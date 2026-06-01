@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Marty's AI Adventure — Week 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+:root {
+  --teal:#1D9E75; --teal-l:#E1F5EE; --teal-d:#085041;
+  --purple:#7F77DD; --purple-l:#EEEDFE; --purple-d:#26215C;
+  --coral:#D85A30; --coral-l:#FAECE7;
+  --amber:#BA7517; --amber-l:#FAEEDA; --amber-d:#633806;
+  --blue:#185FA5; --blue-l:#E6F1FB; --blue-d:#042C53;
+  --green:#3B6D11; --green-l:#EAF3DE;
+  --bg:#F5F3EE; --white:#fff; --text:#1a1a1a; --muted:#555;
+  --r:14px; --rs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.7}
+
+/* ── NAV ── */
+.nav{position:sticky;top:0;z-index:100;background:rgba(245,243,238,.92);backdrop-filter:blur(10px);border-bottom:1px solid #e0ddd5;padding:10px 16px;display:flex;align-items:center;gap:10px}
+.nav-title{font-family:'Fredoka One',cursive;font-size:17px;color:var(--teal-d);flex:1}
+.nav-chapter{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.5px}
+.ch-dots{display:flex;gap:5px;flex-wrap:wrap}
+.ch-dot{width:9px;height:9px;border-radius:50%;background:#ddd;border:none;padding:0;cursor:pointer;transition:background .2s,transform .15s}
+.ch-dot.active{background:var(--teal);transform:scale(1.25)}
+.ch-dot.done{background:#A8DCC8}
+
+/* ── COVER ── */
+.cover{min-height:100svh;background:linear-gradient(155deg,#d4f0e5 0%,#e8f7f1 40%,#f0faf6 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center;position:relative;overflow:hidden}
+.cover::before{content:'🤖';font-size:180px;position:absolute;top:-20px;right:-20px;opacity:.07;transform:rotate(15deg)}
+.cover-badge{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--teal);background:rgba(255,255,255,.7);padding:5px 16px;border-radius:20px;margin-bottom:16px;border:1px solid #b2e8d4}
+.cover-robot{font-size:80px;margin-bottom:12px;animation:bob 2.5s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.cover-title{font-family:'Fredoka One',cursive;font-size:46px;color:var(--teal-d);line-height:1.1;margin-bottom:8px}
+.cover-sub{font-size:18px;font-weight:700;color:var(--teal);margin-bottom:28px}
+.cover-name{background:white;border-radius:var(--r);padding:16px 32px;margin-bottom:32px;border:2px dashed var(--teal);box-shadow:0 4px 20px rgba(29,158,117,.12)}
+.cover-name p{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:2px}
+.cover-name .name{font-family:'Fredoka One',cursive;font-size:30px;color:var(--teal-d)}
+.toc{background:white;border-radius:var(--r);padding:18px 22px;width:100%;max-width:420px;text-align:left;box-shadow:0 4px 24px rgba(0,0,0,.06)}
+.toc h3{font-family:'Fredoka One',cursive;font-size:17px;color:var(--teal-d);margin-bottom:10px}
+.toc-item{display:flex;align-items:center;gap:9px;padding:5px 0;border-bottom:1px dashed #d0ede3;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;transition:color .15s}
+.toc-item:last-child{border:none}
+.toc-item:hover{color:var(--teal-d)}
+.toc-num{width:22px;height:22px;background:var(--teal-l);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--teal-d);flex-shrink:0}
+
+/* ── CHAPTER ── */
+.chapter{background:white;margin:16px 12px;border-radius:20px;padding:28px 22px;box-shadow:0 2px 16px rgba(0,0,0,.05);scroll-margin-top:64px}
+.ch-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:22px;padding-bottom:18px;border-bottom:2px solid var(--bg)}
+.ch-icon{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.ch-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:3px}
+.ch-title{font-family:'Fredoka One',cursive;font-size:26px;line-height:1.15}
+.ch-sub{font-size:13px;font-weight:700;margin-top:2px;color:var(--muted)}
+
+/* ── BLOCKS ── */
+.intro{border-radius:var(--r);padding:14px 18px;margin-bottom:20px;font-size:14px;font-weight:700;line-height:1.65}
+.sec-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:18px 0 8px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:18px}
+.card{border-radius:var(--r);border:1.5px solid #ebebeb;padding:14px 15px;background:white}
+.card.brain{border-top:3px solid var(--teal)}.card.computer{border-top:3px solid var(--purple)}
+.card-hd{display:flex;align-items:center;gap:7px;margin-bottom:9px}
+.card-ico{font-size:20px}.card-lbl{font-family:'Fredoka One',cursive;font-size:15px}
+.fl{list-style:none;display:flex;flex-direction:column;gap:6px}
+.fl li{display:flex;gap:7px;font-size:12.5px;color:var(--muted);line-height:1.45;font-weight:700;align-items:flex-start}
+.dot{width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.wow{border-radius:var(--r);padding:13px 16px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start}
+.wow-e{font-size:22px;flex-shrink:0;margin-top:2px}
+.wow-t{font-size:13px;font-weight:700;line-height:1.55}
+.body-t{font-size:13.5px;font-weight:700;color:var(--muted);line-height:1.7;margin-bottom:13px}
+.vocab{border-radius:var(--r);padding:13px 16px;margin-bottom:18px}
+.vocab-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--blue);margin-bottom:7px}
+.vitem{display:flex;gap:8px;margin-bottom:4px;font-size:13px;line-height:1.4}
+.vw{font-weight:800;color:var(--blue-d);min-width:90px;flex-shrink:0}
+.vd{color:var(--muted);font-weight:700}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.mini{border-radius:var(--rs);padding:11px 12px;font-size:12px;font-weight:700;text-align:center;line-height:1.45}
+.mini .mi{font-size:22px;margin-bottom:5px}
+.big-stats{display:flex;gap:10px;margin-bottom:18px}
+.stat{flex:1;border-radius:var(--rs);padding:14px;text-align:center}
+.stat-n{font-family:'Fredoka One',cursive;font-size:26px;margin-bottom:3px}
+.stat-l{font-size:11px;font-weight:700;line-height:1.4}
+.two-fact{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.fc{border-radius:var(--rs);padding:11px 13px}
+.fc-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.fc-t{font-size:12.5px;font-weight:700;line-height:1.45}
+.timeline{padding-left:24px;position:relative;margin-bottom:18px}
+.timeline::before{content:'';position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--teal-l)}
+.tl-item{position:relative;margin-bottom:13px}
+.tl-dot{position:absolute;left:-20px;top:4px;width:11px;height:11px;border-radius:50%;background:var(--teal)}
+.tl-yr{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--teal);margin-bottom:1px}
+.tl-t{font-size:13px;font-weight:700;color:var(--muted);line-height:1.45}
+.recap-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px}
+.rc{border-radius:var(--rs);padding:11px 13px;font-size:12px;font-weight:700;color:var(--muted);line-height:1.45}
+.rc-n{font-family:'Fredoka One',cursive;font-size:13px;margin-bottom:2px}
+.rc-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px}
+
+/* ── QUIZ (interactive) ── */
+.quiz-wrap{background:var(--bg);border-radius:var(--r);padding:16px 18px;margin-bottom:18px}
+.quiz-h{font-family:'Fredoka One',cursive;font-size:17px;margin-bottom:14px}
+.quiz-q{font-size:13.5px;font-weight:800;margin-bottom:8px}
+.quiz-opts{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
+.qopt{display:flex;align-items:center;gap:9px;background:white;border:1.5px solid #e0ddd5;border-radius:var(--rs);padding:10px 13px;font-size:13px;font-weight:700;color:var(--text);cursor:pointer;transition:all .18s;text-align:left;width:100%;font-family:'Nunito',sans-serif;-webkit-appearance:none;appearance:none}
+.qopt:active{transform:scale(.98)}
+.qopt .olet{width:22px;height:22px;border-radius:50%;border:2px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;transition:all .2s;color:transparent}
+.qopt.selected-correct{background:var(--teal-l);border-color:var(--teal)}
+.qopt.selected-correct .olet{background:var(--teal);border-color:var(--teal);color:white}
+.qopt.selected-wrong{background:#FCEBEB;border-color:#E24B4A}
+.qopt.selected-wrong .olet{background:#E24B4A;border-color:#E24B4A;color:white}
+.qopt.reveal-correct{background:var(--teal-l);border-color:var(--teal)}
+.qopt.reveal-correct .olet{background:var(--teal);border-color:var(--teal);color:white}
+.qopt:disabled{cursor:default}
+.quiz-ans{font-size:12.5px;font-weight:700;padding:9px 12px;border-radius:var(--rs);margin-top:4px;display:none;line-height:1.5}
+.quiz-ans.show{display:block}
+.quiz-div{height:1px;background:#e8e8e0;margin:14px 0}
+.stars-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.star-b{display:inline-flex;align-items:center;gap:5px;background:var(--amber-l);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:800;color:var(--amber-d)}
+
+/* ── ACTIVITY ── */
+.activity{border-radius:var(--r);border:2px dashed var(--purple);padding:16px 18px;margin-bottom:18px;background:var(--purple-l)}
+.act-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--purple);margin-bottom:3px}
+.act-title{font-family:'Fredoka One',cursive;font-size:19px;color:var(--purple-d);margin-bottom:12px}
+.step{display:flex;gap:9px;margin-bottom:8px;align-items:flex-start}
+.sn{width:22px;height:22px;border-radius:50%;background:var(--purple);color:white;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.st{font-size:13px;font-weight:700;color:var(--purple-d);line-height:1.5}
+.dad-tip{background:white;border-radius:var(--rs);padding:9px 13px;margin-top:10px;font-size:12px;font-weight:700;color:var(--purple-d);border-left:3px solid var(--purple);line-height:1.5}
+
+/* ── CERTIFICATE ── */
+.cert{border:3px dashed var(--teal);border-radius:var(--r);padding:28px 20px;text-align:center;background:var(--teal-l);margin-bottom:18px}
+.cert-e{font-size:44px;margin-bottom:8px}
+.cert-title{font-family:'Fredoka One',cursive;font-size:24px;color:var(--teal-d);margin-bottom:4px}
+.cert-sub{font-size:13px;font-weight:700;color:var(--teal);margin-bottom:14px}
+.cert-line{border-bottom:2px solid var(--teal);width:160px;margin:0 auto 4px}
+.cert-nl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:12px}
+.cert-txt{font-size:13px;font-weight:700;color:var(--teal-d);line-height:1.6}
+
+/* ── PROGRESS TOAST ── */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--teal-d);color:white;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:800;transition:transform .35s cubic-bezier(.34,1.56,.64,1);z-index:200;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ── CHECKLIST ── */
+.checklist{display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
+.ci{display:flex;gap:10px;align-items:flex-start;font-size:13px;font-weight:700;color:var(--muted);line-height:1.45}
+.cb{width:18px;height:18px;border:2px solid #ccc;border-radius:4px;flex-shrink:0;margin-top:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent;transition:all .2s}
+.cb.checked{background:var(--teal);border-color:var(--teal);color:white}
+
+@media(max-width:420px){
+  .two-col,.two-fact,.recap-grid{grid-template-columns:1fr}
+  .three-col{grid-template-columns:1fr 1fr}
+  .big-stats{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-title">🤖 Marty's AI Book</div>
+  <div class="ch-dots" id="dots"></div>
+</nav>
+
+<!-- COVER -->
+<div class="cover" id="ch0">
+  <div class="cover-badge">Week 1 · Summer AI Adventure</div>
+  <div class="cover-robot">🤖</div>
+  <div class="cover-title">Marty's AI Book</div>
+  <div class="cover-sub">What is AI and How Does it Work?</div>
+  <div class="cover-name"><p>This book belongs to</p><div class="name">Marty ⭐</div></div>
+  <div class="toc">
+    <h3>📚 10 Chapters Inside!</h3>
+    <div class="toc-item" onclick="goTo(1)"><div class="toc-num">1</div>Brains vs. Computers</div>
+    <div class="toc-item" onclick="goTo(2)"><div class="toc-num">2</div>What is AI?</div>
+    <div class="toc-item" onclick="goTo(3)"><div class="toc-num">3</div>Talking to Machines</div>
+    <div class="toc-item" onclick="goTo(4)"><div class="toc-num">4</div>Giving Instructions</div>
+    <div class="toc-item" onclick="goTo(5)"><div class="toc-num">5</div>What Computers Are Great At</div>
+    <div class="toc-item" onclick="goTo(6)"><div class="toc-num">6</div>What Computers Can't Do</div>
+    <div class="toc-item" onclick="goTo(7)"><div class="toc-num">7</div>The History of AI</div>
+    <div class="toc-item" onclick="goTo(8)"><div class="toc-num">8</div>AI All Around Us</div>
+    <div class="toc-item" onclick="goTo(9)"><div class="toc-num">9</div>Friendly vs. Movie AI</div>
+    <div class="toc-item" onclick="goTo(10)"><div class="toc-num">10</div>Week 1 Recap + Quiz!</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CH 1 ═══════════════════ -->
+<div class="chapter" id="ch1">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--teal-l)">🧠</div>
+    <div><div class="ch-tag" style="color:var(--teal)">Chapter 1</div><div class="ch-title">Brains vs. Computers</div><div class="ch-sub">How human brains work vs. how computers work</div></div>
+  </div>
+  <div class="intro" style="background:var(--teal-l);color:var(--teal-d)">Hey Marty! 👋 Did you know your brain is doing something INCREDIBLE right now? It's reading these words, understanding them, AND deciding if it's hungry — all at the same time! No computer can do that. Let's find out why!</div>
+
+  <div class="sec-label">The big showdown ⚡</div>
+  <div class="two-col">
+    <div class="card brain">
+      <div class="card-hd"><div class="card-ico">🧠</div><div class="card-lbl">Your brain</div></div>
+      <ul class="fl">
+        <li><div class="dot" style="background:var(--teal)"></div>86 BILLION tiny cells called neurons</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Learns from feelings and experiences</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Can dream, imagine, and create</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Runs on only 20 watts — a dim light bulb!</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Gets tired and needs sleep</li>
+      </ul>
+    </div>
+    <div class="card computer">
+      <div class="card-hd"><div class="card-ico">💻</div><div class="card-lbl">A computer</div></div>
+      <ul class="fl">
+        <li><div class="dot" style="background:var(--purple)"></div>Billions of tiny switches called transistors</li>
+        <li><div class="dot" style="background:var(--purple)"></div>Learns only from data and instructions</li>
+        <li><div class="dot" style="background:var(--purple)"></div>Can't dream, feel bored, or be truly creative</li>
+        <li><div class="dot" style="background:var(--purple)"></div>Needs hundreds of watts — much more power!</li>
+        <li><div class="dot" style="background:var(--purple)"></div>Never gets tired — works 24 hours a day</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="wow" style="background:var(--amber-l)"><div class="wow-e">🤯</div><div class="wow-t" style="color:var(--amber-d)">WOW FACT: Your brain makes about 1 MILLION new connections every second when you're learning something new. That's like building a million LEGO bridges every second!</div></div>
+
+  <div class="two-col">
+    <div class="card">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--teal);margin-bottom:7px">🧠 Brain wins at...</div>
+      <ul class="fl">
+        <li><div class="dot" style="background:var(--teal)"></div>Recognizing your mom's face instantly</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Understanding jokes and feelings</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Making up stories and art</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Catching a ball (no math needed!)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--purple);margin-bottom:7px">💻 Computer wins at...</div>
+      <ul class="fl">
+        <li><div class="dot" style="background:var(--purple)"></div>Adding huge numbers in a nanosecond</li>
+        <li><div class="dot" style="background:var(--purple)"></div>Remembering everything perfectly</li>
+        <li><div class="dot" style="background:var(--purple)"></div>Never making math mistakes</li>
+        <li><div class="dot" style="background:var(--purple)"></div>Doing the same task a billion times</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: Who adds 999,999 + 1 faster?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q1a','Computers are WAAAAY faster at math — millions of calculations per second!')"><div class="olet">A</div>Your brain</button>
+      <button class="qopt" onclick="answer(this,true,'q1a','Computers are WAAAAY faster at math — millions of calculations per second!')"><div class="olet">B</div>A computer</button>
+      <button class="qopt" onclick="answer(this,false,'q1a','Computers are WAAAAY faster at math — millions of calculations per second!')"><div class="olet">C</div>They're equal</button>
+    </div>
+    <div class="quiz-ans" id="q1a" style="background:var(--teal-l);color:var(--teal-d)"></div>
+    <div class="quiz-div"></div>
+    <div class="quiz-q">Q2: Who can actually FEEL happy?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q1b','Computers don\'t feel anything — they just follow instructions!')"><div class="olet">A</div>A computer</button>
+      <button class="qopt" onclick="answer(this,true,'q1b','Computers don\'t feel anything — they just follow instructions!')"><div class="olet">B</div>Your brain</button>
+      <button class="qopt" onclick="answer(this,false,'q1b','Computers don\'t feel anything — they just follow instructions!')"><div class="olet">C</div>Both can</button>
+    </div>
+    <div class="quiz-ans" id="q1b" style="background:var(--teal-l);color:var(--teal-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">🎨 Activity Time!</div>
+    <div class="act-title">Draw Your Brain!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Grab a big piece of paper and some crayons or markers.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Draw a brain outline — it looks like a wrinkly cloud or walnut!</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Inside the brain, draw 5 things YOUR brain helps you do (like "love Arjun", "play soccer", "feel excited").</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">On a second paper, draw a rectangle (the computer). Write 5 computer superpowers inside it.</div></div>
+    <div class="step"><div class="sn">5</div><div class="st">Compare! What's only in the brain? Only in the computer?</div></div>
+    <div class="dad-tip">💡 Dad tip: Ask Marty to color-code — green for brain-only things, purple for computer-only things!</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CH 2 ═══════════════════ -->
+<div class="chapter" id="ch2">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--purple-l)">🤖</div>
+    <div><div class="ch-tag" style="color:var(--purple)">Chapter 2</div><div class="ch-title">What is AI?</div><div class="ch-sub">What makes a computer "smart"?</div></div>
+  </div>
+  <div class="intro" style="background:var(--purple-l);color:var(--purple-d)">You know what brains and computers do. But what happens when scientists try to make computers think MORE like brains? That's called Artificial Intelligence — or AI! "Artificial" means made by humans, and "Intelligence" means being smart. So AI is human-made smartness! 🤩</div>
+
+  <div class="vocab" style="background:var(--blue-l)">
+    <div class="vocab-lbl">🔤 New words to know</div>
+    <div class="vitem"><div class="vw">Artificial</div><div class="vd">Made by humans, not natural</div></div>
+    <div class="vitem"><div class="vw">Intelligence</div><div class="vd">The ability to learn, understand, and solve problems</div></div>
+    <div class="vitem"><div class="vw">AI</div><div class="vd">A program that can do "smart" things — recognize faces, understand speech, make art</div></div>
+    <div class="vitem"><div class="vw">Program</div><div class="vd">A set of instructions that tells a computer what to do</div></div>
+  </div>
+
+  <div class="sec-label">What can AI actually DO? 🚀</div>
+  <div class="three-col">
+    <div class="mini" style="background:var(--teal-l)"><div class="mi">🗣️</div><div style="font-weight:800;color:var(--teal-d);margin-bottom:3px">Talk</div><div style="color:var(--teal);font-size:11px">Answer your questions in full sentences</div></div>
+    <div class="mini" style="background:var(--purple-l)"><div class="mi">👁️</div><div style="font-weight:800;color:var(--purple-d);margin-bottom:3px">See</div><div style="color:var(--purple);font-size:11px">Recognize faces, animals, objects in photos</div></div>
+    <div class="mini" style="background:var(--amber-l)"><div class="mi">🎵</div><div style="font-weight:800;color:var(--amber-d);margin-bottom:3px">Listen</div><div style="color:var(--amber);font-size:11px">Understand music and voices</div></div>
+  </div>
+  <div class="three-col">
+    <div class="mini" style="background:var(--coral-l)"><div class="mi">🎨</div><div style="font-weight:800;color:#4A1B0C;margin-bottom:3px">Create</div><div style="color:var(--coral);font-size:11px">Draw pictures, write stories</div></div>
+    <div class="mini" style="background:var(--green-l)"><div class="mi">🏥</div><div style="font-weight:800;color:#173404;margin-bottom:3px">Help</div><div style="color:var(--green);font-size:11px">Spot diseases, help doctors</div></div>
+    <div class="mini" style="background:var(--blue-l)"><div class="mi">🎮</div><div style="font-weight:800;color:var(--blue-d);margin-bottom:3px">Play</div><div style="color:var(--blue);font-size:11px">Beat humans at chess and games</div></div>
+  </div>
+
+  <div class="wow" style="background:var(--teal-l)"><div class="wow-e">💡</div><div class="wow-t" style="color:var(--teal-d)">The KEY thing about AI: it LEARNS! You don't tell it every rule. You show it millions of examples and it figures out the patterns itself — like how you learned to talk by hearing lots of words, not by reading a grammar book!</div></div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: What does the "A" in AI stand for?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q2a','Artificial means &quot;made by humans&quot; — so AI is human-made intelligence!')"><div class="olet">A</div>Amazing</button>
+      <button class="qopt" onclick="answer(this,true,'q2a','Artificial means &quot;made by humans&quot; — so AI is human-made intelligence!')"><div class="olet">B</div>Artificial</button>
+      <button class="qopt" onclick="answer(this,false,'q2a','Artificial means &quot;made by humans&quot; — so AI is human-made intelligence!')"><div class="olet">C</div>Automatic</button>
+    </div>
+    <div class="quiz-ans" id="q2a" style="background:var(--purple-l);color:var(--purple-d)"></div>
+    <div class="quiz-div"></div>
+    <div class="quiz-q">Q2: How does AI learn new things?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q2b','AI learns from examples — just like you learned to recognize dogs by seeing lots of different dogs!')"><div class="olet">A</div>Someone tells it every single rule</button>
+      <button class="qopt" onclick="answer(this,true,'q2b','AI learns from examples — just like you learned to recognize dogs by seeing lots of different dogs!')"><div class="olet">B</div>It looks at millions of examples and finds patterns</button>
+      <button class="qopt" onclick="answer(this,false,'q2b','AI learns from examples — just like you learned to recognize dogs by seeing lots of different dogs!')"><div class="olet">C</div>It reads books like we do</button>
+    </div>
+    <div class="quiz-ans" id="q2b" style="background:var(--purple-l);color:var(--purple-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">🤖 Activity Time!</div>
+    <div class="act-title">AI Hunt at Home!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Walk around your home with Dad and find 3 things that use AI.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Hint: Things that listen to you, recognize your face, or suggest what to watch!</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Draw or write them in a list. Can you find more than 3?</div></div>
+    <div class="dad-tip">💡 Clues: Smart TV, voice assistants (Siri/Alexa), face unlock, autocorrect, spam filter in email!</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CH 3 ═══════════════════ -->
+<div class="chapter" id="ch3">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--blue-l)">🗣️</div>
+    <div><div class="ch-tag" style="color:var(--blue)">Chapter 3</div><div class="ch-title">Talking to Machines</div><div class="ch-sub">How we tell computers what to do</div></div>
+  </div>
+  <div class="intro" style="background:var(--blue-l);color:var(--blue-d)">Imagine talking to someone who only speaks a totally different language. That's what it's like talking to a computer! Computers don't understand "Hey, play my favorite song" — they need specific instructions. Learning to give those instructions is the start of all computing!</div>
+
+  <div class="sec-label">3 ways humans talk to computers 💬</div>
+  <div class="two-fact">
+    <div class="fc" style="background:var(--blue-l)"><div class="fc-lbl" style="color:var(--blue)">1. Buttons & clicks</div><div class="fc-t" style="color:var(--blue-d)">Tapping icons, pressing keys. The computer only knows "button X was pressed."</div></div>
+    <div class="fc" style="background:var(--teal-l)"><div class="fc-lbl" style="color:var(--teal)">2. Voice commands</div><div class="fc-t" style="color:var(--teal-d)">Saying "Hey Siri!" — AI converts your voice into instructions it understands.</div></div>
+    <div class="fc" style="background:var(--purple-l)"><div class="fc-lbl" style="color:var(--purple)">3. Code</div><div class="fc-t" style="color:var(--purple-d)">Writing in Python or Scratch — how programmers build apps and games!</div></div>
+    <div class="fc" style="background:var(--amber-l)"><div class="fc-lbl" style="color:var(--amber)">4. Typing naturally</div><div class="fc-t" style="color:var(--amber-d)">Typing normal sentences to AI like ChatGPT. AI is getting really good at this!</div></div>
+  </div>
+
+  <div class="wow" style="background:var(--amber-l)"><div class="wow-e">🎙️</div><div class="wow-t" style="color:var(--amber-d)">SUPER COOL: When you say "Hey Siri, what's the weather?" — your voice turns into numbers, travels to a huge faraway computer, AI figures out what you said, looks up weather, turns the answer into speech, and sends it back... ALL in under 1 second!</div></div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: What is "code"?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q3a','Code is how programmers give computers their instructions — like a recipe, but for computers!')"><div class="olet">A</div>A secret password</button>
+      <button class="qopt" onclick="answer(this,true,'q3a','Code is how programmers give computers their instructions — like a recipe, but for computers!')"><div class="olet">B</div>Instructions written in a language computers understand</button>
+      <button class="qopt" onclick="answer(this,false,'q3a','Code is how programmers give computers their instructions — like a recipe, but for computers!')"><div class="olet">C</div>A type of keyboard button</button>
+    </div>
+    <div class="quiz-ans" id="q3a" style="background:var(--blue-l);color:var(--blue-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">🎮 Activity Time!</div>
+    <div class="act-title">Play "Robot Commands"!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Dad is the ROBOT. You are the PROGRAMMER.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Give Dad instructions to walk across the room and pick up a toy — but Dad can ONLY follow EXACT instructions!</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Try: "Move forward 3 steps. Turn right. Pick up the red toy." See what happens if you're not specific!</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Swap — Dad gives YOU commands and you be the robot!</div></div>
+    <div class="dad-tip">💡 Follow instructions very literally on purpose! If Marty says "go get the toy" without saying which one, grab the wrong one!</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CH 4 ═══════════════════ -->
+<div class="chapter" id="ch4">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--amber-l)">📋</div>
+    <div><div class="ch-tag" style="color:var(--amber)">Chapter 4</div><div class="ch-title">Giving Instructions</div><div class="ch-sub">Why computers need very clear rules</div></div>
+  </div>
+  <div class="intro" style="background:var(--amber-l);color:var(--amber-d)">Can you make a peanut butter sandwich? Easy! But what if you had to write EVERY single step for a robot that has never seen a sandwich before? That's what programmers do for computers. Computers do EXACTLY what you say — nothing more, nothing less!</div>
+
+  <div class="vocab" style="background:var(--blue-l)">
+    <div class="vocab-lbl">🔤 New word: Algorithm</div>
+    <div class="vitem"><div class="vw">Algorithm</div><div class="vd">A step-by-step set of instructions to solve a problem. Every app, game, and AI uses algorithms!</div></div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;color:var(--teal);margin-bottom:7px">Human thinks:</div>
+      <div class="body-t">"Make a sandwich" — and somehow we just... know what that means!</div>
+    </div>
+    <div class="card">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;color:var(--purple);margin-bottom:7px">Computer needs:</div>
+      <ul class="fl">
+        <li><div class="dot" style="background:var(--purple)"></div>Open the bread bag</li>
+        <li><div class="dot" style="background:var(--purple)"></div>Remove exactly 2 slices</li>
+        <li><div class="dot" style="background:var(--purple)"></div>Place slice 1 flat side up</li>
+        <li><div class="dot" style="background:var(--purple)"></div>Open peanut butter jar</li>
+        <li><div class="dot" style="background:var(--purple)"></div>Pick up knife... (and 20 more steps!)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="wow" style="background:var(--teal-l)"><div class="wow-e">🤔</div><div class="wow-t" style="color:var(--teal-d)">Try this: Close your eyes and explain EXACTLY how to tie your shoes — step by step — without showing anyone. Super hard, right? Our brains learn by doing. Computers learn by having every step written out perfectly!</div></div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: What is an algorithm?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q4a','Every recipe, game rulebook, and computer program is a type of algorithm. You follow algorithms every day!')"><div class="olet">A</div>A type of computer chip</button>
+      <button class="qopt" onclick="answer(this,false,'q4a','Every recipe, game rulebook, and computer program is a type of algorithm. You follow algorithms every day!')"><div class="olet">B</div>A math problem</button>
+      <button class="qopt" onclick="answer(this,true,'q4a','Every recipe, game rulebook, and computer program is a type of algorithm. You follow algorithms every day!')"><div class="olet">C</div>Step-by-step instructions to complete a task</button>
+    </div>
+    <div class="quiz-ans" id="q4a" style="background:var(--amber-l);color:var(--amber-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">📝 Activity Time!</div>
+    <div class="act-title">Write a Sandwich Algorithm!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Get paper and a pencil.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Write down EVERY step to make a peanut butter sandwich. Aim for at least 10 steps!</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Read your steps to Dad, and Dad follows them EXACTLY like a robot.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Did it work? Were any steps missing? Fix them and try again!</div></div>
+    <div class="dad-tip">💡 If Marty says "put peanut butter on the bread" without saying to open the jar first — put the whole closed jar on the bread! 😄</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CH 5 ═══════════════════ -->
+<div class="chapter" id="ch5">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--green-l)">⚡</div>
+    <div><div class="ch-tag" style="color:var(--green)">Chapter 5</div><div class="ch-title">What Computers Are Great At</div><div class="ch-sub">Superfast math, perfect memory, and more!</div></div>
+  </div>
+  <div class="intro" style="background:var(--green-l);color:#173404">Computers have SUPERPOWERS that humans could never match! They add a million numbers faster than you can blink, never forget anything, and do the same task perfectly a billion times without getting bored. Let's explore what makes computers truly amazing!</div>
+
+  <div class="big-stats">
+    <div class="stat" style="background:var(--green-l)"><div class="stat-n" style="color:var(--green)">3 GHz</div><div class="stat-l" style="color:var(--green)">Steps per second — that's 3 BILLION!</div></div>
+    <div class="stat" style="background:var(--purple-l)"><div class="stat-n" style="color:var(--purple)">100%</div><div class="stat-l" style="color:var(--purple)">Math accuracy — computers never make arithmetic errors</div></div>
+    <div class="stat" style="background:var(--amber-l)"><div class="stat-n" style="color:var(--amber)">24/7</div><div class="stat-l" style="color:var(--amber)">No breaks, no sleep, no snacks needed!</div></div>
+  </div>
+
+  <div class="wow" style="background:var(--green-l)"><div class="wow-e">🏎️</div><div class="wow-t" style="color:#173404">SPEED CHECK: If you counted to 1 billion (1 number per second) it would take 31 YEARS. A computer does it in 1 second. That's why AI can look at millions of photos and learn from all of them in just a few hours!</div></div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: Can a computer ever get bored or tired?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q5a','Computers don\'t feel bored or tired — that\'s why they\'re perfect for huge, repetitive tasks!')"><div class="olet">A</div>Yes, after many hours of work</button>
+      <button class="qopt" onclick="answer(this,true,'q5a','Computers don\'t feel bored or tired — that\'s why they\'re perfect for huge, repetitive tasks!')"><div class="olet">B</div>No — they can work forever without getting tired</button>
+      <button class="qopt" onclick="answer(this,false,'q5a','Computers don\'t feel bored or tired — that\'s why they\'re perfect for huge, repetitive tasks!')"><div class="olet">C</div>Only very old computers get tired</button>
+    </div>
+    <div class="quiz-ans" id="q5a" style="background:var(--green-l);color:#173404"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">⚡ Activity Time!</div>
+    <div class="act-title">Speed-Counting Challenge!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Set a timer for 10 seconds.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Count as fast as you can! How high did you get?</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Now imagine counting to 3,000,000,000. How long would THAT take you?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">A computer does 3 billion steps EVERY SECOND. Mind = blown! 🤯</div></div>
+    <div class="dad-tip">💡 If Marty counts ~2 numbers/second, reaching 3 billion would take about 47 years. Help him calculate — great "wow" moment!</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CH 6 ═══════════════════ -->
+<div class="chapter" id="ch6">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--coral-l)">❤️</div>
+    <div><div class="ch-tag" style="color:var(--coral)">Chapter 6</div><div class="ch-title">What Computers Can't Do</div><div class="ch-sub">Feelings, creativity, and common sense</div></div>
+  </div>
+  <div class="intro" style="background:var(--coral-l);color:#4A1B0C">Even with all those superpowers, computers have things they just can't do — at least not the way humans do. Real feelings, true creativity from nothing, or just "getting" something without seeing millions of examples. These are things YOUR brain does naturally, every day!</div>
+
+  <div class="two-col">
+    <div class="card" style="border-top:3px solid var(--coral)"><div class="card-hd"><div class="card-ico">💝</div><div class="card-lbl">Feel emotions</div></div><div class="body-t">Computers can pretend to be happy or sad. But they don't feel anything inside. When you hug little Arjun, that warm feeling? Only brains can feel that.</div></div>
+    <div class="card" style="border-top:3px solid var(--coral)"><div class="card-hd"><div class="card-ico">🎨</div><div class="card-lbl">True creativity</div></div><div class="body-t">AI can make art by copying patterns. But coming up with a totally new idea from scratch? That's still a human superpower.</div></div>
+    <div class="card" style="border-top:3px solid var(--coral)"><div class="card-hd"><div class="card-ico">🧠</div><div class="card-lbl">Common sense</div></div><div class="body-t">You know not to jump off a roof even if no one told you. Computers need to be told every rule. Common sense is surprisingly hard to teach a machine!</div></div>
+    <div class="card" style="border-top:3px solid var(--coral)"><div class="card-hd"><div class="card-ico">🤝</div><div class="card-lbl">Real understanding</div></div><div class="body-t">When you read a sad story, you truly understand WHY it's sad. AI can spot it's labeled "sad" — but truly feeling the sadness is very different!</div></div>
+  </div>
+
+  <div class="wow" style="background:var(--coral-l)"><div class="wow-e">🌟</div><div class="wow-t" style="color:#4A1B0C">This is why YOU are so special, Marty! Your laughter, your kindness, your curiosity, your love for family — these are things no computer has ever truly been able to copy. And many scientists think they never will!</div></div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: Can a computer truly FEEL happy?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q6a','Computers can output the words &quot;I\'m happy!&quot; but nothing is going on inside. Feelings are a human and animal thing!')"><div class="olet">A</div>Yes, very advanced computers can feel emotions</button>
+      <button class="qopt" onclick="answer(this,true,'q6a','Computers can output the words &quot;I\'m happy!&quot; but nothing is going on inside. Feelings are a human and animal thing!')"><div class="olet">B</div>No — they can pretend, but they don't feel anything inside</button>
+      <button class="qopt" onclick="answer(this,false,'q6a','Computers can output the words &quot;I\'m happy!&quot; but nothing is going on inside. Feelings are a human and animal thing!')"><div class="olet">C</div>Only if they're specially programmed to</button>
+    </div>
+    <div class="quiz-ans" id="q6a" style="background:var(--coral-l);color:#4A1B0C"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">❤️ Activity Time!</div>
+    <div class="act-title">What Makes You Human?</div>
+    <div class="step"><div class="sn">1</div><div class="st">Get your paper and crayons.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Draw a big star with YOUR name on it.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Around the star, write or draw 5 things that make you special — things a computer could NEVER do.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Share it with the whole family! 🌟</div></div>
+    <div class="dad-tip">💡 Spark ideas: "feel love," "make up a silly joke," "know not to touch a hot stove," "get butterflies before something exciting."</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CH 7 ═══════════════════ -->
+<div class="chapter" id="ch7">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--blue-l)">📅</div>
+    <div><div class="ch-tag" style="color:var(--blue)">Chapter 7</div><div class="ch-title">The History of AI</div><div class="ch-sub">From Alan Turing to today</div></div>
+  </div>
+  <div class="intro" style="background:var(--blue-l);color:var(--blue-d)">AI didn't just appear one day! People have been dreaming about thinking machines for hundreds of years. The real journey started about 75 years ago with a brilliant mathematician who asked: "Can machines think?" Let's zoom through history!</div>
+
+  <div class="sec-label">AI through the years 🕰️</div>
+  <div class="timeline">
+    <div class="tl-item"><div class="tl-dot"></div><div class="tl-yr">1950</div><div class="tl-t">Alan Turing (math genius) asks "Can machines think?" and invents a test to see if a computer seems as smart as a human.</div></div>
+    <div class="tl-item"><div class="tl-dot"></div><div class="tl-yr">1956</div><div class="tl-t">Scientists officially name their field "Artificial Intelligence." The AI race begins!</div></div>
+    <div class="tl-item"><div class="tl-dot"></div><div class="tl-yr">1997</div><div class="tl-t">IBM's Deep Blue beats the world chess champion Garry Kasparov. Humans are shocked — a machine beat the very best player alive!</div></div>
+    <div class="tl-item"><div class="tl-dot"></div><div class="tl-yr">2011</div><div class="tl-t">Siri launches on iPhone. For the first time, millions of regular people can talk to an AI every day.</div></div>
+    <div class="tl-item"><div class="tl-dot"></div><div class="tl-yr">2016</div><div class="tl-t">AlphaGo beats the world champion at Go — the hardest board game ever. Everyone thought this was impossible!</div></div>
+    <div class="tl-item"><div class="tl-dot"></div><div class="tl-yr">2022</div><div class="tl-t">ChatGPT launches! Suddenly AI can write stories, answer questions, and have conversations with millions of people.</div></div>
+    <div class="tl-item"><div class="tl-dot" style="background:var(--coral)"></div><div class="tl-yr" style="color:var(--coral)">Today!</div><div class="tl-t">AI is everywhere — in your iPad, hospitals, cars, space telescopes. You're growing up right in the middle of the AI age! 🚀</div></div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: Who first seriously asked "Can machines think?"</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q7a','Alan Turing was a brilliant British mathematician often called &quot;the father of computer science.&quot;')"><div class="olet">A</div>Albert Einstein</button>
+      <button class="qopt" onclick="answer(this,true,'q7a','Alan Turing was a brilliant British mathematician often called &quot;the father of computer science.&quot;')"><div class="olet">B</div>Alan Turing</button>
+      <button class="qopt" onclick="answer(this,false,'q7a','Alan Turing was a brilliant British mathematician often called &quot;the father of computer science.&quot;')"><div class="olet">C</div>Steve Jobs</button>
+    </div>
+    <div class="quiz-ans" id="q7a" style="background:var(--blue-l);color:var(--blue-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">📅 Activity Time!</div>
+    <div class="act-title">Draw Your AI Timeline!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Draw a long horizontal line across your paper.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Add the years: 1950, 1956, 1997, 2011, 2016, 2022, and TODAY.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Draw a picture or symbol for each big AI event above each year.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Add YOUR birth year on the timeline! 🌟</div></div>
+    <div class="dad-tip">💡 Point out that Marty was born right as AI was exploding! He'll grow up with AI his whole life — that's pretty special.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CH 8 ═══════════════════ -->
+<div class="chapter" id="ch8">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--teal-l)">🔍</div>
+    <div><div class="ch-tag" style="color:var(--teal)">Chapter 8</div><div class="ch-title">AI All Around Us</div><div class="ch-sub">Siri, Netflix, video games — it's everywhere!</div></div>
+  </div>
+  <div class="intro" style="background:var(--teal-l);color:var(--teal-d)">Here's a secret: AI is probably watching, listening, or helping you DOZENS of times every day — and you might not even notice! From the moment you wake up to when you go to sleep, AI is quietly working in the background. Let's find it all!</div>
+
+  <div class="two-col">
+    <div class="card"><div class="card-hd"><div class="card-ico">📱</div><div class="card-lbl">Your iPad</div></div><ul class="fl"><li><div class="dot" style="background:var(--teal)"></div>Face ID recognizes you to unlock</li><li><div class="dot" style="background:var(--teal)"></div>Siri answers your questions</li><li><div class="dot" style="background:var(--teal)"></div>Autocorrect fixes your spelling</li><li><div class="dot" style="background:var(--teal)"></div>Photos sorts pictures by faces</li></ul></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">📺</div><div class="card-lbl">Watching TV</div></div><ul class="fl"><li><div class="dot" style="background:var(--purple)"></div>Netflix suggests shows you'll love</li><li><div class="dot" style="background:var(--purple)"></div>YouTube picks the next video</li><li><div class="dot" style="background:var(--purple)"></div>Spotify creates your playlist</li><li><div class="dot" style="background:var(--purple)"></div>Ads change based on what you like</li></ul></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">🚗</div><div class="card-lbl">In the car</div></div><ul class="fl"><li><div class="dot" style="background:var(--coral)"></div>GPS finds the fastest route</li><li><div class="dot" style="background:var(--coral)"></div>Some cars can park themselves</li><li><div class="dot" style="background:var(--coral)"></div>Traffic apps predict slow roads</li></ul></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">🎮</div><div class="card-lbl">Video games</div></div><ul class="fl"><li><div class="dot" style="background:var(--amber)"></div>Enemy characters think and react</li><li><div class="dot" style="background:var(--amber)"></div>Games adjust difficulty for your skill</li><li><div class="dot" style="background:var(--amber)"></div>AI generates new levels and worlds</li></ul></div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: When Netflix suggests a show, what is it doing?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q8a','Netflix\'s AI watches what you watch, how long, and what you skip — then guesses what you\'ll love next!')"><div class="olet">A</div>Randomly picking shows</button>
+      <button class="qopt" onclick="answer(this,true,'q8a','Netflix\'s AI watches what you watch, how long, and what you skip — then guesses what you\'ll love next!')"><div class="olet">B</div>Using AI to learn what you enjoy and find similar things</button>
+      <button class="qopt" onclick="answer(this,false,'q8a','Netflix\'s AI watches what you watch, how long, and what you skip — then guesses what you\'ll love next!')"><div class="olet">C</div>A person at Netflix choosing for you</button>
+    </div>
+    <div class="quiz-ans" id="q8a" style="background:var(--teal-l);color:var(--teal-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">🔍 Activity Time!</div>
+    <div class="act-title">AI Scavenger Hunt!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Walk around your home with Dad. You have 10 minutes!</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Find as many things as you can that use AI. Write or draw them!</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Score: 1–4 = AI Spotter 🔭 · 5–8 = AI Detective 🕵️ · 9+ = AI Master 🏆</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">What was the most surprising one you found?</div></div>
+    <div class="dad-tip">💡 Bonus: Ask smart home devices a question, check if your thermostat is "smart," look at the spam folder in email!</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CH 9 ═══════════════════ -->
+<div class="chapter" id="ch9">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--purple-l)">🎬</div>
+    <div><div class="ch-tag" style="color:var(--purple)">Chapter 9</div><div class="ch-title">Friendly vs. Movie AI</div><div class="ch-sub">Real AI vs. robots in the movies</div></div>
+  </div>
+  <div class="intro" style="background:var(--purple-l);color:var(--purple-d)">Have you seen movies where robots take over the world? Or have a robot best friend? Movies love to show AI in dramatic ways — but real AI is very different from Hollywood! Let's separate what's real from what's just cool storytelling.</div>
+
+  <div class="two-col">
+    <div class="card" style="border-top:3px solid var(--purple)"><div class="card-hd"><div class="card-ico">🎬</div><div class="card-lbl">Movie AI says...</div></div><ul class="fl"><li><div class="dot" style="background:var(--purple)"></div>"I want to take over the world!"</li><li><div class="dot" style="background:var(--purple)"></div>Robots have feelings and fall in love</li><li><div class="dot" style="background:var(--purple)"></div>AI suddenly "wakes up" and goes evil</li><li><div class="dot" style="background:var(--purple)"></div>Robots can do EVERYTHING perfectly</li><li><div class="dot" style="background:var(--purple)"></div>AI always looks like a person</li></ul></div>
+    <div class="card" style="border-top:3px solid var(--teal)"><div class="card-hd"><div class="card-ico">💻</div><div class="card-lbl">Real AI is...</div></div><ul class="fl"><li><div class="dot" style="background:var(--teal)"></div>A program that follows patterns — no "wants"</li><li><div class="dot" style="background:var(--teal)"></div>Good at ONE specific thing, not everything</li><li><div class="dot" style="background:var(--teal)"></div>Can make mistakes, especially with new things</li><li><div class="dot" style="background:var(--teal)"></div>Usually invisible — inside phones or the cloud</li><li><div class="dot" style="background:var(--teal)"></div>Built by humans with safety in mind</li></ul></div>
+  </div>
+
+  <div class="wow" style="background:var(--amber-l)"><div class="wow-e">🤖</div><div class="wow-t" style="color:var(--amber-d)">Even the most advanced AI today — the kind that writes stories and makes art — has no idea it even exists. It's just doing math, really fast. It doesn't want anything, fear anything, or dream anything. It's powerful, but it's not a person — and that's actually a good thing!</div></div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: Could a real AI decide it "wants" to take over the world?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,true,'q9a','Current AI has no goals, desires, or awareness. &quot;Wanting&quot; things is a human quality. Real AI is powerful, but not conscious!')"><div class="olet">A</div>No — real AI doesn't "want" anything. It just follows patterns.</button>
+      <button class="qopt" onclick="answer(this,false,'q9a','Current AI has no goals, desires, or awareness. &quot;Wanting&quot; things is a human quality. Real AI is powerful, but not conscious!')"><div class="olet">B</div>Yes, very advanced AI could</button>
+      <button class="qopt" onclick="answer(this,false,'q9a','Current AI has no goals, desires, or awareness. &quot;Wanting&quot; things is a human quality. Real AI is powerful, but not conscious!')"><div class="olet">C</div>Maybe, if it learned enough</button>
+    </div>
+    <div class="quiz-ans" id="q9a" style="background:var(--purple-l);color:var(--purple-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">🎬 Activity Time!</div>
+    <div class="act-title">Real vs. Movie Robot!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Think of a robot or AI from a movie or cartoon (like WALL-E, R2D2, or Baymax).</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Draw that movie robot character.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Next to it, draw what REAL AI looks like (hint: probably an app icon or a box!).</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">List 3 differences between movie AI and real AI.</div></div>
+    <div class="dad-tip">💡 Great conversation starter — what did Marty's favorite robot do that real AI can't? Helps him think critically about what he sees in media!</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CH 10 ═══════════════════ -->
+<div class="chapter" id="ch10">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--amber-l)">🏆</div>
+    <div><div class="ch-tag" style="color:var(--amber)">Chapter 10</div><div class="ch-title">Week 1 Recap + Quiz!</div><div class="ch-sub">Review everything and celebrate! 🎉</div></div>
+  </div>
+  <div class="intro" style="background:var(--amber-l);color:var(--amber-d)">Whoa Marty — you made it through ALL of Week 1! You've learned SO much about AI. Let's do a quick review of everything, then take the BIG quiz to show off what you know! 🌟</div>
+
+  <div class="sec-label">Everything you learned this week 📚</div>
+  <div class="recap-grid">
+    <div class="rc" style="background:var(--teal-l)"><div class="rc-n" style="color:var(--teal)">Ch 1</div><div class="rc-title">Brains vs. Computers</div>Brains feel and dream; computers calculate and remember — both amazing in different ways!</div>
+    <div class="rc" style="background:var(--purple-l)"><div class="rc-n" style="color:var(--purple)">Ch 2</div><div class="rc-title">What is AI?</div>AI = Artificial Intelligence. Learns from examples to do smart things like talk, see, and create!</div>
+    <div class="rc" style="background:var(--blue-l)"><div class="rc-n" style="color:var(--blue)">Ch 3</div><div class="rc-title">Talking to Machines</div>Clicks, voice, code, or typing — AI is getting better at understanding us every day!</div>
+    <div class="rc" style="background:var(--amber-l)"><div class="rc-n" style="color:var(--amber)">Ch 4</div><div class="rc-title">Giving Instructions</div>Algorithms are step-by-step instructions. Computers follow them EXACTLY!</div>
+    <div class="rc" style="background:var(--green-l)"><div class="rc-n" style="color:var(--green)">Ch 5</div><div class="rc-title">Computer Superpowers</div>Speed, perfect memory, never getting tired — computers are incredible tools!</div>
+    <div class="rc" style="background:var(--coral-l)"><div class="rc-n" style="color:var(--coral)">Ch 6</div><div class="rc-title">Human Superpowers</div>Feelings, real creativity, common sense — only humans (and animals) truly have these!</div>
+    <div class="rc" style="background:var(--blue-l)"><div class="rc-n" style="color:var(--blue)">Ch 7</div><div class="rc-title">History of AI</div>From Alan Turing in 1950 to ChatGPT in 2022 — what an amazing journey!</div>
+    <div class="rc" style="background:var(--teal-l)"><div class="rc-n" style="color:var(--teal)">Ch 8</div><div class="rc-title">AI Around Us</div>AI is in your iPad, TV, car, games — invisible and quietly helping everywhere!</div>
+    <div class="rc" style="background:var(--purple-l)" style="grid-column:span 2"><div class="rc-n" style="color:var(--purple)">Ch 9</div><div class="rc-title">Movie vs. Real AI</div>Movie robots are dramatic for fun! Real AI has no feelings or world-domination plans.</div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🏆 The BIG Week 1 Quiz!</div>
+    <div class="stars-row"><div class="star-b">⭐ 5 questions</div><div class="star-b">🎯 Tap to answer</div><div class="star-b">🏅 Aim for 5/5!</div></div>
+
+    <div class="quiz-q">Q1: What does "AI" stand for?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq1','Artificial means human-made. Intelligence means smartness. So AI = human-made smartness!')"><div class="olet">A</div>Automatic Intelligence</button>
+      <button class="qopt" onclick="answer(this,true,'bq1','Artificial means human-made. Intelligence means smartness. So AI = human-made smartness!')"><div class="olet">B</div>Artificial Intelligence</button>
+      <button class="qopt" onclick="answer(this,false,'bq1','Artificial means human-made. Intelligence means smartness. So AI = human-made smartness!')"><div class="olet">C</div>Amazing Invention</button>
+    </div>
+    <div class="quiz-ans" id="bq1" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="quiz-div"></div>
+
+    <div class="quiz-q">Q2: What is a step-by-step set of instructions called?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq2','Algorithm! Even a sandwich recipe is an algorithm. Every app and AI uses them to work.')"><div class="olet">A</div>A program</button>
+      <button class="qopt" onclick="answer(this,false,'bq2','Algorithm! Even a sandwich recipe is an algorithm. Every app and AI uses them to work.')"><div class="olet">B</div>A transistor</button>
+      <button class="qopt" onclick="answer(this,true,'bq2','Algorithm! Even a sandwich recipe is an algorithm. Every app and AI uses them to work.')"><div class="olet">C</div>An algorithm</button>
+    </div>
+    <div class="quiz-ans" id="bq2" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="quiz-div"></div>
+
+    <div class="quiz-q">Q3: Who first seriously asked "Can machines think?"</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,true,'bq3','Alan Turing in 1950! He\'s often called the father of computer science and artificial intelligence.')"><div class="olet">A</div>Alan Turing</button>
+      <button class="qopt" onclick="answer(this,false,'bq3','Alan Turing in 1950! He\'s often called the father of computer science and artificial intelligence.')"><div class="olet">B</div>Elon Musk</button>
+      <button class="qopt" onclick="answer(this,false,'bq3','Alan Turing in 1950! He\'s often called the father of computer science and artificial intelligence.')"><div class="olet">C</div>Thomas Edison</button>
+    </div>
+    <div class="quiz-ans" id="bq3" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="quiz-div"></div>
+
+    <div class="quiz-q">Q4: Name one thing a human can do that a computer truly can't.</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq4','Feelings! Computers can pretend, but can\'t actually feel happiness, love, or excitement the way you do.')"><div class="olet">A</div>Add large numbers</button>
+      <button class="qopt" onclick="answer(this,true,'bq4','Feelings! Computers can pretend, but can\'t actually feel happiness, love, or excitement the way you do.')"><div class="olet">B</div>Feel real emotions</button>
+      <button class="qopt" onclick="answer(this,false,'bq4','Feelings! Computers can pretend, but can\'t actually feel happiness, love, or excitement the way you do.')"><div class="olet">C</div>Remember information</button>
+    </div>
+    <div class="quiz-ans" id="bq4" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="quiz-div"></div>
+
+    <div class="quiz-q">Q5: What makes AI different from a regular computer program?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq5','Regular programs follow fixed rules. AI learns from data and improves over time — that\'s what makes it special!')"><div class="olet">A</div>It's more expensive</button>
+      <button class="qopt" onclick="answer(this,true,'bq5','Regular programs follow fixed rules. AI learns from data and improves over time — that\'s what makes it special!')"><div class="olet">B</div>It can learn from examples and get better over time</button>
+      <button class="qopt" onclick="answer(this,false,'bq5','Regular programs follow fixed rules. AI learns from data and improves over time — that\'s what makes it special!')"><div class="olet">C</div>It moves faster</button>
+    </div>
+    <div class="quiz-ans" id="bq5" style="background:var(--amber-l);color:var(--amber-d)"></div>
+
+    <div id="score-reveal" style="display:none;margin-top:16px;padding:14px 16px;border-radius:var(--r);background:var(--teal-l);color:var(--teal-d);font-weight:800;font-size:15px;text-align:center"></div>
+  </div>
+
+  <div class="cert">
+    <div class="cert-e">🎓</div>
+    <div class="cert-title">Week 1 Complete!</div>
+    <div class="cert-sub">This certifies that</div>
+    <div class="cert-line"></div>
+    <div class="cert-nl">Marty</div>
+    <div class="cert-txt">has successfully completed<br>Week 1 of the AI Summer Adventure<br>and is now an official<br><strong>AI Explorer! 🤖⭐</strong></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// Dots nav
+const dots = document.getElementById('dots');
+for(let i=1;i<=10;i++){
+  const d = document.createElement('button');
+  d.className='ch-dot';
+  d.setAttribute('aria-label','Chapter '+i);
+  d.onclick=()=>goTo(i);
+  dots.appendChild(d);
+}
+
+function goTo(n){
+  document.getElementById('ch'+n).scrollIntoView({behavior:'smooth'});
+}
+
+// Intersection observer for active dot
+const chapters = document.querySelectorAll('.chapter');
+const allDots = document.querySelectorAll('.ch-dot');
+const obs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const n = parseInt(e.target.id.replace('ch',''));
+      if(!isNaN(n)&&n>=1&&n<=10){
+        allDots.forEach((d,i)=>{
+          d.classList.toggle('active',i===n-1);
+        });
+      }
+    }
+  });
+},{threshold:0.3});
+chapters.forEach(c=>obs.observe(c));
+
+// Quiz logic
+const answered = {};
+const bigQuizIds = ['bq1','bq2','bq3','bq4','bq5'];
+let bigScore = 0;
+let bigAnswered = 0;
+
+function answer(btn, correct, ansId, explanation){
+  if(answered[ansId]) return;
+  answered[ansId] = true;
+  const opts = btn.closest('.quiz-opts').querySelectorAll('.qopt');
+  opts.forEach(o=>o.disabled=true);
+  btn.classList.add(correct?'selected-correct':'selected-wrong');
+  // reveal correct if wrong
+  if(!correct){
+    opts.forEach(o=>{
+      if(o.onclick){
+        const txt = o.getAttribute('onclick');
+        // find the correct one by checking if it was passed true
+      }
+    });
+    // find and highlight the correct button
+    opts.forEach(o=>{
+      const oc = o.getAttribute('onclick');
+      if(oc && oc.includes('true,\''+ansId+'\'')) o.classList.add('reveal-correct');
+    });
+  }
+  const ansEl = document.getElementById(ansId);
+  ansEl.textContent = (correct?'🌟 Correct! ':'🤔 Not quite — ') + explanation;
+  ansEl.classList.add('show');
+
+  // big quiz scoring
+  if(bigQuizIds.includes(ansId)){
+    bigAnswered++;
+    if(correct) bigScore++;
+    if(bigAnswered===5){
+      setTimeout(()=>{
+        const rev = document.getElementById('score-reveal');
+        const msgs = ['Keep practising! 💪','Nice work, AI learner! 🎉','You\'re getting it! 🚀','Almost perfect! 🌟','PERFECT SCORE! YOU\'RE AN AI SUPERSTAR! 🏆🤖⭐'];
+        const idx = bigScore<=1?0:bigScore===2?1:bigScore===3?2:bigScore===4?3:4;
+        rev.innerHTML = `You got <strong>${bigScore}/5</strong>! ${msgs[idx]}`;
+        rev.style.display='block';
+        rev.scrollIntoView({behavior:'smooth',block:'nearest'});
+      },400);
+    }
+  }
+
+  // mark dot as done
+  const ch = btn.closest('.chapter');
+  if(ch){
+    const n = parseInt(ch.id.replace('ch',''));
+    if(!isNaN(n)&&n>=1&&n<=10) allDots[n-1].classList.add('done');
+  }
+}
+
+// Checkboxes
+document.querySelectorAll('.cb').forEach(cb=>{
+  cb.onclick=()=>{
+    cb.classList.toggle('checked');
+    cb.textContent = cb.classList.contains('checked')?'✓':'';
+  };
+});
+</script>
+</body>
+</html>
