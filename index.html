@@ -152,10 +152,40 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);font
   .three-col{grid-template-columns:1fr 1fr}
   .big-stats{flex-direction:column}
 }
+
+/* ── PASSWORD SCREEN ── */
+#lock-screen{position:fixed;inset:0;z-index:9999;background:linear-gradient(155deg,#d4f0e5 0%,#e8f7f1 40%,#f0faf6 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center}
+#lock-screen .lock-robot{font-size:72px;margin-bottom:8px;animation:bob 2.5s ease-in-out infinite}
+#lock-screen h1{font-family:'Fredoka One',cursive;font-size:32px;color:var(--teal-d);margin-bottom:6px}
+#lock-screen p{font-size:15px;font-weight:700;color:var(--teal);margin-bottom:28px}
+#lock-screen .lock-box{background:white;border-radius:var(--r);padding:24px 28px;width:100%;max-width:320px;box-shadow:0 4px 24px rgba(29,158,117,.15);border:2px dashed var(--teal)}
+#lock-screen .lock-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:10px}
+#lock-screen input{width:100%;padding:12px 16px;border-radius:var(--rs);border:2px solid #d0ede3;font-family:'Nunito',sans-serif;font-size:18px;font-weight:800;text-align:center;letter-spacing:3px;outline:none;color:var(--teal-d);background:var(--teal-l);margin-bottom:12px;transition:border-color .2s}
+#lock-screen input:focus{border-color:var(--teal)}
+#lock-screen button{width:100%;padding:13px;background:var(--teal);color:white;border:none;border-radius:var(--rs);font-family:'Fredoka One',cursive;font-size:18px;cursor:pointer;transition:background .15s,transform .1s;letter-spacing:.5px}
+#lock-screen button:active{transform:scale(.97)}
+#lock-screen .lock-error{font-size:13px;font-weight:800;color:var(--coral);margin-top:10px;min-height:20px;display:none}
+#lock-screen .lock-error.show{display:block}
+#book-content{display:none}
 </style>
 </head>
 <body>
 
+<!-- LOCK SCREEN -->
+<div id="lock-screen">
+  <div class="lock-robot">🤖</div>
+  <h1>Marty's AI Book</h1>
+  <p>Enter your secret password to unlock!</p>
+  <div class="lock-box">
+    <div class="lock-label">🔑 Secret Password</div>
+    <input type="password" id="pw-input" placeholder="••••••••" maxlength="20" onkeydown="if(event.key==='Enter')checkPw()"/>
+    <button onclick="checkPw()">Unlock My Book 🚀</button>
+    <div class="lock-error" id="pw-error">Oops! Wrong password. Try again! 🤔</div>
+  </div>
+</div>
+
+<!-- BOOK CONTENT -->
+<div id="book-content">
 <nav class="nav">
   <div class="nav-title">🤖 Marty's AI Book</div>
   <div class="ch-dots" id="dots"></div>
@@ -792,6 +822,28 @@ document.querySelectorAll('.cb').forEach(cb=>{
     cb.textContent = cb.classList.contains('checked')?'✓':'';
   };
 });
+
+// Password
+function checkPw(){
+  const val = document.getElementById('pw-input').value;
+  const err = document.getElementById('pw-error');
+  if(val === 'roro@123'){
+    document.getElementById('lock-screen').style.display='none';
+    document.getElementById('book-content').style.display='block';
+    sessionStorage.setItem('unlocked','yes');
+  } else {
+    err.classList.add('show');
+    document.getElementById('pw-input').value='';
+    document.getElementById('pw-input').focus();
+    setTimeout(()=>err.classList.remove('show'),2500);
+  }
+}
+// Stay unlocked if already entered this session
+if(sessionStorage.getItem('unlocked')==='yes'){
+  document.getElementById('lock-screen').style.display='none';
+  document.getElementById('book-content').style.display='block';
+}
 </script>
+</div><!-- end book-content -->
 </body>
 </html>
