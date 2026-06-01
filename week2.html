@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Marty's AI Adventure — Week 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+:root{
+  --purple:#7F77DD;--purple-l:#EEEDFE;--purple-d:#26215C;--purple-m:#CECBF6;
+  --teal:#1D9E75;--teal-l:#E1F5EE;--teal-d:#085041;
+  --coral:#D85A30;--coral-l:#FAECE7;--coral-d:#4A1B0C;
+  --amber:#BA7517;--amber-l:#FAEEDA;--amber-d:#633806;
+  --blue:#185FA5;--blue-l:#E6F1FB;--blue-d:#042C53;
+  --green:#3B6D11;--green-l:#EAF3DE;--green-d:#173404;
+  --bg:#F5F3EE;--white:#fff;--text:#1a1a1a;--muted:#555;
+  --r:14px;--rs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.7}
+
+/* LOCK */
+#lock-screen{position:fixed;inset:0;z-index:9999;background:linear-gradient(155deg,#eeedfe 0%,#f4f3ff 40%,#faf9ff 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center}
+#lock-screen .lock-robot{font-size:72px;animation:bob 2.5s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+#lock-screen h1{font-family:'Fredoka One',cursive;font-size:32px;color:var(--purple-d);margin:10px 0 4px}
+#lock-screen p{font-size:14px;font-weight:700;color:var(--purple);margin-bottom:28px}
+.lock-box{background:white;border-radius:var(--r);padding:24px 28px;width:100%;max-width:320px;border:2px dashed var(--purple)}
+.lock-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--purple);margin-bottom:10px}
+.lock-box input{width:100%;padding:12px 16px;border-radius:var(--rs);border:2px solid var(--purple-m);font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;text-align:center;letter-spacing:4px;outline:none;color:var(--purple-d);background:var(--purple-l);margin-bottom:12px;transition:border-color .2s}
+.lock-box input:focus{border-color:var(--purple)}
+.lock-box button{width:100%;padding:13px;background:var(--purple);color:white;border:none;border-radius:var(--rs);font-family:'Fredoka One',cursive;font-size:18px;cursor:pointer;letter-spacing:.5px;transition:opacity .15s,transform .1s}
+.lock-box button:active{transform:scale(.97)}
+.lock-err{font-size:13px;font-weight:800;color:var(--coral);margin-top:10px;min-height:18px;opacity:0;transition:opacity .2s}
+.lock-err.show{opacity:1}
+#book-content{display:none}
+
+/* NAV */
+.nav{position:sticky;top:0;z-index:100;background:rgba(245,243,238,.93);backdrop-filter:blur(10px);border-bottom:1px solid #e0ddd5;padding:10px 16px;display:flex;align-items:center;gap:10px}
+.nav-back{font-size:13px;font-weight:800;color:var(--purple);text-decoration:none;display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;background:var(--purple-l)}
+.nav-title{font-family:'Fredoka One',cursive;font-size:16px;color:var(--purple-d);flex:1;text-align:center}
+.ch-dots{display:flex;gap:5px;flex-wrap:wrap}
+.ch-dot{width:9px;height:9px;border-radius:50%;background:#ddd;border:none;padding:0;cursor:pointer;transition:background .2s,transform .15s}
+.ch-dot.active{background:var(--purple);transform:scale(1.25)}
+.ch-dot.done{background:var(--purple-m)}
+
+/* COVER */
+.cover{min-height:100svh;background:linear-gradient(155deg,#dddcfc 0%,#eeedfe 40%,#f6f5ff 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center;position:relative;overflow:hidden}
+.cover::before{content:'🧩';font-size:180px;position:absolute;top:-20px;right:-20px;opacity:.07;transform:rotate(15deg);pointer-events:none}
+.cover-badge{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--purple);background:rgba(255,255,255,.7);padding:5px 16px;border-radius:20px;margin-bottom:16px;border:1px solid var(--purple-m)}
+.cover-icon{font-size:80px;margin-bottom:12px;animation:bob 2.5s ease-in-out infinite}
+.cover-title{font-family:'Fredoka One',cursive;font-size:42px;color:var(--purple-d);line-height:1.1;margin-bottom:8px}
+.cover-sub{font-size:17px;font-weight:700;color:var(--purple);margin-bottom:28px}
+.cover-name{background:white;border-radius:var(--r);padding:16px 32px;margin-bottom:32px;border:2px dashed var(--purple)}
+.cover-name p{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--purple);margin-bottom:2px}
+.cover-name .name{font-family:'Fredoka One',cursive;font-size:30px;color:var(--purple-d)}
+.toc{background:white;border-radius:var(--r);padding:18px 22px;width:100%;max-width:420px;text-align:left}
+.toc h3{font-family:'Fredoka One',cursive;font-size:17px;color:var(--purple-d);margin-bottom:10px}
+.toc-item{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px dashed var(--purple-m);font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;transition:color .15s}
+.toc-item:last-child{border:none}
+.toc-item:hover{color:var(--purple-d)}
+.toc-num{width:22px;height:22px;background:var(--purple-l);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--purple-d);flex-shrink:0}
+
+/* CHAPTER */
+.chapter{background:white;margin:16px 12px;border-radius:20px;padding:28px 22px;box-shadow:0 2px 16px rgba(0,0,0,.05);scroll-margin-top:64px}
+.ch-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:22px;padding-bottom:18px;border-bottom:2px solid var(--bg)}
+.ch-icon{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.ch-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:3px}
+.ch-title{font-family:'Fredoka One',cursive;font-size:26px;line-height:1.15}
+.ch-sub{font-size:13px;font-weight:700;margin-top:2px;color:var(--muted)}
+
+/* CONTENT BLOCKS */
+.intro{border-radius:var(--r);padding:14px 18px;margin-bottom:20px;font-size:14px;font-weight:700;line-height:1.65}
+.sec-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:18px 0 8px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:18px}
+.card{border-radius:var(--r);border:1.5px solid #ebebeb;padding:14px 15px;background:white}
+.card-hd{display:flex;align-items:center;gap:7px;margin-bottom:9px}
+.card-ico{font-size:20px}
+.card-lbl{font-family:'Fredoka One',cursive;font-size:15px}
+.fl{list-style:none;display:flex;flex-direction:column;gap:6px}
+.fl li{display:flex;gap:7px;font-size:12.5px;color:var(--muted);line-height:1.45;font-weight:700;align-items:flex-start}
+.dot{width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.wow{border-radius:var(--r);padding:13px 16px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start}
+.wow-e{font-size:22px;flex-shrink:0;margin-top:2px}
+.wow-t{font-size:13px;font-weight:700;line-height:1.55}
+.body-t{font-size:13.5px;font-weight:700;color:var(--muted);line-height:1.7;margin-bottom:13px}
+.vocab{border-radius:var(--r);padding:13px 16px;margin-bottom:18px}
+.vocab-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
+.vitem{display:flex;gap:8px;margin-bottom:5px;font-size:13px;line-height:1.4}
+.vw{font-weight:800;min-width:110px;flex-shrink:0}
+.vd{color:var(--muted);font-weight:700}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.mini{border-radius:var(--rs);padding:11px 12px;font-size:12px;font-weight:700;text-align:center;line-height:1.45}
+.mini .mi{font-size:22px;margin-bottom:5px}
+.two-fact{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.fc{border-radius:var(--rs);padding:11px 13px}
+.fc-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.fc-t{font-size:12.5px;font-weight:700;line-height:1.45}
+.divider{height:1px;background:#eee;margin:14px 0}
+.full-card{border-radius:var(--r);border:1.5px solid #ebebeb;padding:16px 18px;background:white;margin-bottom:18px}
+.recap-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px}
+.rc{border-radius:var(--rs);padding:11px 13px;font-size:12px;font-weight:700;color:var(--muted);line-height:1.45}
+.rc-n{font-family:'Fredoka One',cursive;font-size:13px;margin-bottom:2px}
+.rc-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px}
+
+/* QUIZ */
+.quiz-wrap{background:var(--bg);border-radius:var(--r);padding:16px 18px;margin-bottom:18px}
+.quiz-h{font-family:'Fredoka One',cursive;font-size:17px;margin-bottom:14px}
+.quiz-q{font-size:13.5px;font-weight:800;margin-bottom:8px}
+.quiz-opts{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
+.qopt{display:flex;align-items:center;gap:9px;background:white;border:1.5px solid #e0ddd5;border-radius:var(--rs);padding:10px 13px;font-size:13px;font-weight:700;color:var(--text);cursor:pointer;transition:all .18s;text-align:left;width:100%;font-family:'Nunito',sans-serif;-webkit-appearance:none}
+.qopt:active{transform:scale(.98)}
+.qopt .olet{width:22px;height:22px;border-radius:50%;border:2px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;transition:all .2s;color:transparent}
+.qopt.selected-correct{background:var(--teal-l);border-color:var(--teal)}
+.qopt.selected-correct .olet{background:var(--teal);border-color:var(--teal);color:white}
+.qopt.selected-wrong{background:#FCEBEB;border-color:#E24B4A}
+.qopt.selected-wrong .olet{background:#E24B4A;border-color:#E24B4A;color:white}
+.qopt.reveal-correct{background:var(--teal-l);border-color:var(--teal)}
+.qopt.reveal-correct .olet{background:var(--teal);border-color:var(--teal);color:white}
+.qopt:disabled{cursor:default}
+.quiz-ans{font-size:12.5px;font-weight:700;padding:9px 12px;border-radius:var(--rs);margin-top:4px;display:none;line-height:1.5}
+.quiz-ans.show{display:block}
+.stars-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.star-b{display:inline-flex;align-items:center;gap:5px;background:var(--amber-l);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:800;color:var(--amber-d)}
+
+/* ACTIVITY */
+.activity{border-radius:var(--r);border:2px dashed var(--purple);padding:16px 18px;margin-bottom:18px;background:var(--purple-l)}
+.act-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--purple);margin-bottom:3px}
+.act-title{font-family:'Fredoka One',cursive;font-size:19px;color:var(--purple-d);margin-bottom:12px}
+.step{display:flex;gap:9px;margin-bottom:8px;align-items:flex-start}
+.sn{width:22px;height:22px;border-radius:50%;background:var(--purple);color:white;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.st{font-size:13px;font-weight:700;color:var(--purple-d);line-height:1.5}
+.dad-tip{background:white;border-radius:var(--rs);padding:9px 13px;margin-top:10px;font-size:12px;font-weight:700;color:var(--purple-d);border-left:3px solid var(--purple);line-height:1.5}
+
+/* CERT */
+.cert{border:3px dashed var(--purple);border-radius:var(--r);padding:28px 20px;text-align:center;background:var(--purple-l);margin-bottom:18px}
+.cert-e{font-size:44px;margin-bottom:8px}
+.cert-title{font-family:'Fredoka One',cursive;font-size:24px;color:var(--purple-d);margin-bottom:4px}
+.cert-sub{font-size:13px;font-weight:700;color:var(--purple);margin-bottom:14px}
+.cert-line{border-bottom:2px solid var(--purple);width:160px;margin:0 auto 4px}
+.cert-nl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--purple);margin-bottom:12px}
+.cert-txt{font-size:13px;font-weight:700;color:var(--purple-d);line-height:1.6}
+
+/* VISUAL DIAGRAM */
+.diagram{border-radius:var(--r);border:1.5px solid #ebebeb;padding:16px;margin-bottom:18px;background:white;overflow-x:auto}
+.flow-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:8px}
+.flow-box{border-radius:var(--rs);padding:8px 12px;font-size:12px;font-weight:800;text-align:center;line-height:1.4;min-width:70px}
+.flow-arrow{font-size:16px;color:#bbb;flex-shrink:0}
+
+@media(max-width:420px){
+  .two-col,.two-fact,.recap-grid{grid-template-columns:1fr}
+  .three-col{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- LOCK -->
+<div id="lock-screen">
+  <div class="lock-robot">🧩</div>
+  <h1>Week 2 — How AI Learns</h1>
+  <p>Enter your secret password to unlock!</p>
+  <div class="lock-box">
+    <div class="lock-label">🔑 Secret Password</div>
+    <input type="password" id="pw-input" placeholder="••••••••" maxlength="20" onkeydown="if(event.key==='Enter')checkPw()"/>
+    <button onclick="checkPw()">Unlock Week 2 🚀</button>
+    <div class="lock-err" id="pw-error">Oops! Wrong password. Try again! 🤔</div>
+  </div>
+</div>
+
+<!-- BOOK -->
+<div id="book-content">
+<nav class="nav">
+  <a class="nav-back" href="index.html">← Library</a>
+  <div class="nav-title">🧩 Week 2</div>
+  <div class="ch-dots" id="dots"></div>
+</nav>
+
+<!-- COVER -->
+<div class="cover" id="ch0">
+  <div class="cover-badge">Week 2 · Summer AI Adventure</div>
+  <div class="cover-icon">🧩</div>
+  <div class="cover-title">How AI Learns</div>
+  <div class="cover-sub">Data, patterns, and machine learning</div>
+  <div class="cover-name"><p>This book belongs to</p><div class="name">Marty ⭐</div></div>
+  <div class="toc">
+    <h3>📚 10 Chapters Inside!</h3>
+    <div class="toc-item" onclick="goTo(1)"><div class="toc-num">1</div>Teaching by Example</div>
+    <div class="toc-item" onclick="goTo(2)"><div class="toc-num">2</div>What is Machine Learning?</div>
+    <div class="toc-item" onclick="goTo(3)"><div class="toc-num">3</div>Data is AI Food</div>
+    <div class="toc-item" onclick="goTo(4)"><div class="toc-num">4</div>Good Data vs. Bad Data</div>
+    <div class="toc-item" onclick="goTo(5)"><div class="toc-num">5</div>Patterns Everywhere</div>
+    <div class="toc-item" onclick="goTo(6)"><div class="toc-num">6</div>How AI Spots Patterns</div>
+    <div class="toc-item" onclick="goTo(7)"><div class="toc-num">7</div>Making Mistakes & Getting Better</div>
+    <div class="toc-item" onclick="goTo(8)"><div class="toc-num">8</div>Training vs. Testing</div>
+    <div class="toc-item" onclick="goTo(9)"><div class="toc-num">9</div>Types of Learning</div>
+    <div class="toc-item" onclick="goTo(10)"><div class="toc-num">10</div>Week 2 Recap + Quiz!</div>
+  </div>
+</div>
+
+<!-- CH 1 -->
+<div class="chapter" id="ch1">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--purple-l)">📚</div>
+    <div><div class="ch-tag" style="color:var(--purple)">Chapter 1</div><div class="ch-title">Teaching by Example</div><div class="ch-sub">How we teach kids — and how we teach AI</div></div>
+  </div>
+  <div class="intro" style="background:var(--purple-l);color:var(--purple-d)">Hey Marty! 🧩 How did you learn what a dog looks like? Nobody gave you a list of rules like "four legs, furry, has a tail." You just saw hundreds of dogs — big ones, small ones, fluffy ones — and your brain figured it out! That's EXACTLY how AI learns too!</div>
+
+  <div class="sec-label">How YOU learned vs. how a textbook teaches</div>
+  <div class="two-col">
+    <div class="card" style="border-top:3px solid var(--purple)">
+      <div class="card-hd"><div class="card-ico">🧒</div><div class="card-lbl">How you learned</div></div>
+      <ul class="fl">
+        <li><div class="dot" style="background:var(--purple)"></div>Saw LOTS of examples over time</li>
+        <li><div class="dot" style="background:var(--purple)"></div>Made mistakes and got corrected</li>
+        <li><div class="dot" style="background:var(--purple)"></div>Gradually got better and better</li>
+        <li><div class="dot" style="background:var(--purple)"></div>Can now recognise things you've never seen before</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid var(--blue)">
+      <div class="card-hd"><div class="card-ico">📖</div><div class="card-lbl">Rule-based teaching</div></div>
+      <ul class="fl">
+        <li><div class="dot" style="background:var(--blue)"></div>Someone writes down every rule</li>
+        <li><div class="dot" style="background:var(--blue)"></div>You follow the rules exactly</li>
+        <li><div class="dot" style="background:var(--blue)"></div>Works okay for simple things</li>
+        <li><div class="dot" style="background:var(--blue)"></div>Breaks when something doesn't fit the rules!</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="wow" style="background:var(--purple-l)"><div class="wow-e">🐕</div><div class="wow-t" style="color:var(--purple-d)">TRY THIS: Can you write a rule to tell a dog apart from a cat? Sounds easy... but what about a hairless cat vs. a fluffy dog? What about a Chihuahua vs. a huge Great Dane? Rules get complicated FAST — that's why learning by example is so powerful!</div></div>
+
+  <div class="sec-label">The 3 magic ingredients for learning by example</div>
+  <div class="three-col">
+    <div class="mini" style="background:var(--purple-l)"><div class="mi">📸</div><div style="font-weight:800;color:var(--purple-d);margin-bottom:3px">Lots of examples</div><div style="color:var(--purple);font-size:11px">The more you see, the better you get</div></div>
+    <div class="mini" style="background:var(--teal-l)"><div class="mi">✅</div><div style="font-weight:800;color:var(--teal-d);margin-bottom:3px">Right/wrong feedback</div><div style="color:var(--teal);font-size:11px">Being told when you're wrong helps you improve</div></div>
+    <div class="mini" style="background:var(--amber-l)"><div class="mi">🔁</div><div style="font-weight:800;color:var(--amber-d);margin-bottom:3px">Practice over time</div><div style="color:var(--amber);font-size:11px">Repeating builds stronger memories</div></div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: How did you learn to recognise a dog?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q1a','Learning by example is way more powerful — it works even for new dogs you\'ve never seen before!')"><div class="olet">A</div>Someone gave you a list of rules about dogs</button>
+      <button class="qopt" onclick="answer(this,true,'q1a','Learning by example is way more powerful — it works even for new dogs you\'ve never seen before!')"><div class="olet">B</div>You saw lots of different dogs and your brain figured it out</button>
+      <button class="qopt" onclick="answer(this,false,'q1a','Learning by example is way more powerful — it works even for new dogs you\'ve never seen before!')"><div class="olet">C</div>You read it in a book</button>
+    </div>
+    <div class="quiz-ans" id="q1a" style="background:var(--purple-l);color:var(--purple-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">🎨 Activity Time!</div>
+    <div class="act-title">Sort Shapes by Colour & Size!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Gather some LEGO bricks, toy blocks, or even just coloured pencils.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Mix them all up in a pile — different colours, different sizes.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Now sort them! First by colour, then by size, then by shape.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Congrats — you just did what AI does! You looked at examples and found patterns to group them.</div></div>
+    <div class="dad-tip">💡 Dad tip: Try sorting them yourself first without telling Marty the rule. Then ask him to figure out WHAT rule you used. This is exactly how AI reverse-engineers patterns!</div>
+  </div>
+</div>
+
+<!-- CH 2 -->
+<div class="chapter" id="ch2">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--teal-l)">🤖</div>
+    <div><div class="ch-tag" style="color:var(--teal)">Chapter 2</div><div class="ch-title">What is Machine Learning?</div><div class="ch-sub">Machines that learn the same way you do!</div></div>
+  </div>
+  <div class="intro" style="background:var(--teal-l);color:var(--teal-d)">Last week you learned that AI is human-made smartness. But HOW does AI get smart? The answer is Machine Learning — a special way of training computers so they figure things out on their own, instead of being told every rule. It's one of the coolest inventions ever!</div>
+
+  <div class="vocab" style="background:var(--blue-l)">
+    <div class="vocab-lbl" style="color:var(--blue)">🔤 New words to know</div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">Machine Learning</div><div class="vd">Teaching a computer to learn from examples instead of rules</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">Model</div><div class="vd">The "brain" an AI builds after studying millions of examples</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">Training</div><div class="vd">The process of showing AI thousands of examples so it can learn</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">Prediction</div><div class="vd">What the AI guesses based on what it learned</div></div>
+  </div>
+
+  <div class="sec-label">Old AI vs. Machine Learning 🆚</div>
+  <div class="two-col">
+    <div class="card" style="border-top:3px solid var(--coral)">
+      <div class="card-hd"><div class="card-ico">📋</div><div class="card-lbl">Old-style AI</div></div>
+      <div class="body-t">A human writes every single rule. "If the email has the word 'FREE MONEY' then it's spam." Works for simple things, breaks for complex ones.</div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--teal)">
+      <div class="card-hd"><div class="card-ico">🧠</div><div class="card-lbl">Machine Learning</div></div>
+      <div class="body-t">Show the AI 1 million spam emails and 1 million normal emails. It figures out the patterns itself — and catches spam you never even thought of!</div>
+    </div>
+  </div>
+
+  <div class="wow" style="background:var(--amber-l)"><div class="wow-e">🌟</div><div class="wow-t" style="color:var(--amber-d)">WOW: The spam filter in your email uses machine learning! It has seen billions of spam emails and learns new tricks from spammers every single day — without anyone having to add new rules. It just keeps getting smarter!</div></div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: What is "Machine Learning"?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q2a','Machine learning lets computers learn from examples — no human needs to write every rule!')"><div class="olet">A</div>Teaching a robot to use tools</button>
+      <button class="qopt" onclick="answer(this,true,'q2a','Machine learning lets computers learn from examples — no human needs to write every rule!')"><div class="olet">B</div>Teaching a computer to learn from examples instead of rules</button>
+      <button class="qopt" onclick="answer(this,false,'q2a','Machine learning lets computers learn from examples — no human needs to write every rule!')"><div class="olet">C</div>A machine that fixes other machines</button>
+    </div>
+    <div class="quiz-ans" id="q2a" style="background:var(--teal-l);color:var(--teal-d)"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q2: What does an AI "model" do?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q2b','The model is like the AI\'s brain after training — it uses everything it learned to make smart guesses!')"><div class="olet">A</div>It poses for photos</button>
+      <button class="qopt" onclick="answer(this,false,'q2b','The model is like the AI\'s brain after training — it uses everything it learned to make smart guesses!')"><div class="olet">B</div>It stores all the training examples forever</button>
+      <button class="qopt" onclick="answer(this,true,'q2b','The model is like the AI\'s brain after training — it uses everything it learned to make smart guesses!')"><div class="olet">C</div>It uses patterns it learned to make predictions</button>
+    </div>
+    <div class="quiz-ans" id="q2b" style="background:var(--teal-l);color:var(--teal-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">🐕 Activity Time!</div>
+    <div class="act-title">Spot the Dog: AI Picture Game!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Search Google Images for 10 different animals — some dogs, some cats, some birds.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Can YOU identify which ones are dogs? Of course — it's easy for you!</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Now think: how would you explain to someone who has NEVER seen a dog how to tell it apart from a cat?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">That's the challenge AI had to solve — and it did it by studying MILLIONS of labelled photos!</div></div>
+    <div class="dad-tip">💡 Show Marty a weird breed like a Chinese Crested dog or a Bergamasco. His brain recognises it as a dog instantly — that's the power of learning from examples!</div>
+  </div>
+</div>
+
+<!-- CH 3 -->
+<div class="chapter" id="ch3">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--amber-l)">🍎</div>
+    <div><div class="ch-tag" style="color:var(--amber)">Chapter 3</div><div class="ch-title">Data is AI Food</div><div class="ch-sub">What data means and why AI needs TONS of it</div></div>
+  </div>
+  <div class="intro" style="background:var(--amber-l);color:var(--amber-d)">Your body needs food to grow strong. AI needs DATA to grow smart! Data is just information — photos, words, numbers, sounds, anything really. The more data AI gets to study, the smarter it becomes. Without data, AI is like a kid who never went to school!</div>
+
+  <div class="sec-label">What counts as data? 📊</div>
+  <div class="two-fact">
+    <div class="fc" style="background:var(--purple-l)"><div class="fc-lbl" style="color:var(--purple)">Images & photos</div><div class="fc-t" style="color:var(--purple-d)">Millions of labelled pictures of cats, faces, X-rays, street signs...</div></div>
+    <div class="fc" style="background:var(--teal-l)"><div class="fc-lbl" style="color:var(--teal)">Words & sentences</div><div class="fc-t" style="color:var(--teal-d)">Books, websites, conversations — billions of words!</div></div>
+    <div class="fc" style="background:var(--blue-l)"><div class="fc-lbl" style="color:var(--blue)">Numbers & measurements</div><div class="fc-t" style="color:var(--blue-d)">Weather readings, stock prices, heart rate data...</div></div>
+    <div class="fc" style="background:var(--coral-l)"><div class="fc-lbl" style="color:var(--coral)">Sounds & music</div><div class="fc-t" style="color:var(--coral-d)">Recordings of voices, songs, and environmental sounds</div></div>
+  </div>
+
+  <div class="sec-label">How much data does AI need? 🤯</div>
+  <div class="full-card">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;background:var(--purple-l);border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">👁️</div>
+        <div><div style="font-size:12px;font-weight:800;color:var(--purple)">Image recognition AI</div><div style="font-size:12.5px;font-weight:700;color:var(--muted)">Trained on over 14 million labelled images</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;background:var(--teal-l);border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">💬</div>
+        <div><div style="font-size:12px;font-weight:800;color:var(--teal)">Language AI (like ChatGPT)</div><div style="font-size:12.5px;font-weight:700;color:var(--muted)">Trained on hundreds of BILLIONS of words</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;background:var(--amber-l);border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">♟️</div>
+        <div><div style="font-size:12px;font-weight:800;color:var(--amber)">Chess AI</div><div style="font-size:12.5px;font-weight:700;color:var(--muted)">Played millions of games against itself to learn</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wow" style="background:var(--teal-l)"><div class="wow-e">📚</div><div class="wow-t" style="color:var(--teal-d)">The data used to train some AI language models contains more words than all the books in the world's biggest library combined — AND most of the internet on top! That's how much "reading" AI has to do to get smart.</div></div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: Why does AI need so much data?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q3a','Data is how AI learns — the more examples it sees, the better it gets at spotting patterns!')"><div class="olet">A</div>To fill up its memory and go faster</button>
+      <button class="qopt" onclick="answer(this,true,'q3a','Data is how AI learns — the more examples it sees, the better it gets at spotting patterns!')"><div class="olet">B</div>Because it learns by finding patterns in examples, and more examples = better patterns</button>
+      <button class="qopt" onclick="answer(this,false,'q3a','Data is how AI learns — the more examples it sees, the better it gets at spotting patterns!')"><div class="olet">C</div>Because data makes computers run cooler</button>
+    </div>
+    <div class="quiz-ans" id="q3a" style="background:var(--amber-l);color:var(--amber-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">📊 Activity Time!</div>
+    <div class="act-title">Count Things Around the House!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Walk through your home and count: How many red things can you find? How many round things?</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Write down your counts — you're collecting DATA!</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Now imagine doing this for 10 million homes. THAT'S how much data AI companies collect.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">If an AI learned from your home-data, what could it figure out about your family?</div></div>
+    <div class="dad-tip">💡 Great conversation starter about privacy — the data AI collects teaches it a LOT about us, which is why data privacy matters. Plant this seed now!</div>
+  </div>
+</div>
+
+<!-- CH 4 -->
+<div class="chapter" id="ch4">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--coral-l)">🚮</div>
+    <div><div class="ch-tag" style="color:var(--coral)">Chapter 4</div><div class="ch-title">Good Data vs. Bad Data</div><div class="ch-sub">Garbage in, garbage out!</div></div>
+  </div>
+  <div class="intro" style="background:var(--coral-l);color:var(--coral-d)">More data isn't always better — it has to be GOOD data! If you fed a kid nothing but junk food, they wouldn't grow up healthy. If you feed AI bad data, it learns bad habits. Scientists have a funny saying: "Garbage In, Garbage Out!" It means if the data is rubbish, the AI will be rubbish too!</div>
+
+  <div class="sec-label">What makes data "bad"? ⚠️</div>
+  <div class="two-col">
+    <div class="card" style="border-top:3px solid var(--coral)">
+      <div class="card-hd"><div class="card-ico">❌</div><div class="card-lbl">Bad data problems</div></div>
+      <ul class="fl">
+        <li><div class="dot" style="background:var(--coral)"></div>Wrong labels (cat labelled as dog)</li>
+        <li><div class="dot" style="background:var(--coral)"></div>Missing information (half the photo cut off)</li>
+        <li><div class="dot" style="background:var(--coral)"></div>Biased examples (only showing one type)</li>
+        <li><div class="dot" style="background:var(--coral)"></div>Outdated data (old info that's no longer true)</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid var(--teal)">
+      <div class="card-hd"><div class="card-ico">✅</div><div class="card-lbl">Good data looks like</div></div>
+      <ul class="fl">
+        <li><div class="dot" style="background:var(--teal)"></div>Correctly labelled examples</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Lots of variety (different sizes, colours, angles)</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Includes rare cases too, not just common ones</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Up-to-date and accurate information</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="wow" style="background:var(--coral-l)"><div class="wow-e">😬</div><div class="wow-t" style="color:var(--coral-d)">REAL EXAMPLE: Some early face-recognition AI was trained mostly on photos of one type of face. When tested on different faces, it performed much worse! This is called "bias" — and it happened because the training DATA was biased, not because anyone planned it. Good data must include everyone!</div></div>
+
+  <div class="vocab" style="background:var(--amber-l)">
+    <div class="vocab-lbl" style="color:var(--amber)">🔤 New word: Bias</div>
+    <div class="vitem"><div class="vw" style="color:var(--amber-d)">Bias</div><div class="vd">When AI gives unfair results because its training data wasn't balanced or fair</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--amber-d)">Label</div><div class="vd">The tag that tells AI what something is — like tagging a photo "cat" or "dog"</div></div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: What does "Garbage In, Garbage Out" mean?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q4a','If you train AI with bad data, you get bad results — the AI learns the wrong patterns!')"><div class="olet">A</div>AI systems produce a lot of trash</button>
+      <button class="qopt" onclick="answer(this,true,'q4a','If you train AI with bad data, you get bad results — the AI learns the wrong patterns!')"><div class="olet">B</div>If the training data is bad, the AI will make bad decisions</button>
+      <button class="qopt" onclick="answer(this,false,'q4a','If you train AI with bad data, you get bad results — the AI learns the wrong patterns!')"><div class="olet">C</div>AI learns best from recycled data</button>
+    </div>
+    <div class="quiz-ans" id="q4a" style="background:var(--coral-l);color:var(--coral-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">🧹 Activity Time!</div>
+    <div class="act-title">Find the Bad Data!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Dad reads out this list of animals: Dog, Cat, Dog, Cat, Purple, Dog, Cat, 42, Dog, Cat.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Marty: which ones are "bad data" in this animal training set?</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">"Purple" and "42" are bad data — they're not animals! If AI trained on this, it might think "Purple" is an animal.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Now try making your own "bad data" list and see if Dad can spot the errors!</div></div>
+    <div class="dad-tip">💡 Make it silly — add clearly wrong things like "Tuesday" or "spaghetti" in a list of fruits. Laughing while learning = strong memories!</div>
+  </div>
+</div>
+
+<!-- CH 5 -->
+<div class="chapter" id="ch5">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--green-l)">🔍</div>
+    <div><div class="ch-tag" style="color:var(--green)">Chapter 5</div><div class="ch-title">Patterns Everywhere</div><div class="ch-sub">Pattern recognition in nature and everyday life</div></div>
+  </div>
+  <div class="intro" style="background:var(--green-l);color:var(--green-d)">AI's secret superpower is finding patterns. But guess what? Patterns are EVERYWHERE — in nature, in music, in language, in numbers! Your brain is already an amazing pattern-finder. Every time you know what comes next in a song or finish someone's sentence, you're using pattern recognition!</div>
+
+  <div class="sec-label">Patterns all around you 🌿</div>
+  <div class="three-col">
+    <div class="mini" style="background:var(--green-l)"><div class="mi">🌺</div><div style="font-weight:800;color:var(--green-d);margin-bottom:3px">In nature</div><div style="color:var(--green);font-size:11px">Flower petals, snowflakes, zebra stripes</div></div>
+    <div class="mini" style="background:var(--purple-l)"><div class="mi">🎵</div><div style="font-weight:800;color:var(--purple-d);margin-bottom:3px">In music</div><div style="color:var(--purple);font-size:11px">Rhythm, beats, repeating melodies</div></div>
+    <div class="mini" style="background:var(--blue-l)"><div class="mi">🔢</div><div style="font-weight:800;color:var(--blue-d);margin-bottom:3px">In numbers</div><div style="color:var(--blue);font-size:11px">2, 4, 6, 8... what comes next?</div></div>
+  </div>
+  <div class="three-col">
+    <div class="mini" style="background:var(--amber-l)"><div class="mi">🗣️</div><div style="font-weight:800;color:var(--amber-d);margin-bottom:3px">In language</div><div style="color:var(--amber);font-size:11px">Grammar, sentence structure, word order</div></div>
+    <div class="mini" style="background:var(--coral-l)"><div class="mi">🌤️</div><div style="font-weight:800;color:var(--coral-d);margin-bottom:3px">In weather</div><div style="color:var(--coral);font-size:11px">Seasons, clouds, storm patterns</div></div>
+    <div class="mini" style="background:var(--teal-l)"><div class="mi">🏃</div><div style="font-weight:800;color:var(--teal-d);margin-bottom:3px">In behaviour</div><div style="color:var(--teal);font-size:11px">Daily routines, shopping habits, sleep cycles</div></div>
+  </div>
+
+  <div class="wow" style="background:var(--green-l)"><div class="wow-e">🌀</div><div class="wow-t" style="color:var(--green-d)">COOL FACT: The same spiral pattern found in a sunflower seed head also appears in snail shells, galaxies, and hurricanes! Pattern recognition helps scientists discover that the same laws of nature show up everywhere — and AI is helping find patterns we never even noticed before!</div></div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: What comes next in this pattern: 🔴🔵🔴🔵🔴 ___?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q5a','Great pattern spotting! The pattern is red-blue repeating, so the next one must be blue 🔵')"><div class="olet">A</div>🔴 Red</button>
+      <button class="qopt" onclick="answer(this,true,'q5a','Great pattern spotting! The pattern is red-blue repeating, so the next one must be blue 🔵')"><div class="olet">B</div>🔵 Blue</button>
+      <button class="qopt" onclick="answer(this,false,'q5a','Great pattern spotting! The pattern is red-blue repeating, so the next one must be blue 🔵')"><div class="olet">C</div>🟡 Yellow</button>
+    </div>
+    <div class="quiz-ans" id="q5a" style="background:var(--green-l);color:var(--green-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">🔍 Activity Time!</div>
+    <div class="act-title">Pattern Spotting Walk Outside!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Go outside for a 10-minute walk with Dad.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Your mission: find as many patterns as you can! Look at brick walls, leaves, fences, clouds.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Take photos or draw what you find.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Score: 1-3 patterns = Pattern Spotter, 4-6 = Pattern Pro, 7+ = Pattern Master! 🏆</div></div>
+    <div class="dad-tip">💡 Point out the pattern in brick walls, symmetry in leaves, repeating shapes in fences. Ask "what rule would you write to describe this pattern?" — this connects directly to how AI encodes patterns!</div>
+  </div>
+</div>
+
+<!-- CH 6 -->
+<div class="chapter" id="ch6">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--purple-l)">🧮</div>
+    <div><div class="ch-tag" style="color:var(--purple)">Chapter 6</div><div class="ch-title">How AI Spots Patterns</div><div class="ch-sub">What's really happening inside a learning machine</div></div>
+  </div>
+  <div class="intro" style="background:var(--purple-l);color:var(--purple-d)">Now for the really cool part — HOW does an AI actually spot patterns? It doesn't have eyes or a brain like you. It uses MATH! Specifically, it uses a system inspired by the way YOUR brain's neurons connect to each other. Let's peek inside!</div>
+
+  <div class="sec-label">How AI sees a picture of a cat 🐱</div>
+  <div class="diagram">
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:12px;text-align:center">AI's step-by-step process</div>
+    <div class="flow-row">
+      <div class="flow-box" style="background:var(--blue-l);color:var(--blue-d)">📸<br>Photo arrives<br>as pixels</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="background:var(--purple-l);color:var(--purple-d)">🔢<br>Pixels become<br>numbers</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="background:var(--amber-l);color:var(--amber-d)">🕸️<br>Numbers pass<br>through layers</div>
+    </div>
+    <div class="flow-row" style="margin-top:8px">
+      <div class="flow-box" style="background:var(--teal-l);color:var(--teal-d)">🔍<br>Layers find<br>edges & shapes</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="background:var(--green-l);color:var(--green-d)">🐱<br>Final answer:<br>"It's a cat!"</div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-align:center;margin-top:10px">All of this happens in milliseconds!</div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-hd"><div class="card-ico">👁️</div><div class="card-lbl">Layer 1 — Edges</div></div>
+      <div class="body-t">The first layer looks for simple things — edges, lines, and corners in the image. Very basic stuff!</div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-ico">🎯</div><div class="card-lbl">Layer 2 — Shapes</div></div>
+      <div class="body-t">The second layer combines those edges into shapes — circles, curves, triangles. It starts to see "parts."</div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-ico">🐾</div><div class="card-lbl">Layer 3 — Features</div></div>
+      <div class="body-t">Deeper layers combine shapes into features — "that looks like an ear," "that looks like a paw."</div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-ico">✅</div><div class="card-lbl">Final Layer — Answer</div></div>
+      <div class="body-t">The last layer puts it all together: "I see pointy ears, whiskers, a tail... this is a cat! 95% confident."</div>
+    </div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: What does the very first layer of an image AI look for?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,true,'q6a','Correct! It starts super simple — just edges and lines. Complex things like faces come from combining many layers!')"><div class="olet">A</div>Simple edges and lines in the image</button>
+      <button class="qopt" onclick="answer(this,false,'q6a','Correct! It starts super simple — just edges and lines. Complex things like faces come from combining many layers!')"><div class="olet">B</div>Whether the image is of an animal</button>
+      <button class="qopt" onclick="answer(this,false,'q6a','Correct! It starts super simple — just edges and lines. Complex things like faces come from combining many layers!')"><div class="olet">C</div>The colour of the whole image</button>
+    </div>
+    <div class="quiz-ans" id="q6a" style="background:var(--purple-l);color:var(--purple-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">🎨 Activity Time!</div>
+    <div class="act-title">Draw Patterns — AI Guesses Them!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Draw 5 simple shapes on paper: a circle, a square, a triangle, a star, and one of your choice.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Show each one to Dad. Can he name them instantly? Of course — your brain sees the shapes right away!</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Now try Google's Quick Draw (quickdraw.withgoogle.com) — an AI that guesses what you're drawing in real time!</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">The AI uses exactly what we learned — it spots edges, then shapes, then features. Watch it work!</div></div>
+    <div class="dad-tip">💡 Quick Draw is genuinely magic for kids — watching AI guess a drawing in real time makes the abstract concept of pattern recognition completely concrete. Highly recommended!</div>
+  </div>
+</div>
+
+<!-- CH 7 -->
+<div class="chapter" id="ch7">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--amber-l)">💪</div>
+    <div><div class="ch-tag" style="color:var(--amber)">Chapter 7</div><div class="ch-title">Making Mistakes & Getting Better</div><div class="ch-sub">Why mistakes are actually the secret to AI learning</div></div>
+  </div>
+  <div class="intro" style="background:var(--amber-l);color:var(--amber-d)">Here's something surprising — AI gets BETTER by making mistakes! Every time AI guesses wrong, it adjusts itself a tiny bit so it gets less wrong next time. This is called "learning from errors" — and it's the same thing that happens in YOUR brain when you're practising a new skill!</div>
+
+  <div class="sec-label">The AI improvement loop 🔄</div>
+  <div class="diagram">
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:12px;text-align:center">How AI gets smarter from mistakes</div>
+    <div class="flow-row">
+      <div class="flow-box" style="background:var(--blue-l);color:var(--blue-d)">🎯<br>AI makes<br>a guess</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="background:var(--coral-l);color:var(--coral-d)">❌<br>Wrong!<br>Checks answer</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="background:var(--amber-l);color:var(--amber-d)">📏<br>Measures<br>how wrong</div>
+    </div>
+    <div class="flow-row" style="margin-top:8px">
+      <div class="flow-box" style="background:var(--purple-l);color:var(--purple-d)">🔧<br>Adjusts<br>tiny bit</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="background:var(--teal-l);color:var(--teal-d)">🔁<br>Try again<br>millions of times</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box" style="background:var(--green-l);color:var(--green-d)">🌟<br>Gets really<br>good!</div>
+    </div>
+  </div>
+
+  <div class="wow" style="background:var(--amber-l)"><div class="wow-e">🎮</div><div class="wow-t" style="color:var(--amber-d)">THINK ABOUT IT: When you learned to ride a bike, you wobbled, fell, got back up, and slowly got better. AI does the same thing — except it can "fall off the bike" MILLIONS of times per second! That's why it can learn in hours what might take a human years.</div></div>
+
+  <div class="vocab" style="background:var(--purple-l)">
+    <div class="vocab-lbl" style="color:var(--purple)">🔤 New words</div>
+    <div class="vitem"><div class="vw" style="color:var(--purple-d)">Loss / Error</div><div class="vd">How wrong AI's guess was — a big number means very wrong, zero means perfect!</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--purple-d)">Backpropagation</div><div class="vd">The fancy word for how AI sends the error signal backwards to fix itself — say it: "BACK-prop-a-GAY-shun"!</div></div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: Why are mistakes actually GOOD for AI?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q7a','Mistakes are the main way AI improves — each wrong answer tells it exactly how to adjust and get better!')"><div class="olet">A</div>They're not — mistakes make AI worse</button>
+      <button class="qopt" onclick="answer(this,true,'q7a','Mistakes are the main way AI improves — each wrong answer tells it exactly how to adjust and get better!')"><div class="olet">B</div>Each mistake tells AI how to adjust and improve for next time</button>
+      <button class="qopt" onclick="answer(this,false,'q7a','Mistakes are the main way AI improves — each wrong answer tells it exactly how to adjust and get better!')"><div class="olet">C</div>Mistakes fill up AI's memory with useful information</button>
+    </div>
+    <div class="quiz-ans" id="q7a" style="background:var(--amber-l);color:var(--amber-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">🎯 Activity Time!</div>
+    <div class="act-title">Practice & Improve a Skill!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Pick a skill to practise: drawing a circle freehand, throwing a ball into a bucket, or balancing on one foot.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Try it 10 times. Count how many times you succeed.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">After each mistake, think: "What went wrong? What do I adjust?"</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Try 10 more times. Did you get better? You just used the same learning loop as AI!</div></div>
+    <div class="dad-tip">💡 This activity makes the abstract concept of gradient descent (AI's learning mechanism) completely physical and real for kids. The "what do I adjust" question IS what backpropagation does mathematically!</div>
+  </div>
+</div>
+
+<!-- CH 8 -->
+<div class="chapter" id="ch8">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--blue-l)">📝</div>
+    <div><div class="ch-tag" style="color:var(--blue)">Chapter 8</div><div class="ch-title">Training vs. Testing</div><div class="ch-sub">First you learn, then you prove you know it</div></div>
+  </div>
+  <div class="intro" style="background:var(--blue-l);color:var(--blue-d)">When you study for a test at school, you learn from your notes — then you prove what you know on an exam WITHOUT looking at your notes. AI works exactly the same way! It learns from one set of data (training), then it's tested on NEW data it's never seen before to prove it really learned.</div>
+
+  <div class="two-col">
+    <div class="card" style="border-top:3px solid var(--blue)">
+      <div class="card-hd"><div class="card-ico">📚</div><div class="card-lbl">Training data</div></div>
+      <div class="body-t">The examples AI studies to learn. Like your textbook and notes. AI sees these LOTS of times during training.</div>
+      <div style="margin-top:8px;padding:8px 10px;background:var(--blue-l);border-radius:var(--rs);font-size:12px;font-weight:700;color:var(--blue-d)">Usually about 80% of all available data</div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--purple)">
+      <div class="card-hd"><div class="card-ico">🎯</div><div class="card-lbl">Test data</div></div>
+      <div class="body-t">Brand new examples AI has NEVER seen. Used to check if AI really learned or just memorised. Like your exam!</div>
+      <div style="margin-top:8px;padding:8px 10px;background:var(--purple-l);border-radius:var(--rs);font-size:12px;font-weight:700;color:var(--purple-d)">Usually about 20% of all available data</div>
+    </div>
+  </div>
+
+  <div class="wow" style="background:var(--blue-l)"><div class="wow-e">🚨</div><div class="wow-t" style="color:var(--blue-d)">WATCH OUT for "overfitting!" This is when AI memorises the training examples instead of truly learning the pattern — like a student who memorises exact test questions without understanding the topic. It does great on training data but fails on anything new. AI scientists work hard to prevent this!</div></div>
+
+  <div class="vocab" style="background:var(--teal-l)">
+    <div class="vocab-lbl" style="color:var(--teal)">🔤 New word</div>
+    <div class="vitem"><div class="vw" style="color:var(--teal-d)">Overfitting</div><div class="vd">When AI memorises training examples instead of learning the real pattern — good on old data, bad on new data</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--teal-d)">Accuracy</div><div class="vd">How often the AI gets the right answer, shown as a percentage. 95% accurate = right 95 out of 100 times!</div></div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: Why do we test AI on data it has NEVER seen before?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q8a','Testing on new data proves AI truly learned the pattern — not just memorised the examples!')"><div class="olet">A</div>To give it more data to learn from</button>
+      <button class="qopt" onclick="answer(this,true,'q8a','Testing on new data proves AI truly learned the pattern — not just memorised the examples!')"><div class="olet">B</div>To check that it truly learned the patterns, not just memorised examples</button>
+      <button class="qopt" onclick="answer(this,false,'q8a','Testing on new data proves AI truly learned the pattern — not just memorised the examples!')"><div class="olet">C</div>Because new data is always more accurate</button>
+    </div>
+    <div class="quiz-ans" id="q8a" style="background:var(--blue-l);color:var(--blue-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">📝 Activity Time!</div>
+    <div class="act-title">Quiz Each Other!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Marty: Study these 5 animals — Lion, Penguin, Elephant, Parrot, Shark. That's your "training data."</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Dad asks 3 questions about them (like "which animal swims?"). That's the "training test."</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Now Dad asks about a NEW animal Marty hasn't studied — like a Platypus. That's the "real test!"</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Can Marty use what he learned to reason about the new animal? That's true learning — not just memorising!</div></div>
+    <div class="dad-tip">💡 The key insight: if Marty learned "sharks swim because they have fins and live in water" he can reason about new fish. That's generalisation — the goal of all learning, human or AI!</div>
+  </div>
+</div>
+
+<!-- CH 9 -->
+<div class="chapter" id="ch9">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--teal-l)">🗂️</div>
+    <div><div class="ch-tag" style="color:var(--teal)">Chapter 9</div><div class="ch-title">Types of Learning</div><div class="ch-sub">Supervised, unsupervised, and reinforcement learning</div></div>
+  </div>
+  <div class="intro" style="background:var(--teal-l);color:var(--teal-d)">Did you know there's more than one way for AI to learn? Just like you can learn from a teacher giving you answers, from figuring things out yourself, or by playing a game with rewards — AI has different learning styles too! Let's meet the three main ones!</div>
+
+  <div class="sec-label">The 3 types of machine learning 🎓</div>
+  <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px">
+    <div class="card" style="border-left:4px solid var(--purple);border-radius:var(--rs)">
+      <div class="card-hd"><div class="card-ico">👨‍🏫</div><div class="card-lbl" style="color:var(--purple-d)">1. Supervised Learning</div></div>
+      <div class="body-t">AI is shown labelled examples. "This photo is a cat. This is a dog." AI learns from the answers you give it. Like having a teacher tell you if you're right or wrong every time.</div>
+      <div style="font-size:11px;font-weight:800;color:var(--purple);background:var(--purple-l);padding:5px 10px;border-radius:var(--rs);display:inline-block">Used for: image recognition, spam filters, voice assistants</div>
+    </div>
+    <div class="card" style="border-left:4px solid var(--teal);border-radius:var(--rs)">
+      <div class="card-hd"><div class="card-ico">🔎</div><div class="card-lbl" style="color:var(--teal-d)">2. Unsupervised Learning</div></div>
+      <div class="body-t">AI is given data with NO labels. It has to find patterns and groups all by itself. Like sorting a pile of unknown toys into groups without anyone telling you the categories.</div>
+      <div style="font-size:11px;font-weight:800;color:var(--teal);background:var(--teal-l);padding:5px 10px;border-radius:var(--rs);display:inline-block">Used for: finding customer groups, discovering new patterns</div>
+    </div>
+    <div class="card" style="border-left:4px solid var(--amber);border-radius:var(--rs)">
+      <div class="card-hd"><div class="card-ico">🎮</div><div class="card-lbl" style="color:var(--amber-d)">3. Reinforcement Learning</div></div>
+      <div class="body-t">AI learns by trying things and getting rewards or penalties. Like training a dog — good behaviour gets a treat, bad behaviour doesn't. The AI tries to maximise its score!</div>
+      <div style="font-size:11px;font-weight:800;color:var(--amber);background:var(--amber-l);padding:5px 10px;border-radius:var(--rs);display:inline-block">Used for: playing games, robot movement, self-driving cars</div>
+    </div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: AlphaGo learned to play the board game Go by playing millions of games and getting better each time. Which type of learning is that?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q9a','Reinforcement learning! It got rewarded for winning and learned from losing — exactly like training with rewards and penalties!')"><div class="olet">A</div>Supervised Learning</button>
+      <button class="qopt" onclick="answer(this,false,'q9a','Reinforcement learning! It got rewarded for winning and learned from losing — exactly like training with rewards and penalties!')"><div class="olet">B</div>Unsupervised Learning</button>
+      <button class="qopt" onclick="answer(this,true,'q9a','Reinforcement learning! It got rewarded for winning and learned from losing — exactly like training with rewards and penalties!')"><div class="olet">C</div>Reinforcement Learning</button>
+    </div>
+    <div class="quiz-ans" id="q9a" style="background:var(--teal-l);color:var(--teal-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">🗂️ Activity Time!</div>
+    <div class="act-title">Sort Toys — With and Without Rules!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Gather 10–15 different toys or objects.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Round 1 — Supervised: Dad tells Marty the rule ("sort by colour") and Marty sorts. Easy!</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Round 2 — Unsupervised: Mix them up. Marty sorts them however he wants, then explains his rule. Dad didn't help — Marty invented the categories himself!</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Round 3 — Reinforcement: Marty tries to guess Dad's secret rule. Dad just says "warm" (closer to right) or "cold" (wrong). Marty learns from the feedback!</div></div>
+    <div class="dad-tip">💡 Round 3 is the most fun and directly mirrors how reinforcement learning works. The "warm/cold" feedback IS the reward signal!</div>
+  </div>
+</div>
+
+<!-- CH 10 -->
+<div class="chapter" id="ch10">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--amber-l)">🏆</div>
+    <div><div class="ch-tag" style="color:var(--amber)">Chapter 10</div><div class="ch-title">Week 2 Recap + Quiz!</div><div class="ch-sub">Review everything and celebrate! 🎉</div></div>
+  </div>
+  <div class="intro" style="background:var(--amber-l);color:var(--amber-d)">You are now a Machine Learning Expert, Marty! 🧩 You've learned how AI eats data, spots patterns, fixes its mistakes, and keeps getting smarter. Let's review all 10 chapters and then take the BIG quiz!</div>
+
+  <div class="sec-label">Everything you learned this week 📚</div>
+  <div class="recap-grid">
+    <div class="rc" style="background:var(--purple-l)"><div class="rc-n" style="color:var(--purple)">Ch 1</div><div class="rc-title">Teaching by Example</div>You learned by seeing lots of dogs — AI learns the exact same way, from millions of examples!</div>
+    <div class="rc" style="background:var(--teal-l)"><div class="rc-n" style="color:var(--teal)">Ch 2</div><div class="rc-title">Machine Learning</div>Instead of rules, AI learns from data and builds its own model of how the world works!</div>
+    <div class="rc" style="background:var(--amber-l)"><div class="rc-n" style="color:var(--amber)">Ch 3</div><div class="rc-title">Data is AI Food</div>Data is information — photos, words, numbers. AI needs mountains of it to get smart!</div>
+    <div class="rc" style="background:var(--coral-l)"><div class="rc-n" style="color:var(--coral)">Ch 4</div><div class="rc-title">Good vs. Bad Data</div>Garbage In, Garbage Out! Bad or biased data teaches AI bad habits.</div>
+    <div class="rc" style="background:var(--green-l)"><div class="rc-n" style="color:var(--green)">Ch 5</div><div class="rc-title">Patterns Everywhere</div>Patterns are in nature, music, language and numbers — and AI is brilliant at finding them!</div>
+    <div class="rc" style="background:var(--purple-l)"><div class="rc-n" style="color:var(--purple)">Ch 6</div><div class="rc-title">How AI Spots Patterns</div>AI uses layers — first finding edges, then shapes, then features, then the final answer!</div>
+    <div class="rc" style="background:var(--amber-l)"><div class="rc-n" style="color:var(--amber)">Ch 7</div><div class="rc-title">Mistakes Help AI</div>Every wrong answer helps AI adjust and improve. Mistakes are the engine of learning!</div>
+    <div class="rc" style="background:var(--blue-l)"><div class="rc-n" style="color:var(--blue)">Ch 8</div><div class="rc-title">Training vs. Testing</div>Learn on training data, prove yourself on test data — just like studying then taking an exam!</div>
+    <div class="rc" style="background:var(--teal-l)"><div class="rc-n" style="color:var(--teal)">Ch 9</div><div class="rc-title">Types of Learning</div>Supervised (with answers), Unsupervised (find it yourself), Reinforcement (reward-based)!</div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🏆 The BIG Week 2 Quiz!</div>
+    <div class="stars-row"><div class="star-b">⭐ 5 questions</div><div class="star-b">🎯 Tap to answer</div><div class="star-b">🏅 Aim for 5/5!</div></div>
+
+    <div class="quiz-q">Q1: What is Machine Learning?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq1','Machine Learning is about learning from examples, not writing rules — it\'s what makes modern AI so powerful!')"><div class="olet">A</div>Teaching a robot to use tools</button>
+      <button class="qopt" onclick="answer(this,true,'bq1','Machine Learning is about learning from examples, not writing rules — it\'s what makes modern AI so powerful!')"><div class="olet">B</div>Teaching a computer to learn from examples instead of rules</button>
+      <button class="qopt" onclick="answer(this,false,'bq1','Machine Learning is about learning from examples, not writing rules — it\'s what makes modern AI so powerful!')"><div class="olet">C</div>Programming computers with every possible rule</button>
+    </div>
+    <div class="quiz-ans" id="bq1" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="divider"></div>
+
+    <div class="quiz-q">Q2: What does "Garbage In, Garbage Out" mean?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq2','Bad training data = bad AI. The quality of data is just as important as the quantity!')"><div class="olet">A</div>AI produces waste products that need to be cleaned</button>
+      <button class="qopt" onclick="answer(this,true,'bq2','Bad training data = bad AI. The quality of data is just as important as the quantity!')"><div class="olet">B</div>If the training data is bad, the AI will make bad decisions</button>
+      <button class="qopt" onclick="answer(this,false,'bq2','Bad training data = bad AI. The quality of data is just as important as the quantity!')"><div class="olet">C</div>AI learns best from recycled data</button>
+    </div>
+    <div class="quiz-ans" id="bq2" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="divider"></div>
+
+    <div class="quiz-q">Q3: Why do AI scientists keep some data separate for testing?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,true,'bq3','Test data proves AI truly learned the patterns — not just memorised the training examples!')"><div class="olet">A</div>To check that AI really learned, not just memorised the training examples</button>
+      <button class="qopt" onclick="answer(this,false,'bq3','Test data proves AI truly learned the patterns — not just memorised the training examples!')"><div class="olet">B</div>Because test data is higher quality</button>
+      <button class="qopt" onclick="answer(this,false,'bq3','Test data proves AI truly learned the patterns — not just memorised the training examples!')"><div class="olet">C</div>To save time during training</button>
+    </div>
+    <div class="quiz-ans" id="bq3" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="divider"></div>
+
+    <div class="quiz-q">Q4: A video game AI gets points for winning and loses points for bad moves. What type of learning is this?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq4','It\'s Reinforcement Learning — learning through rewards and penalties, just like training a dog!')"><div class="olet">A</div>Supervised Learning</button>
+      <button class="qopt" onclick="answer(this,false,'bq4','It\'s Reinforcement Learning — learning through rewards and penalties, just like training a dog!')"><div class="olet">B</div>Unsupervised Learning</button>
+      <button class="qopt" onclick="answer(this,true,'bq4','It\'s Reinforcement Learning — learning through rewards and penalties, just like training a dog!')"><div class="olet">C</div>Reinforcement Learning</button>
+    </div>
+    <div class="quiz-ans" id="bq4" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="divider"></div>
+
+    <div class="quiz-q">Q5: How does AI get better after making a mistake?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq5','AI measures how wrong it was and adjusts its weights a tiny bit — millions of these tiny adjustments = a smart AI!')"><div class="olet">A</div>It deletes the wrong answer and tries a random new one</button>
+      <button class="qopt" onclick="answer(this,false,'bq5','AI measures how wrong it was and adjusts its weights a tiny bit — millions of these tiny adjustments = a smart AI!')"><div class="olet">B</div>A human fixes it manually</button>
+      <button class="qopt" onclick="answer(this,true,'bq5','AI measures how wrong it was and adjusts its weights a tiny bit — millions of these tiny adjustments = a smart AI!')"><div class="olet">C</div>It measures how wrong it was and adjusts itself a tiny bit</button>
+    </div>
+    <div class="quiz-ans" id="bq5" style="background:var(--amber-l);color:var(--amber-d)"></div>
+
+    <div id="score-reveal" style="display:none;margin-top:16px;padding:14px 16px;border-radius:var(--r);background:var(--purple-l);color:var(--purple-d);font-weight:800;font-size:15px;text-align:center"></div>
+  </div>
+
+  <div class="cert">
+    <div class="cert-e">🎓</div>
+    <div class="cert-title">Week 2 Complete!</div>
+    <div class="cert-sub">This certifies that</div>
+    <div class="cert-line"></div>
+    <div class="cert-nl">Marty</div>
+    <div class="cert-txt">has successfully completed<br>Week 2 of the AI Summer Adventure<br>and is now an official<br><strong>Machine Learning Explorer! 🧩⭐</strong></div>
+  </div>
+
+  <div style="margin:0 0 8px;padding:14px 16px;background:var(--teal-l);border-radius:var(--r);text-align:center">
+    <div style="font-family:'Fredoka One',cursive;font-size:16px;color:var(--teal-d);margin-bottom:4px">Ready for Week 3? 🚀</div>
+    <div style="font-size:13px;font-weight:700;color:var(--teal)">Next up: AI That Sees & Hears — computer vision, speech recognition, and AI art!</div>
+  </div>
+</div>
+
+</div><!-- end book-content -->
+
+<script>
+const dots=document.getElementById('dots');
+for(let i=1;i<=10;i++){
+  const d=document.createElement('button');
+  d.className='ch-dot';
+  d.setAttribute('aria-label','Chapter '+i);
+  d.onclick=()=>goTo(i);
+  dots.appendChild(d);
+}
+function goTo(n){document.getElementById('ch'+n).scrollIntoView({behavior:'smooth'})}
+const chapters=document.querySelectorAll('.chapter');
+const allDots=document.querySelectorAll('.ch-dot');
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const n=parseInt(e.target.id.replace('ch',''));
+      if(!isNaN(n)&&n>=1&&n<=10)allDots.forEach((d,i)=>d.classList.toggle('active',i===n-1));
+    }
+  });
+},{threshold:0.3});
+chapters.forEach(c=>obs.observe(c));
+
+const answered={};
+const bigIds=['bq1','bq2','bq3','bq4','bq5'];
+let bigScore=0,bigAnswered=0;
+function answer(btn,correct,ansId,explanation){
+  if(answered[ansId])return;
+  answered[ansId]=true;
+  const opts=btn.closest('.quiz-opts').querySelectorAll('.qopt');
+  opts.forEach(o=>o.disabled=true);
+  btn.classList.add(correct?'selected-correct':'selected-wrong');
+  if(!correct){
+    opts.forEach(o=>{
+      const oc=o.getAttribute('onclick');
+      if(oc&&oc.includes("true,'"+ansId+"'"))o.classList.add('reveal-correct');
+    });
+  }
+  const el=document.getElementById(ansId);
+  el.textContent=(correct?'🌟 Correct! ':'🤔 Not quite — ')+explanation;
+  el.classList.add('show');
+  if(bigIds.includes(ansId)){
+    bigAnswered++;
+    if(correct)bigScore++;
+    if(bigAnswered===5){
+      setTimeout(()=>{
+        const rev=document.getElementById('score-reveal');
+        const msgs=['Keep practising! 💪','Nice work, AI learner! 🎉','You\'re getting it! 🚀','Almost perfect! 🌟','PERFECT SCORE! MACHINE LEARNING MASTER! 🏆🧩⭐'];
+        const idx=bigScore<=1?0:bigScore===2?1:bigScore===3?2:bigScore===4?3:4;
+        rev.innerHTML='You got <strong>'+bigScore+'/5</strong>! '+msgs[idx];
+        rev.style.display='block';
+        rev.scrollIntoView({behavior:'smooth',block:'nearest'});
+      },400);
+    }
+  }
+  const ch=btn.closest('.chapter');
+  if(ch){const n=parseInt(ch.id.replace('ch',''));if(!isNaN(n)&&n>=1&&n<=10)allDots[n-1].classList.add('done');}
+}
+
+function checkPw(){
+  const val=document.getElementById('pw-input').value;
+  const err=document.getElementById('pw-error');
+  if(val==='roro@123'){
+    sessionStorage.setItem('marty_unlocked','yes');
+    document.getElementById('lock-screen').style.display='none';
+    document.getElementById('book-content').style.display='block';
+  } else {
+    err.classList.add('show');
+    document.getElementById('pw-input').value='';
+    document.getElementById('pw-input').focus();
+    setTimeout(()=>err.classList.remove('show'),2500);
+  }
+}
+if(sessionStorage.getItem('marty_unlocked')==='yes'){
+  document.getElementById('lock-screen').style.display='none';
+  document.getElementById('book-content').style.display='block';
+}
+</script>
+</body>
+</html>
