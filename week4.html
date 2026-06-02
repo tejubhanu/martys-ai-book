@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Marty's AI Adventure — Week 4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+:root{--amber:#BA7517;--amber-l:#FAEEDA;--amber-d:#633806;--amber-m:#FAC775;--teal:#1D9E75;--teal-l:#E1F5EE;--teal-d:#085041;--purple:#7F77DD;--purple-l:#EEEDFE;--purple-d:#26215C;--coral:#D85A30;--coral-l:#FAECE7;--coral-d:#4A1B0C;--blue:#185FA5;--blue-l:#E6F1FB;--blue-d:#042C53;--green:#3B6D11;--green-l:#EAF3DE;--green-d:#173404;--bg:#F5F3EE;--white:#fff;--text:#1a1a1a;--muted:#555;--r:14px;--rs:8px;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}html{scroll-behavior:smooth}body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.7}
+#lock-screen{position:fixed;inset:0;z-index:9999;background:linear-gradient(155deg,#fde8c0 0%,#faeeda 40%,#fffbf5 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center}
+#lock-screen .lock-robot{font-size:72px;animation:bob 2.5s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+#lock-screen h1{font-family:'Fredoka One',cursive;font-size:32px;color:var(--amber-d);margin:10px 0 4px}
+#lock-screen p{font-size:14px;font-weight:700;color:var(--amber);margin-bottom:28px}
+.lock-box{background:white;border-radius:var(--r);padding:24px 28px;width:100%;max-width:320px;border:2px dashed var(--amber)}
+.lock-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--amber);margin-bottom:10px}
+.lock-box input{width:100%;padding:12px 16px;border-radius:var(--rs);border:2px solid var(--amber-m);font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;text-align:center;letter-spacing:4px;outline:none;color:var(--amber-d);background:var(--amber-l);margin-bottom:12px;transition:border-color .2s}
+.lock-box input:focus{border-color:var(--amber)}.lock-box button{width:100%;padding:13px;background:var(--amber);color:white;border:none;border-radius:var(--rs);font-family:'Fredoka One',cursive;font-size:18px;cursor:pointer;letter-spacing:.5px;transition:opacity .15s,transform .1s}.lock-box button:active{transform:scale(.97)}
+.lock-err{font-size:13px;font-weight:800;color:var(--coral);margin-top:10px;min-height:18px;opacity:0;transition:opacity .2s}.lock-err.show{opacity:1}
+#book-content{display:none}
+.nav{position:sticky;top:0;z-index:100;background:rgba(245,243,238,.93);backdrop-filter:blur(10px);border-bottom:1px solid #e0ddd5;padding:10px 16px;display:flex;align-items:center;gap:10px}
+.nav-back{font-size:13px;font-weight:800;color:var(--amber);text-decoration:none;display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;background:var(--amber-l)}
+.nav-title{font-family:'Fredoka One',cursive;font-size:16px;color:var(--amber-d);flex:1;text-align:center}
+.ch-dots{display:flex;gap:5px;flex-wrap:wrap}.ch-dot{width:9px;height:9px;border-radius:50%;background:#ddd;border:none;padding:0;cursor:pointer;transition:background .2s,transform .15s}.ch-dot.active{background:var(--amber);transform:scale(1.25)}.ch-dot.done{background:var(--amber-m)}
+.cover{min-height:100svh;background:linear-gradient(155deg,#fad99e 0%,#faeeda 40%,#fffbf2 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center;position:relative;overflow:hidden}
+.cover::before{content:'🏗️';font-size:180px;position:absolute;top:-20px;right:-20px;opacity:.07;transform:rotate(15deg);pointer-events:none}
+.cover-badge{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--amber);background:rgba(255,255,255,.7);padding:5px 16px;border-radius:20px;margin-bottom:16px;border:1px solid var(--amber-m)}
+.cover-icon{font-size:80px;margin-bottom:12px;animation:bob 2.5s ease-in-out infinite}
+.cover-title{font-family:'Fredoka One',cursive;font-size:42px;color:var(--amber-d);line-height:1.1;margin-bottom:8px}
+.cover-sub{font-size:17px;font-weight:700;color:var(--amber);margin-bottom:28px}
+.cover-name{background:white;border-radius:var(--r);padding:16px 32px;margin-bottom:32px;border:2px dashed var(--amber)}
+.cover-name p{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--amber);margin-bottom:2px}
+.cover-name .name{font-family:'Fredoka One',cursive;font-size:30px;color:var(--amber-d)}
+.toc{background:white;border-radius:var(--r);padding:18px 22px;width:100%;max-width:420px;text-align:left}
+.toc h3{font-family:'Fredoka One',cursive;font-size:17px;color:var(--amber-d);margin-bottom:10px}
+.toc-item{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px dashed var(--amber-m);font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;transition:color .15s}.toc-item:last-child{border:none}.toc-item:hover{color:var(--amber-d)}
+.toc-num{width:22px;height:22px;background:var(--amber-l);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--amber-d);flex-shrink:0}
+.chapter{background:white;margin:16px 12px;border-radius:20px;padding:28px 22px;box-shadow:0 2px 16px rgba(0,0,0,.05);scroll-margin-top:64px}
+.ch-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:22px;padding-bottom:18px;border-bottom:2px solid var(--bg)}
+.ch-icon{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.ch-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:3px}.ch-title{font-family:'Fredoka One',cursive;font-size:26px;line-height:1.15}.ch-sub{font-size:13px;font-weight:700;margin-top:2px;color:var(--muted)}
+.intro{border-radius:var(--r);padding:14px 18px;margin-bottom:20px;font-size:14px;font-weight:700;line-height:1.65}
+.sec-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:18px 0 8px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:18px}
+.card{border-radius:var(--r);border:1.5px solid #ebebeb;padding:14px 15px;background:white}
+.card-hd{display:flex;align-items:center;gap:7px;margin-bottom:9px}.card-ico{font-size:20px}.card-lbl{font-family:'Fredoka One',cursive;font-size:15px}
+.fl{list-style:none;display:flex;flex-direction:column;gap:6px}.fl li{display:flex;gap:7px;font-size:12.5px;color:var(--muted);line-height:1.45;font-weight:700;align-items:flex-start}
+.dot{width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.wow{border-radius:var(--r);padding:13px 16px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start}.wow-e{font-size:22px;flex-shrink:0;margin-top:2px}.wow-t{font-size:13px;font-weight:700;line-height:1.55}
+.body-t{font-size:13.5px;font-weight:700;color:var(--muted);line-height:1.7;margin-bottom:13px}
+.vocab{border-radius:var(--r);padding:13px 16px;margin-bottom:18px}.vocab-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
+.vitem{display:flex;gap:8px;margin-bottom:5px;font-size:13px;line-height:1.4}.vw{font-weight:800;min-width:110px;flex-shrink:0}.vd{color:var(--muted);font-weight:700}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.mini{border-radius:var(--rs);padding:11px 12px;font-size:12px;font-weight:700;text-align:center;line-height:1.45}.mini .mi{font-size:22px;margin-bottom:5px}
+.two-fact{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}.fc{border-radius:var(--rs);padding:11px 13px}.fc-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}.fc-t{font-size:12.5px;font-weight:700;line-height:1.45}
+.divider{height:1px;background:#eee;margin:14px 0}
+.recap-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px}.rc{border-radius:var(--rs);padding:11px 13px;font-size:12px;font-weight:700;color:var(--muted);line-height:1.45}.rc-n{font-family:'Fredoka One',cursive;font-size:13px;margin-bottom:2px}.rc-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px}
+.quiz-wrap{background:var(--bg);border-radius:var(--r);padding:16px 18px;margin-bottom:18px}.quiz-h{font-family:'Fredoka One',cursive;font-size:17px;margin-bottom:14px}.quiz-q{font-size:13.5px;font-weight:800;margin-bottom:8px}
+.quiz-opts{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
+.qopt{display:flex;align-items:center;gap:9px;background:white;border:1.5px solid #e0ddd5;border-radius:var(--rs);padding:10px 13px;font-size:13px;font-weight:700;color:var(--text);cursor:pointer;transition:all .18s;text-align:left;width:100%;font-family:'Nunito',sans-serif;-webkit-appearance:none}
+.qopt:active{transform:scale(.98)}.qopt .olet{width:22px;height:22px;border-radius:50%;border:2px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;transition:all .2s;color:transparent}
+.qopt.selected-correct{background:var(--teal-l);border-color:var(--teal)}.qopt.selected-correct .olet{background:var(--teal);border-color:var(--teal);color:white}
+.qopt.selected-wrong{background:#FCEBEB;border-color:#E24B4A}.qopt.selected-wrong .olet{background:#E24B4A;border-color:#E24B4A;color:white}
+.qopt.reveal-correct{background:var(--teal-l);border-color:var(--teal)}.qopt.reveal-correct .olet{background:var(--teal);border-color:var(--teal);color:white}
+.qopt:disabled{cursor:default}.quiz-ans{font-size:12.5px;font-weight:700;padding:9px 12px;border-radius:var(--rs);margin-top:4px;display:none;line-height:1.5}.quiz-ans.show{display:block}
+.stars-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}.star-b{display:inline-flex;align-items:center;gap:5px;background:var(--amber-l);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:800;color:var(--amber-d)}
+.activity{border-radius:var(--r);border:2px dashed var(--amber);padding:16px 18px;margin-bottom:18px;background:var(--amber-l)}
+.act-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--amber);margin-bottom:3px}
+.act-title{font-family:'Fredoka One',cursive;font-size:19px;color:var(--amber-d);margin-bottom:12px}
+.step{display:flex;gap:9px;margin-bottom:8px;align-items:flex-start}.sn{width:22px;height:22px;border-radius:50%;background:var(--amber);color:white;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}.st{font-size:13px;font-weight:700;color:var(--amber-d);line-height:1.5}
+.dad-tip{background:white;border-radius:var(--rs);padding:9px 13px;margin-top:10px;font-size:12px;font-weight:700;color:var(--amber-d);border-left:3px solid var(--amber);line-height:1.5}
+.cert{border:3px dashed var(--amber);border-radius:var(--r);padding:28px 20px;text-align:center;background:var(--amber-l);margin-bottom:18px}.cert-e{font-size:44px;margin-bottom:8px}.cert-title{font-family:'Fredoka One',cursive;font-size:24px;color:var(--amber-d);margin-bottom:4px}.cert-sub{font-size:13px;font-weight:700;color:var(--amber);margin-bottom:14px}.cert-line{border-bottom:2px solid var(--amber);width:160px;margin:0 auto 4px}.cert-nl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--amber);margin-bottom:12px}.cert-txt{font-size:13px;font-weight:700;color:var(--amber-d);line-height:1.6}
+.code-block{background:#1a1a2e;border-radius:var(--rs);padding:12px 16px;margin-bottom:14px;font-family:monospace;font-size:13px;color:#a8e6cf;line-height:1.7;overflow-x:auto}
+.code-comment{color:#6c8ebf}.code-kw{color:#ff9a3c}.code-str{color:#ffd93d}
+@media(max-width:420px){.two-col,.two-fact,.recap-grid{grid-template-columns:1fr}.three-col{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div id="lock-screen">
+  <div class="lock-robot">🏗️</div>
+  <h1>Week 4 — How AI is Built</h1>
+  <p>Enter your secret password to unlock!</p>
+  <div class="lock-box">
+    <div class="lock-label">🔑 Secret Password</div>
+    <input type="password" id="pw-input" placeholder="••••••••" maxlength="20" onkeydown="if(event.key==='Enter')checkPw()"/>
+    <button onclick="checkPw()">Unlock Week 4 🚀</button>
+    <div class="lock-err" id="pw-error">Oops! Wrong password. Try again! 🤔</div>
+  </div>
+</div>
+<div id="book-content">
+<nav class="nav">
+  <a class="nav-back" href="index.html">← Library</a>
+  <div class="nav-title">🏗️ Week 4</div>
+  <div class="ch-dots" id="dots"></div>
+</nav>
+<div class="cover" id="ch0">
+  <div class="cover-badge">Week 4 · Summer AI Adventure</div>
+  <div class="cover-icon">🏗️</div>
+  <div class="cover-title">How AI is Built</div>
+  <div class="cover-sub">Code, neural networks & data centres</div>
+  <div class="cover-name"><p>This book belongs to</p><div class="name">Marty ⭐</div></div>
+  <div class="toc">
+    <h3>📚 10 Chapters Inside!</h3>
+    <div class="toc-item" onclick="goTo(1)"><div class="toc-num">1</div>Meet the AI Team</div>
+    <div class="toc-item" onclick="goTo(2)"><div class="toc-num">2</div>What is Code?</div>
+    <div class="toc-item" onclick="goTo(3)"><div class="toc-num">3</div>If/Then Rules</div>
+    <div class="toc-item" onclick="goTo(4)"><div class="toc-num">4</div>Decision Trees</div>
+    <div class="toc-item" onclick="goTo(5)"><div class="toc-num">5</div>Neural Networks</div>
+    <div class="toc-item" onclick="goTo(6)"><div class="toc-num">6</div>Layers in a Brain Network</div>
+    <div class="toc-item" onclick="goTo(7)"><div class="toc-num">7</div>How Much Power Does AI Need?</div>
+    <div class="toc-item" onclick="goTo(8)"><div class="toc-num">8</div>AI in the Cloud</div>
+    <div class="toc-item" onclick="goTo(9)"><div class="toc-num">9</div>The Future of AI Hardware</div>
+    <div class="toc-item" onclick="goTo(10)"><div class="toc-num">10</div>Week 4 Recap + Quiz!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch1">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--amber-l)">👥</div><div><div class="ch-tag" style="color:var(--amber)">Chapter 1</div><div class="ch-title">Meet the AI Team</div><div class="ch-sub">The people who build AI together</div></div></div>
+  <div class="intro" style="background:var(--amber-l);color:var(--amber-d)">Building AI isn't a one-person job! It takes an entire team of brilliant people with different skills — kind of like how building a house needs architects, builders, electricians, and designers. Let's meet all the people who make AI happen!</div>
+  <div class="two-col">
+    <div class="card"><div class="card-hd"><div class="card-ico">🔬</div><div class="card-lbl">AI Researcher</div></div><div class="body-t">Invents new AI techniques. Asks "what if we tried this?" and runs experiments. Usually has a PhD.</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">💻</div><div class="card-lbl">ML Engineer</div></div><div class="body-t">Builds and trains the actual AI models. Writes the code that makes AI learn from data.</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">📊</div><div class="card-lbl">Data Scientist</div></div><div class="body-t">Collects, cleans, and prepares all the training data. Remembers: garbage in, garbage out!</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">⚖️</div><div class="card-lbl">AI Ethicist</div></div><div class="body-t">Makes sure AI is fair, safe, and doesn't harm people. Asks "should we build this?" not just "can we?"</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">🎨</div><div class="card-lbl">UX Designer</div></div><div class="body-t">Designs how humans interact with AI — makes it easy and enjoyable to use.</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">🧪</div><div class="card-lbl">QA Tester</div></div><div class="body-t">Tries to break the AI! Finds bugs, errors, and unfair results before millions of people use it.</div></div>
+  </div>
+  <div class="wow" style="background:var(--teal-l)"><div class="wow-e">🌟</div><div class="wow-t" style="color:var(--teal-d)">A BIG AI team at a company like Google or Anthropic might have hundreds of people — engineers, scientists, designers, lawyers, and ethicists. Building AI responsibly is a massive team effort!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: What does an AI Ethicist do?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q1a','An AI Ethicist makes sure AI is fair and safe — they ask the important moral questions about what AI should and shouldn\'t do!')"><div class="olet">A</div>Writes the code for AI models</button>
+      <button class="qopt" onclick="answer(this,true,'q1a','An AI Ethicist makes sure AI is fair and safe — they ask the important moral questions about what AI should and shouldn\'t do!')"><div class="olet">B</div>Makes sure AI is fair, safe, and doesn't harm people</button>
+      <button class="qopt" onclick="answer(this,false,'q1a','An AI Ethicist makes sure AI is fair and safe — they ask the important moral questions about what AI should and shouldn\'t do!')"><div class="olet">C</div>Designs the user interface</button>
+    </div>
+    <div class="quiz-ans" id="q1a" style="background:var(--amber-l);color:var(--amber-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">👥 Activity Time!</div>
+    <div class="act-title">Design Your Own AI Team!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Imagine you're building an AI that helps kids learn maths. What team do you need?</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Draw each team member as a character and write their job next to them.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">What would each person's biggest challenge be?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Which role would YOU most like to have when you grow up?</div></div>
+    <div class="dad-tip">💡 This is a great career exploration exercise! All these roles are real, well-paying jobs — and they all require different skills including art, maths, writing, and science.</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch2">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--purple-l)">💻</div><div><div class="ch-tag" style="color:var(--purple)">Chapter 2</div><div class="ch-title">What is Code?</div><div class="ch-sub">The language computers understand</div></div></div>
+  <div class="intro" style="background:var(--purple-l);color:var(--purple-d)">Code is a set of instructions written in a special language that computers can follow. Just like how you could write a recipe in English for a human chef, programmers write recipes in Python or JavaScript for computer "chefs." Let's see what code actually looks like!</div>
+  <div class="sec-label">Real Python code — a loop!</div>
+  <div class="code-block"><span class="code-comment"># This tells the computer to count from 1 to 5</span><br><span class="code-kw">for</span> number <span class="code-kw">in</span> range(1, 6):<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-kw">print</span>(<span class="code-str">"Hello Marty, number:"</span>, number)</div>
+  <div class="vocab" style="background:var(--purple-l)">
+    <div class="vocab-lbl" style="color:var(--purple)">🔤 Coding words</div>
+    <div class="vitem"><div class="vw" style="color:var(--purple-d)">Python</div><div class="vd">The most popular programming language for AI — named after Monty Python, not a snake!</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--purple-d)">Variable</div><div class="vd">A named box that stores a value — like "score = 10"</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--purple-d)">Loop</div><div class="vd">Instructions that repeat — "do this 1000 times"</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--purple-d)">Function</div><div class="vd">A named set of instructions you can use over and over</div></div>
+  </div>
+  <div class="wow" style="background:var(--amber-l)"><div class="wow-e">🐍</div><div class="wow-t" style="color:var(--amber-d)">Python is used by almost every major AI team in the world! Google, Anthropic, OpenAI, Meta — they all use Python as their main language. And the amazing thing? You can start learning Python for FREE at scratch.mit.edu or code.org — both designed for kids your age!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: What is Python (in programming)?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q2a','Python is a programming language — it\'s the most popular language used for AI, named after Monty Python the comedy group!')"><div class="olet">A</div>A type of snake used as an AI mascot</button>
+      <button class="qopt" onclick="answer(this,true,'q2a','Python is a programming language — it\'s the most popular language used for AI, named after Monty Python the comedy group!')"><div class="olet">B</div>The most popular programming language for AI</button>
+      <button class="qopt" onclick="answer(this,false,'q2a','Python is a programming language — it\'s the most popular language used for AI, named after Monty Python the comedy group!')"><div class="olet">C</div>A special computer chip</button>
+    </div>
+    <div class="quiz-ans" id="q2a" style="background:var(--purple-l);color:var(--purple-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">💻 Activity Time!</div>
+    <div class="act-title">Write Your Name in Binary!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Computers only understand 1s and 0s — called binary. Every letter has a binary code!</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">M = 01001101, A = 01000001, R = 01010010, T = 01010100, Y = 01011001</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Write MARTY in binary on paper: 01001101 01000001 01010010 01010100 01011001</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">That's 40 ones and zeros just for your name! Computers do this for EVERYTHING.</div></div>
+    <div class="dad-tip">💡 You can use an online binary converter to check — just search "text to binary converter." This makes the abstract concept of computers using numbers for everything completely concrete!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch3">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--teal-l)">🔀</div><div><div class="ch-tag" style="color:var(--teal)">Chapter 3</div><div class="ch-title">If/Then Rules</div><div class="ch-sub">The basic building block of all programs</div></div></div>
+  <div class="intro" style="background:var(--teal-l);color:var(--teal-d)">Every computer program — from the simplest app to the most complex AI — is built on one basic idea: IF something is true, THEN do something. It's called a conditional statement, and once you understand it, you can start thinking like a programmer!</div>
+  <div class="sec-label">If/Then examples everywhere</div>
+  <div class="code-block"><span class="code-comment"># A simple thermostat program</span><br><span class="code-kw">if</span> temperature &lt; 68:<br>&nbsp;&nbsp;&nbsp;&nbsp;turn_on_heating()<br><span class="code-kw">elif</span> temperature &gt; 75:<br>&nbsp;&nbsp;&nbsp;&nbsp;turn_on_cooling()<br><span class="code-kw">else</span>:<br>&nbsp;&nbsp;&nbsp;&nbsp;do_nothing()</div>
+  <div class="two-col">
+    <div class="card"><div class="card-hd"><div class="card-ico">🌧️</div><div class="card-lbl">Weather app</div></div><div class="body-t">IF it will rain THEN show an umbrella icon. IF temperature below 32° THEN show snow warning.</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">🎮</div><div class="card-lbl">Video game</div></div><div class="body-t">IF player health = 0 THEN game over. IF player collects coin THEN add 10 points.</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">📱</div><div class="card-lbl">Face ID</div></div><div class="body-t">IF face matches stored map THEN unlock device. IF face doesn't match THEN stay locked.</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">🤖</div><div class="card-lbl">Simple chatbot</div></div><div class="body-t">IF user says "hello" THEN reply "Hi there!" IF user asks weather THEN check weather app.</div></div>
+  </div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: What is an "if/then" statement in programming?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,true,'q3a','Exactly! IF something is true, THEN do something. It\'s the most fundamental building block of all computer programs!')"><div class="olet">A</div>A rule that says: if a condition is true, then do something</button>
+      <button class="qopt" onclick="answer(this,false,'q3a','Exactly! IF something is true, THEN do something. It\'s the most fundamental building block of all computer programs!')"><div class="olet">B</div>A type of loop that repeats forever</button>
+      <button class="qopt" onclick="answer(this,false,'q3a','Exactly! IF something is true, THEN do something. It\'s the most fundamental building block of all computer programs!')"><div class="olet">C</div>A question the computer asks the user</button>
+    </div>
+    <div class="quiz-ans" id="q3a" style="background:var(--teal-l);color:var(--teal-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎮 Activity Time!</div>
+    <div class="act-title">Program Your Morning Routine!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Write your morning routine as IF/THEN rules on paper.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Example: IF I wake up before 7am THEN I have time for cereal. IF it's raining THEN I take an umbrella.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Write at least 5 IF/THEN rules for your morning.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Congrats — you just wrote your first program! (In English, but the logic is the same as real code.)</div></div>
+    <div class="dad-tip">💡 This activity is literally how beginner programmers think. The skill of breaking decisions into conditions is called "computational thinking" and it's foundational for coding!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch4">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--green-l)">🌳</div><div><div class="ch-tag" style="color:var(--green)">Chapter 4</div><div class="ch-title">Decision Trees</div><div class="ch-sub">How computers make choices step by step</div></div></div>
+  <div class="intro" style="background:var(--green-l);color:var(--green-d)">Imagine a giant flowchart with YES/NO questions at each branch. That's a Decision Tree! It's one of the most popular types of AI because it's easy to understand — you can actually SEE the logic. Let's build one to identify animals!</div>
+  <div class="sec-label">Animal decision tree 🐾</div>
+  <div style="background:#f9f8f5;border-radius:var(--r);padding:16px;margin-bottom:18px;text-align:center">
+    <div style="display:inline-block;background:var(--amber-l);border-radius:var(--rs);padding:8px 14px;font-size:12px;font-weight:800;color:var(--amber-d);margin-bottom:12px">Does it have wings?</div>
+    <div style="display:flex;justify-content:center;gap:30px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div style="font-size:11px;font-weight:800;color:var(--teal)">YES ↓</div>
+        <div style="background:var(--teal-l);border-radius:var(--rs);padding:7px 12px;font-size:12px;font-weight:800;color:var(--teal-d)">Can it fly?</div>
+        <div style="display:flex;gap:10px">
+          <div style="text-align:center"><div style="font-size:10px;font-weight:800;color:var(--teal)">YES</div><div style="background:var(--teal-l);border-radius:var(--rs);padding:5px 8px;font-size:11px;font-weight:800;color:var(--teal-d)">🐦 Bird</div></div>
+          <div style="text-align:center"><div style="font-size:10px;font-weight:800;color:var(--coral)">NO</div><div style="background:var(--coral-l);border-radius:var(--rs);padding:5px 8px;font-size:11px;font-weight:800;color:var(--coral-d)">🐧 Penguin</div></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div style="font-size:11px;font-weight:800;color:var(--coral)">NO ↓</div>
+        <div style="background:var(--purple-l);border-radius:var(--rs);padding:7px 12px;font-size:12px;font-weight:800;color:var(--purple-d)">Does it bark?</div>
+        <div style="display:flex;gap:10px">
+          <div style="text-align:center"><div style="font-size:10px;font-weight:800;color:var(--teal)">YES</div><div style="background:var(--teal-l);border-radius:var(--rs);padding:5px 8px;font-size:11px;font-weight:800;color:var(--teal-d)">🐕 Dog</div></div>
+          <div style="text-align:center"><div style="font-size:10px;font-weight:800;color:var(--coral)">NO</div><div style="background:var(--coral-l);border-radius:var(--rs);padding:5px 8px;font-size:11px;font-weight:800;color:var(--coral-d)">🐱 Cat</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="wow" style="background:var(--amber-l)"><div class="wow-e">🏥</div><div class="wow-t" style="color:var(--amber-d)">REAL WORLD: Early medical AI used decision trees! "Does the patient have a fever? YES → Does the patient have a rash? YES → Could be X, Y, or Z diseases." Simple but effective. Today's AI uses much more complex versions of this idea!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: What is a decision tree in AI?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q4a','A decision tree is a flowchart of yes/no questions — each branch leads to a different outcome!')"><div class="olet">A</div>A real tree that grows in a data centre</button>
+      <button class="qopt" onclick="answer(this,true,'q4a','A decision tree is a flowchart of yes/no questions — each branch leads to a different outcome!')"><div class="olet">B</div>A flowchart of yes/no questions that leads to a decision</button>
+      <button class="qopt" onclick="answer(this,false,'q4a','A decision tree is a flowchart of yes/no questions — each branch leads to a different outcome!')"><div class="olet">C</div>A type of neural network</button>
+    </div>
+    <div class="quiz-ans" id="q4a" style="background:var(--green-l);color:var(--green-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🌳 Activity Time!</div>
+    <div class="act-title">Build a "Guess the Animal" Tree!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Think of 8 different animals.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Draw a tree that starts with one yes/no question to split them into 2 groups.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Add more yes/no branches until each animal is at its own "leaf."</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Test it! Can Dad use your tree to identify any animal you think of?</div></div>
+    <div class="dad-tip">💡 Good starting questions: "Does it have 4 legs?" "Does it live in water?" "Is it bigger than a dog?" This is literally how classification algorithms work in ML!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch5">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--purple-l)">🕸️</div><div><div class="ch-tag" style="color:var(--purple)">Chapter 5</div><div class="ch-title">Neural Networks</div><div class="ch-sub">Inspired by YOUR brain's neurons</div></div></div>
+  <div class="intro" style="background:var(--purple-l);color:var(--purple-d)">The most powerful AI today is built on something called neural networks — and the inspiration came directly from studying how YOUR brain works! Your brain has 86 billion neurons all connected together. AI engineers built a simplified version of this in code. Let's explore!</div>
+  <div class="vocab" style="background:var(--blue-l)">
+    <div class="vocab-lbl" style="color:var(--blue)">🔤 Key words</div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">Neuron (brain)</div><div class="vd">A brain cell that receives signals, processes them, and fires (or doesn't)</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">Artificial Neuron</div><div class="vd">A maths function in code that mimics what a brain neuron does</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">Weight</div><div class="vd">A number that controls how much influence one neuron has on the next</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">Network</div><div class="vd">All the artificial neurons connected together in layers</div></div>
+  </div>
+  <div class="two-col">
+    <div class="card" style="border-top:3px solid var(--purple)"><div class="card-hd"><div class="card-ico">🧠</div><div class="card-lbl">Real brain neuron</div></div><div class="body-t">Receives electrical signals from thousands of other neurons. If the combined signal is strong enough, it fires a new signal to the next neurons.</div></div>
+    <div class="card" style="border-top:3px solid var(--blue)"><div class="card-hd"><div class="card-ico">💻</div><div class="card-lbl">Artificial neuron</div></div><div class="body-t">Receives numbers from the previous layer. Multiplies them by "weights", adds them up. If the total is high enough, it passes a signal to the next layer.</div></div>
+  </div>
+  <div class="wow" style="background:var(--amber-l)"><div class="wow-e">🔢</div><div class="wow-t" style="color:var(--amber-d)">A large AI like ChatGPT has about 175 BILLION artificial neurons — that's roughly TWICE the number of real neurons in your brain! But your brain is still far more efficient — it runs on 20 watts while ChatGPT needs thousands of watts of electricity.</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: What inspired the design of neural networks?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q5a','Neural networks were directly inspired by the connected neurons in the human brain — it\'s biomimicry with maths!')"><div class="olet">A</div>The structure of computer chips</button>
+      <button class="qopt" onclick="answer(this,true,'q5a','Neural networks were directly inspired by the connected neurons in the human brain — it\'s biomimicry with maths!')"><div class="olet">B</div>The way neurons in the human brain connect and signal each other</button>
+      <button class="qopt" onclick="answer(this,false,'q5a','Neural networks were directly inspired by the connected neurons in the human brain — it\'s biomimicry with maths!')"><div class="olet">C</div>Spider webs and their geometry</button>
+    </div>
+    <div class="quiz-ans" id="q5a" style="background:var(--purple-l);color:var(--purple-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🕸️ Activity Time!</div>
+    <div class="act-title">Build a Human Neural Network!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Get a ball of yarn and gather 3+ family members.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Each person is a "neuron." Hold one end of the yarn and pass the ball to someone else.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Keep passing until everyone is connected — you've made a neural network!</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Now pass a "signal" (a squeeze on the yarn) from one person to another. That's how information flows through a neural network!</div></div>
+    <div class="dad-tip">💡 You can make this more realistic: tell some people to only pass the squeeze if they receive it from TWO people at the same time — that's the "threshold" concept in neural networks!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch6">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--teal-l)">📚</div><div><div class="ch-tag" style="color:var(--teal)">Chapter 6</div><div class="ch-title">Layers in a Brain Network</div><div class="ch-sub">Input, hidden layers, output — like a relay race!</div></div></div>
+  <div class="intro" style="background:var(--teal-l);color:var(--teal-d)">A neural network isn't just a random tangle of neurons — it's organised into LAYERS! Think of it like a relay race: the first runner (input layer) starts with the raw data, passes it through several middle runners (hidden layers), and the last runner (output layer) crosses the finish line with the final answer!</div>
+  <div style="background:#f9f8f5;border-radius:var(--r);padding:16px;margin-bottom:18px">
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:12px;text-align:center">A neural network recognising a handwritten number</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap">
+      <div style="text-align:center"><div style="background:var(--blue-l);border-radius:var(--rs);padding:8px 10px;font-size:11px;font-weight:800;color:var(--blue-d);margin-bottom:4px">INPUT<br>LAYER</div><div style="font-size:10px;color:var(--muted);font-weight:700">784 neurons<br>(28×28 pixels)</div></div>
+      <div style="font-size:18px;color:#bbb">→</div>
+      <div style="text-align:center"><div style="background:var(--purple-l);border-radius:var(--rs);padding:8px 10px;font-size:11px;font-weight:800;color:var(--purple-d);margin-bottom:4px">HIDDEN<br>LAYER 1</div><div style="font-size:10px;color:var(--muted);font-weight:700">512 neurons<br>(finds edges)</div></div>
+      <div style="font-size:18px;color:#bbb">→</div>
+      <div style="text-align:center"><div style="background:var(--amber-l);border-radius:var(--rs);padding:8px 10px;font-size:11px;font-weight:800;color:var(--amber-d);margin-bottom:4px">HIDDEN<br>LAYER 2</div><div style="font-size:10px;color:var(--muted);font-weight:700">256 neurons<br>(finds shapes)</div></div>
+      <div style="font-size:18px;color:#bbb">→</div>
+      <div style="text-align:center"><div style="background:var(--teal-l);border-radius:var(--rs);padding:8px 10px;font-size:11px;font-weight:800;color:var(--teal-d);margin-bottom:4px">OUTPUT<br>LAYER</div><div style="font-size:10px;color:var(--muted);font-weight:700">10 neurons<br>(one per digit 0-9)</div></div>
+    </div>
+  </div>
+  <div class="wow" style="background:var(--teal-l)"><div class="wow-e">🏃</div><div class="wow-t" style="color:var(--teal-d)">DEEP LEARNING: When a neural network has many hidden layers (sometimes hundreds!), it's called "deep learning" — that's where the "deep" in "deep neural network" comes from. Each extra layer lets AI understand more complex and abstract things. More layers = deeper understanding!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: What is "deep learning"?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q6a','Deep learning means neural networks with MANY layers — the depth refers to the number of layers, not how hard the AI thinks!')"><div class="olet">A</div>AI that thinks very carefully and slowly</button>
+      <button class="qopt" onclick="answer(this,true,'q6a','Deep learning means neural networks with MANY layers — the depth refers to the number of layers, not how hard the AI thinks!')"><div class="olet">B</div>Neural networks that have many hidden layers</button>
+      <button class="qopt" onclick="answer(this,false,'q6a','Deep learning means neural networks with MANY layers — the depth refers to the number of layers, not how hard the AI thinks!')"><div class="olet">C</div>AI that learns from very complex textbooks</button>
+    </div>
+    <div class="quiz-ans" id="q6a" style="background:var(--teal-l);color:var(--teal-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🏃 Activity Time!</div>
+    <div class="act-title">Relay Race = Data Through Layers!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Set up a relay race with 4 stations in your garden or hallway.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Station 1 (input): shout a number. Station 2: double it. Station 3: add 10. Station 4 (output): say the final answer!</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Each station is a "layer" — it takes the data, transforms it, and passes it on.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Try with different starting numbers. That's data flowing through a neural network!</div></div>
+    <div class="dad-tip">💡 For extra realism, have each person "forget" the original number — they can only work with what they received. This is exactly how neural networks work — each layer only sees the output from the previous layer!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch7">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--coral-l)">⚡</div><div><div class="ch-tag" style="color:var(--coral)">Chapter 7</div><div class="ch-title">How Much Power Does AI Need?</div><div class="ch-sub">Huge computers and lots of electricity</div></div></div>
+  <div class="intro" style="background:var(--coral-l);color:var(--coral-d)">Training a big AI model requires ENORMOUS amounts of electricity — more than you'd believe! While your brain runs on just 20 watts (less than a light bulb), training a large AI model uses as much electricity as thousands of homes in a whole year. This is one of the big challenges facing AI today!</div>
+  <div class="two-col">
+    <div class="card"><div class="card-hd"><div class="card-ico">🧠</div><div class="card-lbl">Your brain</div></div><div class="body-t" style="font-size:18px;font-weight:900;color:var(--teal)">20 watts</div><div class="body-t">Less than a dim light bulb. Runs on glucose from the food you eat. The most energy-efficient computer ever!</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">💻</div><div class="card-lbl">Your iPad</div></div><div class="body-t" style="font-size:18px;font-weight:900;color:var(--amber)">~20 watts</div><div class="body-t">Roughly the same as your brain — that's why Apple works so hard on energy efficiency in their chips!</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">🏢</div><div class="card-lbl">AI training server</div></div><div class="body-t" style="font-size:18px;font-weight:900;color:var(--coral)">~300 watts</div><div class="body-t">One high-end AI chip uses 300 watts. A training cluster might have thousands of these!</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">🌍</div><div class="card-lbl">Training GPT-3</div></div><div class="body-t" style="font-size:18px;font-weight:900;color:var(--coral)">1,287 MWh</div><div class="body-t">Training GPT-3 used about as much energy as 120 US homes use in a whole year. That's just ONE training run!</div></div>
+  </div>
+  <div class="wow" style="background:var(--green-l)"><div class="wow-e">🌱</div><div class="wow-t" style="color:var(--green-d)">THE GOOD NEWS: AI researchers are working hard to make AI more efficient. Some companies now train AI using renewable energy (solar and wind). And new chip designs are making AI far more energy-efficient every year. Energy-efficient AI is one of the most important challenges for your generation to solve!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: How does your brain's energy use compare to an AI training server?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q7a','Your brain runs on just 20 watts — less than a light bulb! A single AI training chip uses 300 watts — 15× more!')"><div class="olet">A</div>Your brain uses more energy than an AI server</button>
+      <button class="qopt" onclick="answer(this,false,'q7a','Your brain runs on just 20 watts — less than a light bulb! A single AI training chip uses 300 watts — 15× more!')"><div class="olet">B</div>They use about the same amount</button>
+      <button class="qopt" onclick="answer(this,true,'q7a','Your brain runs on just 20 watts — less than a light bulb! A single AI training chip uses 300 watts — 15× more!')"><div class="olet">C</div>Your brain uses MUCH less energy than an AI server</button>
+    </div>
+    <div class="quiz-ans" id="q7a" style="background:var(--coral-l);color:var(--coral-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">⚡ Activity Time!</div>
+    <div class="act-title">Light Bulb vs. Brain vs. AI!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Find a 20-watt LED bulb in your home (or ask Dad). That's roughly how much power your brain uses!</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Turn it on and look at how dim it is. Your incredible brain — with all its creativity and feelings — runs on THAT.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Now imagine 15 of those bulbs all on at once — that's one AI training chip!</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">And training a big AI model needs thousands of chips running for weeks. That's a LOT of light bulbs!</div></div>
+    <div class="dad-tip">💡 If you have a smart plug with energy monitoring, plug in a few devices and compare wattages. Making the abstract concept of watts physical makes it much more memorable!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch8">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--blue-l)">☁️</div><div><div class="ch-tag" style="color:var(--blue)">Chapter 8</div><div class="ch-title">AI in the Cloud</div><div class="ch-sub">Why AI lives on the internet</div></div></div>
+  <div class="intro" style="background:var(--blue-l);color:var(--blue-d)">When you ask Siri a question, your iPad doesn't do all the thinking alone — it sends your question to a giant building full of computers somewhere in the world. This is called "the cloud." But what exactly is the cloud, and why does AI live there instead of on your device?</div>
+  <div class="two-col">
+    <div class="card"><div class="card-hd"><div class="card-ico">📱</div><div class="card-lbl">On-device AI</div></div><div class="body-t">Simple AI that runs directly on your iPad. Fast, works offline, private. But limited to what fits in a small chip.</div><div style="margin-top:6px;font-size:11px;font-weight:800;background:var(--teal-l);color:var(--teal-d);padding:4px 8px;border-radius:var(--rs);display:inline-block">Examples: Face ID, autocorrect, Siri basic commands</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">☁️</div><div class="card-lbl">Cloud AI</div></div><div class="body-t">Your question travels to giant server buildings (data centres). Thousands of powerful computers work on it. The answer comes back in milliseconds!</div><div style="margin-top:6px;font-size:11px;font-weight:800;background:var(--blue-l);color:var(--blue-d);padding:4px 8px;border-radius:var(--rs);display:inline-block">Examples: ChatGPT, Google Search, Siri complex questions</div></div>
+  </div>
+  <div class="wow" style="background:var(--blue-l)"><div class="wow-e">🌍</div><div class="wow-t" style="color:var(--blue-d)">DATA CENTRES: The buildings that run the cloud are enormous! A single data centre might be as big as 10 football fields, use as much electricity as a small city, and need millions of litres of water to keep the computers cool. There are thousands of these buildings around the world running 24/7!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: When you use ChatGPT, where does the AI thinking happen?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q8a','ChatGPT runs in the cloud — your question travels to giant server buildings and the answer comes back over the internet!')"><div class="olet">A</div>On your iPad's processor</button>
+      <button class="qopt" onclick="answer(this,true,'q8a','ChatGPT runs in the cloud — your question travels to giant server buildings and the answer comes back over the internet!')"><div class="olet">B</div>On giant server computers in data centres</button>
+      <button class="qopt" onclick="answer(this,false,'q8a','ChatGPT runs in the cloud — your question travels to giant server buildings and the answer comes back over the internet!')"><div class="olet">C</div>On a satellite in space</button>
+    </div>
+    <div class="quiz-ans" id="q8a" style="background:var(--blue-l);color:var(--blue-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">☁️ Activity Time!</div>
+    <div class="act-title">Draw the Cloud Journey!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Draw your home on the left side of a big paper.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Draw a huge building full of computers somewhere in the middle (the data centre).</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Draw the path your question travels: iPad → WiFi router → internet cables → data centre → back to you!</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Add the actual distances — some data centres are thousands of miles away but reply in under a second!</div></div>
+    <div class="dad-tip">💡 The data centre might actually be in a different country! Google and Amazon have data centres on every continent. The speed of light through fibre optic cables is what makes this seem instantaneous.</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch9">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--green-l)">🔭</div><div><div class="ch-tag" style="color:var(--green)">Chapter 9</div><div class="ch-title">The Future of AI Hardware</div><div class="ch-sub">Chips, quantum computers, and what comes next</div></div></div>
+  <div class="intro" style="background:var(--green-l);color:var(--green-d)">The chips inside computers have been getting smaller and faster for 60 years — but we're approaching the limits of how small traditional chips can get. Scientists are now exploring wild new ideas for the next generation of AI hardware. Welcome to the future!</div>
+  <div class="two-col">
+    <div class="card"><div class="card-hd"><div class="card-ico">🔲</div><div class="card-lbl">GPU (Graphics chip)</div></div><div class="body-t">Originally made for video games! Turned out to be perfect for AI because they can do millions of maths operations in parallel. NVIDIA GPUs power most AI today.</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">🧠</div><div class="card-lbl">Neuromorphic chips</div></div><div class="body-t">Chips designed to mimic the brain — they use tiny bursts of electricity just like real neurons. Ultra energy-efficient! Intel's Loihi chip is an example.</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">⚛️</div><div class="card-lbl">Quantum computers</div></div><div class="body-t">Use quantum physics to do certain calculations exponentially faster. Not yet powerful enough for AI, but potentially revolutionary in 10-20 years!</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">💡</div><div class="card-lbl">Photonic AI</div></div><div class="body-t">Uses light instead of electricity! Incredibly fast and energy-efficient. Still experimental but very promising for future AI.</div></div>
+  </div>
+  <div class="wow" style="background:var(--amber-l)"><div class="wow-e">⚛️</div><div class="wow-t" style="color:var(--amber-d)">QUANTUM COMPUTERS: Instead of bits (0 or 1), quantum computers use "qubits" that can be 0, 1, or BOTH at the same time (thanks to quantum physics!). This lets them explore millions of possibilities simultaneously. When mature, they could solve problems that would take regular computers millions of years. You might work on this technology someday, Marty!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: Why are GPU chips (originally for gaming) so good for AI?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q9a','GPUs can do millions of parallel maths operations — perfect for AI which needs to crunch millions of numbers simultaneously!')"><div class="olet">A</div>Because games and AI use the same graphics</button>
+      <button class="qopt" onclick="answer(this,true,'q9a','GPUs can do millions of parallel maths operations — perfect for AI which needs to crunch millions of numbers simultaneously!')"><div class="olet">B</div>Because they can do millions of maths operations at the same time</button>
+      <button class="qopt" onclick="answer(this,false,'q9a','GPUs can do millions of parallel maths operations — perfect for AI which needs to crunch millions of numbers simultaneously!')"><div class="olet">C</div>Because they were designed by AI companies</button>
+    </div>
+    <div class="quiz-ans" id="q9a" style="background:var(--green-l);color:var(--green-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🔬 Activity Time!</div>
+    <div class="act-title">Look at a Computer Chip!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Find an old broken phone, computer, or electronic device at home.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Open it up (with Dad's help!) and find the circuit board — the green board with lots of tiny components.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Look at the chips — those shiny squares are processors. Some have BILLIONS of transistors inside!</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Use a magnifying glass if you have one. All those tiny lines are circuits carrying electricity!</div></div>
+    <div class="dad-tip">💡 If you don't have an old device, just Google "CPU die shot" and you'll find incredible microscope photos of chip surfaces. The complexity is mind-blowing and inspires awe in even adult engineers!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch10">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--amber-l)">🏆</div><div><div class="ch-tag" style="color:var(--amber)">Chapter 10</div><div class="ch-title">Week 4 Recap + Quiz!</div><div class="ch-sub">Review everything and celebrate! 🎉</div></div></div>
+  <div class="intro" style="background:var(--amber-l);color:var(--amber-d)">Engineer Marty in the house! 🏗️ This week you went inside the machine — code, neural networks, data centres and future hardware. You now understand not just WHAT AI does, but HOW it's built. That's seriously impressive! Let's review and take the big quiz!</div>
+  <div class="sec-label">Everything you learned this week 📚</div>
+  <div class="recap-grid">
+    <div class="rc" style="background:var(--amber-l)"><div class="rc-n" style="color:var(--amber)">Ch 1</div><div class="rc-title">The AI Team</div>Researchers, engineers, data scientists, ethicists, designers — it takes a village to build AI!</div>
+    <div class="rc" style="background:var(--purple-l)"><div class="rc-n" style="color:var(--purple)">Ch 2</div><div class="rc-title">What is Code?</div>Instructions in languages like Python. MARTY in binary = 40 ones and zeros!</div>
+    <div class="rc" style="background:var(--teal-l)"><div class="rc-n" style="color:var(--teal)">Ch 3</div><div class="rc-title">If/Then Rules</div>The building block of all programs — IF this is true, THEN do something.</div>
+    <div class="rc" style="background:var(--green-l)"><div class="rc-n" style="color:var(--green)">Ch 4</div><div class="rc-title">Decision Trees</div>Flowcharts of yes/no questions. One of the most understandable AI methods!</div>
+    <div class="rc" style="background:var(--purple-l)"><div class="rc-n" style="color:var(--purple)">Ch 5</div><div class="rc-title">Neural Networks</div>Inspired by YOUR brain! Artificial neurons connected in layers, learning from data.</div>
+    <div class="rc" style="background:var(--teal-l)"><div class="rc-n" style="color:var(--teal)">Ch 6</div><div class="rc-title">Deep Learning</div>Many hidden layers = deep learning. More layers = understanding more complex things.</div>
+    <div class="rc" style="background:var(--coral-l)"><div class="rc-n" style="color:var(--coral)">Ch 7</div><div class="rc-title">AI Power</div>Your brain = 20 watts. AI training = thousands of homes worth of electricity!</div>
+    <div class="rc" style="background:var(--blue-l)"><div class="rc-n" style="color:var(--blue)">Ch 8</div><div class="rc-title">The Cloud</div>Huge data centre buildings full of computers. Your question travels there and back in milliseconds!</div>
+    <div class="rc" style="background:var(--green-l)"><div class="rc-n" style="color:var(--green)">Ch 9</div><div class="rc-title">Future Hardware</div>GPU, neuromorphic, quantum, photonic — wild new technologies coming to power future AI!</div>
+  </div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🏆 The BIG Week 4 Quiz!</div>
+    <div class="stars-row"><div class="star-b">⭐ 5 questions</div><div class="star-b">🎯 Tap to answer</div><div class="star-b">🏅 Aim for 5/5!</div></div>
+    <div class="quiz-q">Q1: What is Python (in AI)?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq1','Python is the most popular programming language for AI — used by Google, OpenAI, Anthropic and virtually every major AI company!')"><div class="olet">A</div>A snake-themed AI robot</button>
+      <button class="qopt" onclick="answer(this,true,'bq1','Python is the most popular programming language for AI — used by Google, OpenAI, Anthropic and virtually every major AI company!')"><div class="olet">B</div>The most popular programming language for AI</button>
+      <button class="qopt" onclick="answer(this,false,'bq1','Python is the most popular programming language for AI — used by Google, OpenAI, Anthropic and virtually every major AI company!')"><div class="olet">C</div>A type of computer chip</button>
+    </div>
+    <div class="quiz-ans" id="bq1" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q2: Neural networks were inspired by what?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq2','Neural networks were directly inspired by the connected neurons in YOUR brain — it\'s biological inspiration for computer science!')"><div class="olet">A</div>The structure of the internet</button>
+      <button class="qopt" onclick="answer(this,true,'bq2','Neural networks were directly inspired by the connected neurons in YOUR brain — it\'s biological inspiration for computer science!')"><div class="olet">B</div>The connected neurons in the human brain</button>
+      <button class="qopt" onclick="answer(this,false,'bq2','Neural networks were directly inspired by the connected neurons in YOUR brain — it\'s biological inspiration for computer science!')"><div class="olet">C</div>Electric power grids</button>
+    </div>
+    <div class="quiz-ans" id="bq2" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q3: What is a "decision tree" in AI?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,true,'bq3','A decision tree is a flowchart of yes/no questions — very easy to understand and one of the oldest types of AI!')"><div class="olet">A</div>A flowchart of yes/no questions leading to a decision</button>
+      <button class="qopt" onclick="answer(this,false,'bq3','A decision tree is a flowchart of yes/no questions — very easy to understand and one of the oldest types of AI!')"><div class="olet">B</div>A diagram of a neural network</button>
+      <button class="qopt" onclick="answer(this,false,'bq3','A decision tree is a flowchart of yes/no questions — very easy to understand and one of the oldest types of AI!')"><div class="olet">C</div>A type of computer memory</button>
+    </div>
+    <div class="quiz-ans" id="bq3" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q4: How much power does your brain use?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq4','Just 20 watts — less than a dim light bulb! Your brain is the most energy-efficient computer ever built.')"><div class="olet">A</div>About 300 watts — same as a gaming computer</button>
+      <button class="qopt" onclick="answer(this,true,'bq4','Just 20 watts — less than a dim light bulb! Your brain is the most energy-efficient computer ever built.')"><div class="olet">B</div>About 20 watts — less than a light bulb</button>
+      <button class="qopt" onclick="answer(this,false,'bq4','Just 20 watts — less than a dim light bulb! Your brain is the most energy-efficient computer ever built.')"><div class="olet">C</div>About 1,000 watts — like a microwave</button>
+    </div>
+    <div class="quiz-ans" id="bq4" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q5: What is "the cloud" in AI?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq5','The cloud is actually giant buildings full of computers — data centres — where powerful AI runs and processes your requests!')"><div class="olet">A</div>Actual clouds in the sky that store data</button>
+      <button class="qopt" onclick="answer(this,false,'bq5','The cloud is actually giant buildings full of computers — data centres — where powerful AI runs and processes your requests!')"><div class="olet">B</div>Memory inside your iPad</button>
+      <button class="qopt" onclick="answer(this,true,'bq5','The cloud is actually giant buildings full of computers — data centres — where powerful AI runs and processes your requests!')"><div class="olet">C</div>Giant data centre buildings full of powerful computers</button>
+    </div>
+    <div class="quiz-ans" id="bq5" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div id="score-reveal" style="display:none;margin-top:16px;padding:14px 16px;border-radius:var(--r);background:var(--amber-l);color:var(--amber-d);font-weight:800;font-size:15px;text-align:center"></div>
+  </div>
+  <div class="cert">
+    <div class="cert-e">🎓</div>
+    <div class="cert-title">Week 4 Complete!</div>
+    <div class="cert-sub">This certifies that</div>
+    <div class="cert-line"></div>
+    <div class="cert-nl">Marty</div>
+    <div class="cert-txt">has successfully completed<br>Week 4 of the AI Summer Adventure<br>and is now an official<br><strong>AI Engineer! 🏗️⭐</strong></div>
+  </div>
+  <div style="margin:0 0 8px;padding:14px 16px;background:var(--green-l);border-radius:var(--r);text-align:center">
+    <div style="font-family:'Fredoka One',cursive;font-size:16px;color:var(--green-d);margin-bottom:4px">Ready for Week 5? 🌍</div>
+    <div style="font-size:13px;font-weight:700;color:var(--green)">Next up: AI Helps the World — doctors, farmers, climate scientists, and space explorers!</div>
+  </div>
+</div>
+</div>
+<script>
+const dots=document.getElementById('dots');
+for(let i=1;i<=10;i++){const d=document.createElement('button');d.className='ch-dot';d.setAttribute('aria-label','Chapter '+i);d.onclick=()=>goTo(i);dots.appendChild(d);}
+function goTo(n){document.getElementById('ch'+n).scrollIntoView({behavior:'smooth'})}
+const chapters=document.querySelectorAll('.chapter');const allDots=document.querySelectorAll('.ch-dot');
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const n=parseInt(e.target.id.replace('ch',''));if(!isNaN(n)&&n>=1&&n<=10)allDots.forEach((d,i)=>d.classList.toggle('active',i===n-1));}});},{threshold:0.3});
+chapters.forEach(c=>obs.observe(c));
+const answered={};const bigIds=['bq1','bq2','bq3','bq4','bq5'];let bigScore=0,bigAnswered=0;
+function answer(btn,correct,ansId,explanation){
+  if(answered[ansId])return;answered[ansId]=true;
+  const opts=btn.closest('.quiz-opts').querySelectorAll('.qopt');opts.forEach(o=>o.disabled=true);
+  btn.classList.add(correct?'selected-correct':'selected-wrong');
+  if(!correct){opts.forEach(o=>{const oc=o.getAttribute('onclick');if(oc&&oc.includes("true,'"+ansId+"'"))o.classList.add('reveal-correct');});}
+  const el=document.getElementById(ansId);el.textContent=(correct?'🌟 Correct! ':'🤔 Not quite — ')+explanation;el.classList.add('show');
+  if(bigIds.includes(ansId)){bigAnswered++;if(correct)bigScore++;if(bigAnswered===5){setTimeout(()=>{const rev=document.getElementById('score-reveal');const msgs=['Keep practising! 💪','Nice work! 🎉','Getting there! 🚀','Almost perfect! 🌟','PERFECT SCORE! AI ENGINEER CERTIFIED! 🏆🏗️⭐'];rev.innerHTML='You got <strong>'+bigScore+'/5</strong>! '+msgs[bigScore<=1?0:bigScore===2?1:bigScore===3?2:bigScore===4?3:4];rev.style.display='block';rev.scrollIntoView({behavior:'smooth',block:'nearest'});},400);}}
+  const ch=btn.closest('.chapter');if(ch){const n=parseInt(ch.id.replace('ch',''));if(!isNaN(n)&&n>=1&&n<=10)allDots[n-1].classList.add('done');}
+}
+function checkPw(){
+  const val=document.getElementById('pw-input').value;const err=document.getElementById('pw-error');
+  if(val==='roro@123'){sessionStorage.setItem('marty_unlocked','yes');document.getElementById('lock-screen').style.display='none';document.getElementById('book-content').style.display='block';}
+  else{err.classList.add('show');document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();setTimeout(()=>err.classList.remove('show'),2500);}
+}
+if(sessionStorage.getItem('marty_unlocked')==='yes'){document.getElementById('lock-screen').style.display='none';document.getElementById('book-content').style.display='block';}
+</script>
+</body>
+</html>
+HTMLEOF

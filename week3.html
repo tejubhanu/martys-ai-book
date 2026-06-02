@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Marty's AI Adventure — Week 3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#185FA5;--blue-l:#E6F1FB;--blue-d:#042C53;--blue-m:#B5D4F4;
+  --purple:#7F77DD;--purple-l:#EEEDFE;--purple-d:#26215C;
+  --teal:#1D9E75;--teal-l:#E1F5EE;--teal-d:#085041;
+  --coral:#D85A30;--coral-l:#FAECE7;--coral-d:#4A1B0C;
+  --amber:#BA7517;--amber-l:#FAEEDA;--amber-d:#633806;
+  --green:#3B6D11;--green-l:#EAF3DE;--green-d:#173404;
+  --pink:#D4537E;--pink-l:#FBEAF0;--pink-d:#4B1528;
+  --bg:#F5F3EE;--white:#fff;--text:#1a1a1a;--muted:#555;
+  --r:14px;--rs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.7}
+#lock-screen{position:fixed;inset:0;z-index:9999;background:linear-gradient(155deg,#dbeeff 0%,#e6f1fb 40%,#f0f7ff 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center}
+#lock-screen .lock-robot{font-size:72px;animation:bob 2.5s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+#lock-screen h1{font-family:'Fredoka One',cursive;font-size:32px;color:var(--blue-d);margin:10px 0 4px}
+#lock-screen p{font-size:14px;font-weight:700;color:var(--blue);margin-bottom:28px}
+.lock-box{background:white;border-radius:var(--r);padding:24px 28px;width:100%;max-width:320px;border:2px dashed var(--blue)}
+.lock-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--blue);margin-bottom:10px}
+.lock-box input{width:100%;padding:12px 16px;border-radius:var(--rs);border:2px solid var(--blue-m);font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;text-align:center;letter-spacing:4px;outline:none;color:var(--blue-d);background:var(--blue-l);margin-bottom:12px;transition:border-color .2s}
+.lock-box input:focus{border-color:var(--blue)}
+.lock-box button{width:100%;padding:13px;background:var(--blue);color:white;border:none;border-radius:var(--rs);font-family:'Fredoka One',cursive;font-size:18px;cursor:pointer;letter-spacing:.5px;transition:opacity .15s,transform .1s}
+.lock-box button:active{transform:scale(.97)}
+.lock-err{font-size:13px;font-weight:800;color:var(--coral);margin-top:10px;min-height:18px;opacity:0;transition:opacity .2s}
+.lock-err.show{opacity:1}
+#book-content{display:none}
+.nav{position:sticky;top:0;z-index:100;background:rgba(245,243,238,.93);backdrop-filter:blur(10px);border-bottom:1px solid #e0ddd5;padding:10px 16px;display:flex;align-items:center;gap:10px}
+.nav-back{font-size:13px;font-weight:800;color:var(--blue);text-decoration:none;display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;background:var(--blue-l)}
+.nav-title{font-family:'Fredoka One',cursive;font-size:16px;color:var(--blue-d);flex:1;text-align:center}
+.ch-dots{display:flex;gap:5px;flex-wrap:wrap}
+.ch-dot{width:9px;height:9px;border-radius:50%;background:#ddd;border:none;padding:0;cursor:pointer;transition:background .2s,transform .15s}
+.ch-dot.active{background:var(--blue);transform:scale(1.25)}
+.ch-dot.done{background:var(--blue-m)}
+.cover{min-height:100svh;background:linear-gradient(155deg,#c8dffa 0%,#e6f1fb 40%,#f5f9ff 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center;position:relative;overflow:hidden}
+.cover::before{content:'👁️';font-size:180px;position:absolute;top:-20px;right:-20px;opacity:.07;transform:rotate(15deg);pointer-events:none}
+.cover-badge{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--blue);background:rgba(255,255,255,.7);padding:5px 16px;border-radius:20px;margin-bottom:16px;border:1px solid var(--blue-m)}
+.cover-icon{font-size:80px;margin-bottom:12px;animation:bob 2.5s ease-in-out infinite}
+.cover-title{font-family:'Fredoka One',cursive;font-size:42px;color:var(--blue-d);line-height:1.1;margin-bottom:8px}
+.cover-sub{font-size:17px;font-weight:700;color:var(--blue);margin-bottom:28px}
+.cover-name{background:white;border-radius:var(--r);padding:16px 32px;margin-bottom:32px;border:2px dashed var(--blue)}
+.cover-name p{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--blue);margin-bottom:2px}
+.cover-name .name{font-family:'Fredoka One',cursive;font-size:30px;color:var(--blue-d)}
+.toc{background:white;border-radius:var(--r);padding:18px 22px;width:100%;max-width:420px;text-align:left}
+.toc h3{font-family:'Fredoka One',cursive;font-size:17px;color:var(--blue-d);margin-bottom:10px}
+.toc-item{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px dashed var(--blue-m);font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;transition:color .15s}
+.toc-item:last-child{border:none}
+.toc-item:hover{color:var(--blue-d)}
+.toc-num{width:22px;height:22px;background:var(--blue-l);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--blue-d);flex-shrink:0}
+.chapter{background:white;margin:16px 12px;border-radius:20px;padding:28px 22px;box-shadow:0 2px 16px rgba(0,0,0,.05);scroll-margin-top:64px}
+.ch-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:22px;padding-bottom:18px;border-bottom:2px solid var(--bg)}
+.ch-icon{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.ch-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:3px}
+.ch-title{font-family:'Fredoka One',cursive;font-size:26px;line-height:1.15}
+.ch-sub{font-size:13px;font-weight:700;margin-top:2px;color:var(--muted)}
+.intro{border-radius:var(--r);padding:14px 18px;margin-bottom:20px;font-size:14px;font-weight:700;line-height:1.65}
+.sec-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:18px 0 8px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:18px}
+.card{border-radius:var(--r);border:1.5px solid #ebebeb;padding:14px 15px;background:white}
+.card-hd{display:flex;align-items:center;gap:7px;margin-bottom:9px}
+.card-ico{font-size:20px}.card-lbl{font-family:'Fredoka One',cursive;font-size:15px}
+.fl{list-style:none;display:flex;flex-direction:column;gap:6px}
+.fl li{display:flex;gap:7px;font-size:12.5px;color:var(--muted);line-height:1.45;font-weight:700;align-items:flex-start}
+.dot{width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.wow{border-radius:var(--r);padding:13px 16px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start}
+.wow-e{font-size:22px;flex-shrink:0;margin-top:2px}.wow-t{font-size:13px;font-weight:700;line-height:1.55}
+.body-t{font-size:13.5px;font-weight:700;color:var(--muted);line-height:1.7;margin-bottom:13px}
+.vocab{border-radius:var(--r);padding:13px 16px;margin-bottom:18px}
+.vocab-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
+.vitem{display:flex;gap:8px;margin-bottom:5px;font-size:13px;line-height:1.4}
+.vw{font-weight:800;min-width:110px;flex-shrink:0}.vd{color:var(--muted);font-weight:700}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.mini{border-radius:var(--rs);padding:11px 12px;font-size:12px;font-weight:700;text-align:center;line-height:1.45}
+.mini .mi{font-size:22px;margin-bottom:5px}
+.two-fact{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.fc{border-radius:var(--rs);padding:11px 13px}
+.fc-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.fc-t{font-size:12.5px;font-weight:700;line-height:1.45}
+.divider{height:1px;background:#eee;margin:14px 0}
+.recap-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px}
+.rc{border-radius:var(--rs);padding:11px 13px;font-size:12px;font-weight:700;color:var(--muted);line-height:1.45}
+.rc-n{font-family:'Fredoka One',cursive;font-size:13px;margin-bottom:2px}
+.rc-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px}
+.quiz-wrap{background:var(--bg);border-radius:var(--r);padding:16px 18px;margin-bottom:18px}
+.quiz-h{font-family:'Fredoka One',cursive;font-size:17px;margin-bottom:14px}
+.quiz-q{font-size:13.5px;font-weight:800;margin-bottom:8px}
+.quiz-opts{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
+.qopt{display:flex;align-items:center;gap:9px;background:white;border:1.5px solid #e0ddd5;border-radius:var(--rs);padding:10px 13px;font-size:13px;font-weight:700;color:var(--text);cursor:pointer;transition:all .18s;text-align:left;width:100%;font-family:'Nunito',sans-serif;-webkit-appearance:none}
+.qopt:active{transform:scale(.98)}
+.qopt .olet{width:22px;height:22px;border-radius:50%;border:2px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;transition:all .2s;color:transparent}
+.qopt.selected-correct{background:var(--teal-l);border-color:var(--teal)}
+.qopt.selected-correct .olet{background:var(--teal);border-color:var(--teal);color:white}
+.qopt.selected-wrong{background:#FCEBEB;border-color:#E24B4A}
+.qopt.selected-wrong .olet{background:#E24B4A;border-color:#E24B4A;color:white}
+.qopt.reveal-correct{background:var(--teal-l);border-color:var(--teal)}
+.qopt.reveal-correct .olet{background:var(--teal);border-color:var(--teal);color:white}
+.qopt:disabled{cursor:default}
+.quiz-ans{font-size:12.5px;font-weight:700;padding:9px 12px;border-radius:var(--rs);margin-top:4px;display:none;line-height:1.5}
+.quiz-ans.show{display:block}
+.stars-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.star-b{display:inline-flex;align-items:center;gap:5px;background:var(--amber-l);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:800;color:var(--amber-d)}
+.activity{border-radius:var(--r);border:2px dashed var(--blue);padding:16px 18px;margin-bottom:18px;background:var(--blue-l)}
+.act-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--blue);margin-bottom:3px}
+.act-title{font-family:'Fredoka One',cursive;font-size:19px;color:var(--blue-d);margin-bottom:12px}
+.step{display:flex;gap:9px;margin-bottom:8px;align-items:flex-start}
+.sn{width:22px;height:22px;border-radius:50%;background:var(--blue);color:white;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.st{font-size:13px;font-weight:700;color:var(--blue-d);line-height:1.5}
+.dad-tip{background:white;border-radius:var(--rs);padding:9px 13px;margin-top:10px;font-size:12px;font-weight:700;color:var(--blue-d);border-left:3px solid var(--blue);line-height:1.5}
+.cert{border:3px dashed var(--blue);border-radius:var(--r);padding:28px 20px;text-align:center;background:var(--blue-l);margin-bottom:18px}
+.cert-e{font-size:44px;margin-bottom:8px}
+.cert-title{font-family:'Fredoka One',cursive;font-size:24px;color:var(--blue-d);margin-bottom:4px}
+.cert-sub{font-size:13px;font-weight:700;color:var(--blue);margin-bottom:14px}
+.cert-line{border-bottom:2px solid var(--blue);width:160px;margin:0 auto 4px}
+.cert-nl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--blue);margin-bottom:12px}
+.cert-txt{font-size:13px;font-weight:700;color:var(--blue-d);line-height:1.6}
+@media(max-width:420px){.two-col,.two-fact,.recap-grid{grid-template-columns:1fr}.three-col{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div id="lock-screen">
+  <div class="lock-robot">👁️</div>
+  <h1>Week 3 — AI That Sees & Hears</h1>
+  <p>Enter your secret password to unlock!</p>
+  <div class="lock-box">
+    <div class="lock-label">🔑 Secret Password</div>
+    <input type="password" id="pw-input" placeholder="••••••••" maxlength="20" onkeydown="if(event.key==='Enter')checkPw()"/>
+    <button onclick="checkPw()">Unlock Week 3 🚀</button>
+    <div class="lock-err" id="pw-error">Oops! Wrong password. Try again! 🤔</div>
+  </div>
+</div>
+<div id="book-content">
+<nav class="nav">
+  <a class="nav-back" href="index.html">← Library</a>
+  <div class="nav-title">👁️ Week 3</div>
+  <div class="ch-dots" id="dots"></div>
+</nav>
+<div class="cover" id="ch0">
+  <div class="cover-badge">Week 3 · Summer AI Adventure</div>
+  <div class="cover-icon">👁️</div>
+  <div class="cover-title">AI That Sees & Hears</div>
+  <div class="cover-sub">Computer vision, speech, and AI creativity</div>
+  <div class="cover-name"><p>This book belongs to</p><div class="name">Marty ⭐</div></div>
+  <div class="toc">
+    <h3>📚 10 Chapters Inside!</h3>
+    <div class="toc-item" onclick="goTo(1)"><div class="toc-num">1</div>How AI Sees Pictures</div>
+    <div class="toc-item" onclick="goTo(2)"><div class="toc-num">2</div>Face Recognition</div>
+    <div class="toc-item" onclick="goTo(3)"><div class="toc-num">3</div>AI & Videos</div>
+    <div class="toc-item" onclick="goTo(4)"><div class="toc-num">4</div>Talking to AI</div>
+    <div class="toc-item" onclick="goTo(5)"><div class="toc-num">5</div>AI That Reads Text</div>
+    <div class="toc-item" onclick="goTo(6)"><div class="toc-num">6</div>AI That Writes</div>
+    <div class="toc-item" onclick="goTo(7)"><div class="toc-num">7</div>AI That Makes Art</div>
+    <div class="toc-item" onclick="goTo(8)"><div class="toc-num">8</div>AI That Makes Music</div>
+    <div class="toc-item" onclick="goTo(9)"><div class="toc-num">9</div>Senses AI Doesn't Have</div>
+    <div class="toc-item" onclick="goTo(10)"><div class="toc-num">10</div>Week 3 Recap + Quiz!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch1">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--blue-l)">🖼️</div><div><div class="ch-tag" style="color:var(--blue)">Chapter 1</div><div class="ch-title">How AI Sees Pictures</div><div class="ch-sub">Pixels, colours, and how computers read images</div></div></div>
+  <div class="intro" style="background:var(--blue-l);color:var(--blue-d)">Hey Marty! 👁️ When you look at a photo of a cat, you instantly see a fluffy animal. But a computer just sees a giant grid of tiny coloured squares called PIXELS. Each pixel is just a number! Let's find out how computers turn those millions of numbers into understanding what's in a picture.</div>
+  <div class="sec-label">What a computer actually sees 🔢</div>
+  <div class="two-col">
+    <div class="card" style="border-top:3px solid var(--blue)"><div class="card-hd"><div class="card-ico">👤</div><div class="card-lbl">What YOU see</div></div><div class="body-t">A cute orange cat sitting on a blue mat. Instantly! Your brain figures it all out in a split second using everything you've ever learned about cats.</div></div>
+    <div class="card" style="border-top:3px solid var(--purple)"><div class="card-hd"><div class="card-ico">💻</div><div class="card-lbl">What AI sees</div></div><div class="body-t">255,128,0,255,127,1,254,129... Millions of numbers! Each one represents the brightness of Red, Green, and Blue in one tiny pixel.</div></div>
+  </div>
+  <div class="vocab" style="background:var(--blue-l)">
+    <div class="vocab-lbl" style="color:var(--blue)">🔤 Key words</div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">Pixel</div><div class="vd">The tiniest dot in a digital image — like one square in a mosaic</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">Resolution</div><div class="vd">How many pixels an image has — more pixels = sharper image</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">RGB</div><div class="vd">Red, Green, Blue — the three colour values that mix to make every colour on a screen</div></div>
+  </div>
+  <div class="wow" style="background:var(--amber-l)"><div class="wow-e">📸</div><div class="wow-t" style="color:var(--amber-d)">A photo on your iPad might have 12 MEGAPIXELS — that's 12 million pixels! Each pixel has 3 numbers (R, G, B), so the AI processes 36 million numbers just to "see" ONE photo. And it does this in milliseconds!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: What is a pixel?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q1a','A pixel is the tiniest dot in a digital image — zoom in really close on any screen and you\'ll see them!')"><div class="olet">A</div>A type of camera lens</button>
+      <button class="qopt" onclick="answer(this,true,'q1a','A pixel is the tiniest dot in a digital image — zoom in really close on any screen and you\'ll see them!')"><div class="olet">B</div>The tiniest dot in a digital image</button>
+      <button class="qopt" onclick="answer(this,false,'q1a','A pixel is the tiniest dot in a digital image — zoom in really close on any screen and you\'ll see them!')"><div class="olet">C</div>A number that represents colour</button>
+    </div>
+    <div class="quiz-ans" id="q1a" style="background:var(--blue-l);color:var(--blue-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🔬 Activity Time!</div>
+    <div class="act-title">See the Pixels!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Open any photo on your iPad.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Use two fingers to zoom in as far as you can go.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Can you see the tiny squares? Those are pixels! Each one is a single colour.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Now zoom out — your brain magically blends them all into a picture. AI has to do that with maths!</div></div>
+    <div class="dad-tip">💡 Try a photo with a bright coloured area — like a rainbow or a sunset. Zoomed in, you can really see the pixel grid clearly!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch2">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--purple-l)">😀</div><div><div class="ch-tag" style="color:var(--purple)">Chapter 2</div><div class="ch-title">Face Recognition</div><div class="ch-sub">How your iPad knows it's YOU</div></div></div>
+  <div class="intro" style="background:var(--purple-l);color:var(--purple-d)">Every time you pick up your iPad and it unlocks — that's AI! Face ID uses a tiny dot projector that shoots 30,000 invisible dots at your face, creates a 3D map, and checks it against the stored map of your face. All in less than a second. Let's explore how this amazing technology works!</div>
+  <div class="two-col">
+    <div class="card"><div class="card-hd"><div class="card-ico">📡</div><div class="card-lbl">Step 1: Scan</div></div><div class="body-t">30,000 tiny infrared dots are projected onto your face, creating a detailed 3D depth map.</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">🗺️</div><div class="card-lbl">Step 2: Map</div></div><div class="body-t">The depth map captures the unique shape of YOUR face — distance between your eyes, nose depth, jaw shape.</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">🔢</div><div class="card-lbl">Step 3: Math</div></div><div class="body-t">Your face is converted to a mathematical pattern — a unique "face signature" stored securely.</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">✅</div><div class="card-lbl">Step 4: Match</div></div><div class="body-t">AI compares today's face signature to the stored one. Close enough? Unlock! Doesn't match? Stay locked.</div></div>
+  </div>
+  <div class="wow" style="background:var(--teal-l)"><div class="wow-e">🔒</div><div class="wow-t" style="color:var(--teal-d)">PRIVACY FACT: Your face data never leaves your device! It's stored in a special secure chip called the Secure Enclave — not in the cloud, not on Apple's servers. Even Apple can't see your face map. Pretty cool security design!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: How does Face ID actually recognise your face?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q2a','Face ID uses 30,000 infrared dots to create a 3D depth map — it\'s much more than just a photo!')"><div class="olet">A</div>It takes a photo and compares colours</button>
+      <button class="qopt" onclick="answer(this,true,'q2a','Face ID uses 30,000 infrared dots to create a 3D depth map — it\'s much more than just a photo!')"><div class="olet">B</div>It projects invisible dots to create a 3D map of your face shape</button>
+      <button class="qopt" onclick="answer(this,false,'q2a','Face ID uses 30,000 infrared dots to create a 3D depth map — it\'s much more than just a photo!')"><div class="olet">C</div>It scans your eyes like a retina scanner</button>
+    </div>
+    <div class="quiz-ans" id="q2a" style="background:var(--purple-l);color:var(--purple-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">📸 Activity Time!</div>
+    <div class="act-title">Test Face ID!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Try to unlock your iPad with your face in different conditions — normal lighting, dim light, wearing sunglasses.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">What still works? What confuses it?</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Ask a family member to try unlocking it. Does it work for them?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Why do you think it works in the dark? (Hint: infrared light is invisible to humans but not to sensors!)</div></div>
+    <div class="dad-tip">💡 Infrared light works in the dark — that's why Face ID works even when the room is pitch black. This is a great "wow" moment for kids!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch3">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--teal-l)">🎥</div><div><div class="ch-tag" style="color:var(--teal)">Chapter 3</div><div class="ch-title">AI & Videos</div><div class="ch-sub">How AI understands moving pictures</div></div></div>
+  <div class="intro" style="background:var(--teal-l);color:var(--teal-d)">A video is just thousands of photos played really fast — typically 24 to 60 photos (frames) every single second! To understand a video, AI has to process each frame AND understand how things move and change over time. That's MUCH harder than just looking at one picture!</div>
+  <div class="two-fact">
+    <div class="fc" style="background:var(--blue-l)"><div class="fc-lbl" style="color:var(--blue)">Video = many photos</div><div class="fc-t" style="color:var(--blue-d)">30 frames per second × 60 seconds = 1,800 images in just one minute of video!</div></div>
+    <div class="fc" style="background:var(--teal-l)"><div class="fc-lbl" style="color:var(--teal)">AI watches for changes</div><div class="fc-t" style="color:var(--teal-d)">It notices what moved, what appeared, what disappeared — not just what's there.</div></div>
+    <div class="fc" style="background:var(--purple-l)"><div class="fc-lbl" style="color:var(--purple)">Action recognition</div><div class="fc-t" style="color:var(--purple-d)">AI can tell if someone is running, dancing, falling — just from analysing movement patterns.</div></div>
+    <div class="fc" style="background:var(--amber-l)"><div class="fc-lbl" style="color:var(--amber)">Real uses today</div><div class="fc-t" style="color:var(--amber-d)">Security cameras, self-driving cars, sports analysis, film special effects!</div></div>
+  </div>
+  <div class="wow" style="background:var(--amber-l)"><div class="wow-e">🎬</div><div class="wow-t" style="color:var(--amber-d)">MOVIE MAGIC: When you watch a superhero movie and a character flies through a city, AI is doing a LOT of work! It tracks real actors, replaces backgrounds, adds digital characters, and makes everything look real — all by analysing thousands of video frames!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: A 1-minute video at 30 frames per second has how many frames for AI to analyse?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q3a','30 frames × 60 seconds = 1,800 frames! That\'s why video AI needs such powerful computers.')"><div class="olet">A</div>30 frames</button>
+      <button class="qopt" onclick="answer(this,false,'q3a','30 frames × 60 seconds = 1,800 frames! That\'s why video AI needs such powerful computers.')"><div class="olet">B</div>300 frames</button>
+      <button class="qopt" onclick="answer(this,true,'q3a','30 frames × 60 seconds = 1,800 frames! That\'s why video AI needs such powerful computers.')"><div class="olet">C</div>1,800 frames</button>
+    </div>
+    <div class="quiz-ans" id="q3a" style="background:var(--teal-l);color:var(--teal-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎥 Activity Time!</div>
+    <div class="act-title">Slow-Mo Video Exploration!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Open the Camera app on your iPad and switch to Slow-Mo mode.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Record something fast — a ball bouncing, water splashing, or clapping hands.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Play it back and watch in slow motion. You can now see what AI sees — individual moments!</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">This is how AI "breaks down" motion to understand what's happening frame by frame.</div></div>
+    <div class="dad-tip">💡 Slow motion captures 240 frames per second — 8x more than normal video. This is literally what AI processing feels like — seeing every tiny moment in detail!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch4">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--amber-l)">🎙️</div><div><div class="ch-tag" style="color:var(--amber)">Chapter 4</div><div class="ch-title">Talking to AI</div><div class="ch-sub">How Siri hears and understands you</div></div></div>
+  <div class="intro" style="background:var(--amber-l);color:var(--amber-d)">When you say "Hey Siri!" your voice travels as invisible waves through the air, gets captured by a tiny microphone, turned into numbers, and sent to an AI that figures out what you said AND what you meant. All in under a second. Let's break down this incredible journey!</div>
+  <div class="two-col">
+    <div class="card"><div class="card-hd"><div class="card-ico">🌊</div><div class="card-lbl">Sound waves</div></div><div class="body-t">Your voice creates invisible pressure waves in the air — like ripples on a pond. The microphone detects these vibrations.</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">🔢</div><div class="card-lbl">Digitising</div></div><div class="body-t">The waves become numbers — thousands of measurements per second. This is called "sampling."</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">🗣️</div><div class="card-lbl">Speech recognition</div></div><div class="body-t">AI matches the sound patterns to words it learned from millions of hours of human speech recordings.</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">🧠</div><div class="card-lbl">Understanding</div></div><div class="body-t">A second AI figures out what the words MEAN — "set a timer for 5 minutes" vs "what's the weather like today?"</div></div>
+  </div>
+  <div class="wow" style="background:var(--blue-l)"><div class="wow-e">🌍</div><div class="wow-t" style="color:var(--blue-d)">AI assistants like Siri can now understand over 20 different languages! To learn each language, the AI studied thousands of hours of speech from native speakers. Learning English alone required listening to more hours of speech than a human could hear in several lifetimes!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: When you speak to Siri, what does the microphone convert your voice into first?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q4a','Sound waves get converted to numbers first — that\'s how all digital devices store and process sound!')"><div class="olet">A</div>Text that AI can read</button>
+      <button class="qopt" onclick="answer(this,true,'q4a','Sound waves get converted to numbers first — that\'s how all digital devices store and process sound!')"><div class="olet">B</div>Numbers representing the sound waves</button>
+      <button class="qopt" onclick="answer(this,false,'q4a','Sound waves get converted to numbers first — that\'s how all digital devices store and process sound!')"><div class="olet">C</div>A recording stored in memory</button>
+    </div>
+    <div class="quiz-ans" id="q4a" style="background:var(--amber-l);color:var(--amber-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎙️ Activity Time!</div>
+    <div class="act-title">Test Siri with Funny Questions!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Ask Siri some tricky questions — see if it understands accents, whispers, or funny voices!</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Try whispering — does it still work?</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Try saying the same thing in different ways. Does Siri always understand?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">When does it get confused? That tells you where AI speech recognition still struggles!</div></div>
+    <div class="dad-tip">💡 Try: "Set a timer for two minutes" then "Set a timer for 2 minutes" — does it handle both? Testing AI's limits is a great way to understand how it works!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch5">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--green-l)">📖</div><div><div class="ch-tag" style="color:var(--green)">Chapter 5</div><div class="ch-title">AI That Reads Text</div><div class="ch-sub">How AI understands words and sentences</div></div></div>
+  <div class="intro" style="background:var(--green-l);color:var(--green-d)">Reading is HARD — even for humans! Think about how many years it took you to learn to read. AI had to learn the same thing — but it did it by reading billions of books, websites, and articles. Now it can understand sentences, answer questions, and even translate languages. Let's see how!</div>
+  <div class="vocab" style="background:var(--purple-l)">
+    <div class="vocab-lbl" style="color:var(--purple)">🔤 Key words</div>
+    <div class="vitem"><div class="vw" style="color:var(--purple-d)">NLP</div><div class="vd">Natural Language Processing — the science of teaching AI to understand human language</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--purple-d)">Token</div><div class="vd">A chunk of text (usually a word or part of a word) that AI processes one piece at a time</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--purple-d)">Context</div><div class="vd">Understanding meaning based on surrounding words — "bat" means different things in baseball vs. nature!</div></div>
+  </div>
+  <div class="three-col">
+    <div class="mini" style="background:var(--blue-l)"><div class="mi">🔍</div><div style="font-weight:800;color:var(--blue-d);margin-bottom:3px">Search engines</div><div style="color:var(--blue);font-size:11px">Understand what you're really looking for</div></div>
+    <div class="mini" style="background:var(--teal-l)"><div class="mi">🌍</div><div style="font-weight:800;color:var(--teal-d);margin-bottom:3px">Translators</div><div style="color:var(--teal);font-size:11px">Convert text between 100+ languages instantly</div></div>
+    <div class="mini" style="background:var(--amber-l)"><div class="mi">📧</div><div style="font-weight:800;color:var(--amber-d);margin-bottom:3px">Email filters</div><div style="color:var(--amber);font-size:11px">Read emails to spot spam and sort your inbox</div></div>
+  </div>
+  <div class="wow" style="background:var(--green-l)"><div class="wow-e">🔮</div><div class="wow-t" style="color:var(--green-d)">AUTOCOMPLETE MAGIC: When you type on your iPad, it suggests the next word. That's AI reading what you've written and predicting what comes next! It learned this by studying billions of sentences and noticing which words usually follow other words. It's like a very smart "fill in the blank" game!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: What does "context" mean for AI language understanding?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q5a','Context means understanding words based on the words around them — "I caught a bat" means something very different in a baseball game vs. a cave!')"><div class="olet">A</div>The size of the text</div></button>
+      <button class="qopt" onclick="answer(this,true,'q5a','Context means understanding words based on the words around them — "I caught a bat" means something very different in a baseball game vs. a cave!')"><div class="olet">B</div>Understanding meaning based on the surrounding words</button>
+      <button class="qopt" onclick="answer(this,false,'q5a','Context means understanding words based on the words around them — "I caught a bat" means something very different in a baseball game vs. a cave!')"><div class="olet">C</div>The language the text is written in</button>
+    </div>
+    <div class="quiz-ans" id="q5a" style="background:var(--green-l);color:var(--green-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🔮 Activity Time!</div>
+    <div class="act-title">Autocomplete Guessing Game!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Open Notes or Messages on your iPad.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Start typing a sentence slowly. Before you type each word, PREDICT what the autocomplete will suggest.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Were you right? Keep tapping the first autocomplete suggestion and see what sentence the AI "writes."</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">The AI sentence might not make sense — why? Because it only predicts one word at a time without planning the whole sentence!</div></div>
+    <div class="dad-tip">💡 This reveals a real limitation of simple AI — it's very good at "what word usually comes next" but can lose track of the overall meaning. Advanced AI like ChatGPT is trained to plan whole responses, not just one word at a time.</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch6">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--coral-l)">✍️</div><div><div class="ch-tag" style="color:var(--coral)">Chapter 6</div><div class="ch-title">AI That Writes</div><div class="ch-sub">Stories, essays, and where AI creativity comes from</div></div></div>
+  <div class="intro" style="background:var(--coral-l);color:var(--coral-d)">AI can now write stories, poems, essays, jokes, and even code! Tools like ChatGPT have read so much human writing that they can produce text that sounds just like a person wrote it. But does AI really understand what it's writing? Or is it just a very sophisticated "fill in the blank" machine? Let's explore!</div>
+  <div class="two-col">
+    <div class="card" style="border-top:3px solid var(--coral)"><div class="card-hd"><div class="card-ico">✅</div><div class="card-lbl">What AI writing is good at</div></div><ul class="fl"><li><div class="dot" style="background:var(--coral)"></div>Following a structure (beginning, middle, end)</li><li><div class="dot" style="background:var(--coral)"></div>Writing in different styles (formal, funny, poetic)</li><li><div class="dot" style="background:var(--coral)"></div>Generating ideas quickly</li><li><div class="dot" style="background:var(--coral)"></div>Summarising long texts</li></ul></div>
+    <div class="card" style="border-top:3px solid var(--teal)"><div class="card-hd"><div class="card-ico">⚠️</div><div class="card-lbl">What AI writing struggles with</div></div><ul class="fl"><li><div class="dot" style="background:var(--teal)"></div>Always being 100% accurate and truthful</li><li><div class="dot" style="background:var(--teal)"></div>Personal experiences it has never had</li><li><div class="dot" style="background:var(--teal)"></div>Truly original ideas (everything is based on training data)</li><li><div class="dot" style="background:var(--teal)"></div>Knowing when it's wrong</li></ul></div>
+  </div>
+  <div class="wow" style="background:var(--purple-l)"><div class="wow-e">🤖</div><div class="wow-t" style="color:var(--purple-d)">YOUR voice matters! AI writing is trained on human writing — which means YOUR creativity, YOUR stories, and YOUR unique way of seeing the world are things AI can never replace. AI is a tool that helps you write MORE — but the truly original spark always starts with a human brain like yours!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: When AI writes a story, where does its "creativity" come from?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q6a','AI generates text based on patterns from training data — it blends and recombines things humans already wrote!')"><div class="olet">A</div>It invents completely new ideas</button>
+      <button class="qopt" onclick="answer(this,true,'q6a','AI generates text based on patterns from training data — it blends and recombines things humans already wrote!')"><div class="olet">B</div>Patterns learned from billions of stories humans already wrote</button>
+      <button class="qopt" onclick="answer(this,false,'q6a','AI generates text based on patterns from training data — it blends and recombines things humans already wrote!')"><div class="olet">C</div>A human programmer writes it secretly</button>
+    </div>
+    <div class="quiz-ans" id="q6a" style="background:var(--coral-l);color:var(--coral-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">✍️ Activity Time!</div>
+    <div class="act-title">Co-Write a Story with AI!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Marty writes the opening sentence of a story — make it exciting!</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Ask AI (Dad types it into ChatGPT or similar) to continue the story for 2 sentences.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Marty adds 2 more sentences, then AI adds 2, back and forth.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Read the finished story! Who came up with the most creative parts — Marty or the AI?</div></div>
+    <div class="dad-tip">💡 This is a beautiful way to show AI as a creative partner, not a replacement. Marty's opening sentence will likely be more imaginative than AI's — because it comes from HIS unique experiences!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch7">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--pink-l)">🎨</div><div><div class="ch-tag" style="color:var(--pink)">Chapter 7</div><div class="ch-title">AI That Makes Art</div><div class="ch-sub">How AI generates images and what it means for artists</div></div></div>
+  <div class="intro" style="background:var(--pink-l);color:var(--pink-d)">Tools like DALL-E and Midjourney can turn your words into pictures! Type "a robot reading a book on the moon" and within seconds, AI creates an image that's never existed before. How is this possible? And is it really "art" if a machine made it? Let's dive in!</div>
+  <div class="vocab" style="background:var(--blue-l)">
+    <div class="vocab-lbl" style="color:var(--blue)">🔤 New words</div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">Prompt</div><div class="vd">The description you type to tell AI what image to create</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">Diffusion</div><div class="vd">The process AI uses — it starts with random noise and slowly "clears" it into an image</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">Generative AI</div><div class="vd">AI that creates NEW content — images, text, music, video</div></div>
+  </div>
+  <div class="wow" style="background:var(--pink-l)"><div class="wow-e">🖌️</div><div class="wow-t" style="color:var(--pink-d)">HOW IT WORKS: AI image generators learned from hundreds of millions of images and their descriptions. When you type "sunset over mountains," it recalls all the visual patterns associated with those words and combines them. It's like a super-powered collage artist who has seen every painting ever made!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: What is a "prompt" when using AI art tools?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q7a','A prompt is your text description — the instructions you give the AI for what to draw!')"><div class="olet">A</div>A type of paintbrush used by AI</button>
+      <button class="qopt" onclick="answer(this,true,'q7a','A prompt is your text description — the instructions you give the AI for what to draw!')"><div class="olet">B</div>The text description you type to tell AI what to create</button>
+      <button class="qopt" onclick="answer(this,false,'q7a','A prompt is your text description — the instructions you give the AI for what to draw!')"><div class="olet">C</div>A button that starts the art generation</button>
+    </div>
+    <div class="quiz-ans" id="q7a" style="background:var(--pink-l);color:var(--pink-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎨 Activity Time!</div>
+    <div class="act-title">Create AI Art Together!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Marty: think of the most creative, detailed image you can imagine. Write it down!</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Dad: type Marty's description into an AI art tool (try Adobe Firefly at firefly.adobe.com — free and kid-safe).</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Look at what comes out! Is it what Marty imagined? What's different?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Try tweaking the prompt — add words like "watercolour style" or "bright colours" and see how it changes!</div></div>
+    <div class="dad-tip">💡 Adobe Firefly is specifically designed to be ethical — it only trained on licensed images. It's also free to try without signing up. Perfect for kids!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch8">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--purple-l)">🎵</div><div><div class="ch-tag" style="color:var(--purple)">Chapter 8</div><div class="ch-title">AI That Makes Music</div><div class="ch-sub">How AI composes and why music has patterns</div></div></div>
+  <div class="intro" style="background:var(--purple-l);color:var(--purple-d)">Music is pure pattern! Rhythms, melodies, harmonies — they're all mathematical patterns that follow rules. And if there's one thing AI is amazing at, it's finding and reproducing patterns! Today AI can compose entire songs, create background music, and even match music to your mood. Let's explore!</div>
+  <div class="two-col">
+    <div class="card"><div class="card-hd"><div class="card-ico">🎼</div><div class="card-lbl">Music = patterns</div></div><div class="body-t">A beat repeats every few seconds. Melodies follow scales. Chords follow progressions. AI learns all these rules from analysing millions of songs.</div></div>
+    <div class="card"><div class="card-hd"><div class="card-ico">🤖</div><div class="card-lbl">AI composing</div></div><div class="body-t">AI can generate music in any style — classical, pop, jazz. It picks notes, rhythms, and instruments based on patterns it learned from human composers.</div></div>
+  </div>
+  <div class="wow" style="background:var(--amber-l)"><div class="wow-e">🎸</div><div class="wow-t" style="color:var(--amber-d)">REAL EXAMPLE: Spotify uses AI to create personalised playlists for every single listener. It analyses what songs you've played, when you skipped, how long you listened, and even what time of day — then creates a playlist it predicts you'll love. Over 600 million people use it every day!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: Why is music especially easy for AI to work with?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,true,'q8a','Music is full of mathematical patterns — beats, scales, chord progressions. AI excels at learning and reproducing patterns!')"><div class="olet">A</div>Because music is made of patterns that follow mathematical rules</button>
+      <button class="qopt" onclick="answer(this,false,'q8a','Music is full of mathematical patterns — beats, scales, chord progressions. AI excels at learning and reproducing patterns!')"><div class="olet">B</div>Because sounds are easier to process than images</button>
+      <button class="qopt" onclick="answer(this,false,'q8a','Music is full of mathematical patterns — beats, scales, chord progressions. AI excels at learning and reproducing patterns!')"><div class="olet">C</div>Because musicians taught the AI directly</button>
+    </div>
+    <div class="quiz-ans" id="q8a" style="background:var(--purple-l);color:var(--purple-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎵 Activity Time!</div>
+    <div class="act-title">Explore Chrome Music Lab!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Go to musiclab.chromeexperiments.com on your iPad (no app needed, just Safari!).</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Try the "Song Maker" — create a melody by tapping the grid.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Notice how the coloured squares create a visual pattern that matches the musical pattern!</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">AI sees music EXACTLY like this — as a grid of patterns. You're seeing through AI's eyes!</div></div>
+    <div class="dad-tip">💡 Chrome Music Lab is made by Google and is completely free, kid-friendly, and works in Safari on iPad. The visual representation of music as a grid is literally how AI processes audio — this activity makes that concept concrete!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch9">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--coral-l)">👃</div><div><div class="ch-tag" style="color:var(--coral)">Chapter 9</div><div class="ch-title">Senses AI Doesn't Have (Yet!)</div><div class="ch-sub">Touch, smell, taste — still a huge challenge</div></div></div>
+  <div class="intro" style="background:var(--coral-l);color:var(--coral-d)">AI has gotten amazing at seeing, hearing, and reading. But what about your other senses? Imagine trying to teach a computer what "warm" feels like, or what the smell of rain is like, or how pineapple on pizza tastes! These are things AI still struggles HUGELY with. Your senses give you superpowers AI doesn't have!</div>
+  <div class="two-col">
+    <div class="card" style="border-top:3px solid var(--teal)"><div class="card-hd"><div class="card-ico">✅</div><div class="card-lbl">AI is great at</div></div><ul class="fl"><li><div class="dot" style="background:var(--teal)"></div>Seeing (computer vision)</li><li><div class="dot" style="background:var(--teal)"></div>Hearing (speech recognition)</li><li><div class="dot" style="background:var(--teal)"></div>Reading (natural language)</li><li><div class="dot" style="background:var(--teal)"></div>Detecting some physical sensors</li></ul></div>
+    <div class="card" style="border-top:3px solid var(--coral)"><div class="card-hd"><div class="card-ico">😓</div><div class="card-lbl">AI struggles with</div></div><ul class="fl"><li><div class="dot" style="background:var(--coral)"></div>Touch — feeling texture, temperature, pain</li><li><div class="dot" style="background:var(--coral)"></div>Smell — identifying and describing scents</li><li><div class="dot" style="background:var(--coral)"></div>Taste — understanding flavour combinations</li><li><div class="dot" style="background:var(--coral)"></div>Emotional gut feelings and intuition</li></ul></div>
+  </div>
+  <div class="wow" style="background:var(--green-l)"><div class="wow-e">👃</div><div class="wow-t" style="color:var(--green-d)">SCIENTISTS ARE WORKING ON IT: Researchers have built "electronic noses" that can detect certain smells using chemical sensors. They're used to detect gas leaks, check food freshness, and even spot some diseases! But describing WHAT a smell is like, the way you can, is still incredibly hard for machines.</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q1: Which of these can current AI do best?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,true,'q9a','Vision and speech recognition are the most advanced AI senses today — touch, smell, and taste are still extremely difficult!')"><div class="olet">A</div>Recognise a face in a photo</button>
+      <button class="qopt" onclick="answer(this,false,'q9a','Vision and speech recognition are the most advanced AI senses today — touch, smell, and taste are still extremely difficult!')"><div class="olet">B</div>Tell you what food tastes like</button>
+      <button class="qopt" onclick="answer(this,false,'q9a','Vision and speech recognition are the most advanced AI senses today — touch, smell, and taste are still extremely difficult!')"><div class="olet">C</div>Feel if something is hot or cold</button>
+    </div>
+    <div class="quiz-ans" id="q9a" style="background:var(--coral-l);color:var(--coral-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">👃 Activity Time!</div>
+    <div class="act-title">Blindfold Smell Test — Can AI Do This?</div>
+    <div class="step"><div class="sn">1</div><div class="st">Collect 5 things with strong scents — orange peel, coffee, soap, cinnamon, vanilla extract.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Marty closes his eyes. Dad holds each one under his nose. Can Marty identify them all?</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Marty will probably get most right! Now think: how would you teach a robot to do this?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Could you describe the smell in enough words for a robot to learn it? This is exactly why smell AI is so hard!</div></div>
+    <div class="dad-tip">💡 Smell is deeply connected to memory and emotion in humans — that's partly why it's so hard to separate from experience and teach to a machine. Great conversation about what makes human senses special!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch10">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--amber-l)">🏆</div><div><div class="ch-tag" style="color:var(--amber)">Chapter 10</div><div class="ch-title">Week 3 Recap + Quiz!</div><div class="ch-sub">Review everything and celebrate! 🎉</div></div></div>
+  <div class="intro" style="background:var(--amber-l);color:var(--amber-d)">Amazing work, Marty! 👁️ This week you explored ALL the ways AI can sense and understand the world — from seeing pixels to hearing voices, from reading words to making art and music! Let's review and take the big quiz!</div>
+  <div class="sec-label">Everything you learned this week 📚</div>
+  <div class="recap-grid">
+    <div class="rc" style="background:var(--blue-l)"><div class="rc-n" style="color:var(--blue)">Ch 1</div><div class="rc-title">How AI Sees</div>Images are grids of pixels — millions of numbers that AI processes to understand what's in a photo.</div>
+    <div class="rc" style="background:var(--purple-l)"><div class="rc-n" style="color:var(--purple)">Ch 2</div><div class="rc-title">Face Recognition</div>30,000 dots create a 3D face map. Your face data never leaves your device!</div>
+    <div class="rc" style="background:var(--teal-l)"><div class="rc-n" style="color:var(--teal)">Ch 3</div><div class="rc-title">AI & Videos</div>Videos are thousands of frames — AI analyses movement and changes over time.</div>
+    <div class="rc" style="background:var(--amber-l)"><div class="rc-n" style="color:var(--amber)">Ch 4</div><div class="rc-title">Talking to AI</div>Voice → waves → numbers → words → meaning. All in under a second!</div>
+    <div class="rc" style="background:var(--green-l)"><div class="rc-n" style="color:var(--green)">Ch 5</div><div class="rc-title">AI Reads Text</div>NLP, context, autocomplete — AI learned language from billions of books and websites.</div>
+    <div class="rc" style="background:var(--coral-l)"><div class="rc-n" style="color:var(--coral)">Ch 6</div><div class="rc-title">AI Writes</div>Great at style and structure, but all "creativity" comes from patterns in human writing.</div>
+    <div class="rc" style="background:var(--pink-l)"><div class="rc-n" style="color:var(--pink)">Ch 7</div><div class="rc-title">AI Art</div>Describe it → AI creates it! Learned from millions of images and their descriptions.</div>
+    <div class="rc" style="background:var(--purple-l)"><div class="rc-n" style="color:var(--purple)">Ch 8</div><div class="rc-title">AI Music</div>Music is mathematical patterns — rhythm, melody, harmony. AI masters all of them!</div>
+    <div class="rc" style="background:var(--coral-l)"><div class="rc-n" style="color:var(--coral)">Ch 9</div><div class="rc-title">Missing Senses</div>Touch, smell, taste — AI still struggles hugely with these. Your senses are superpowers!</div>
+  </div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🏆 The BIG Week 3 Quiz!</div>
+    <div class="stars-row"><div class="star-b">⭐ 5 questions</div><div class="star-b">🎯 Tap to answer</div><div class="star-b">🏅 Aim for 5/5!</div></div>
+    <div class="quiz-q">Q1: What is a pixel?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,true,'bq1','Every digital image is made of millions of tiny coloured dots called pixels. Zoom in on any photo to see them!')"><div class="olet">A</div>The tiniest dot in a digital image</button>
+      <button class="qopt" onclick="answer(this,false,'bq1','Every digital image is made of millions of tiny coloured dots called pixels. Zoom in on any photo to see them!')"><div class="olet">B</div>A type of camera sensor</button>
+      <button class="qopt" onclick="answer(this,false,'bq1','Every digital image is made of millions of tiny coloured dots called pixels. Zoom in on any photo to see them!')"><div class="olet">C</div>A measurement of sound quality</button>
+    </div>
+    <div class="quiz-ans" id="bq1" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q2: How does your iPad's Face ID recognise you?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq2','Face ID projects 30,000 infrared dots to create a 3D depth map of your unique face shape!')"><div class="olet">A</div>It takes a colour photo and checks your eye colour</button>
+      <button class="qopt" onclick="answer(this,true,'bq2','Face ID projects 30,000 infrared dots to create a 3D depth map of your unique face shape!')"><div class="olet">B</div>It creates a 3D map of your face using 30,000 invisible dots</button>
+      <button class="qopt" onclick="answer(this,false,'bq2','Face ID projects 30,000 infrared dots to create a 3D depth map of your unique face shape!')"><div class="olet">C</div>It matches your face to a photo stored on Apple's servers</button>
+    </div>
+    <div class="quiz-ans" id="bq2" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q3: What is a "prompt" in AI art tools?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq3','A prompt is the text description you type to tell the AI what image to create — like giving it a drawing assignment!')"><div class="olet">A</div>The button that generates the art</button>
+      <button class="qopt" onclick="answer(this,false,'bq3','A prompt is the text description you type to tell the AI what image to create — like giving it a drawing assignment!')"><div class="olet">B</div>The artist who trains the AI</button>
+      <button class="qopt" onclick="answer(this,true,'bq3','A prompt is the text description you type to tell the AI what image to create — like giving it a drawing assignment!')"><div class="olet">C</div>The text description you type to tell AI what to create</button>
+    </div>
+    <div class="quiz-ans" id="bq3" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q4: Why is music easy for AI to learn?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,true,'bq4','Music follows mathematical patterns — beats, scales, chord progressions. AI is extraordinary at learning and recreating patterns!')"><div class="olet">A</div>Because music is made of mathematical patterns like rhythm and melody</button>
+      <button class="qopt" onclick="answer(this,false,'bq4','Music follows mathematical patterns — beats, scales, chord progressions. AI is extraordinary at learning and recreating patterns!')"><div class="olet">B</div>Because AI was invented by musicians</button>
+      <button class="qopt" onclick="answer(this,false,'bq4','Music follows mathematical patterns — beats, scales, chord progressions. AI is extraordinary at learning and recreating patterns!')"><div class="olet">C</div>Because all music sounds the same to computers</button>
+    </div>
+    <div class="quiz-ans" id="bq4" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q5: Which human sense is AI still WORST at handling?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq5','Smell and taste are still extremely difficult for AI — while vision and hearing have advanced hugely, chemical senses remain a big challenge!')"><div class="olet">A</div>Seeing images</button>
+      <button class="qopt" onclick="answer(this,false,'bq5','Smell and taste are still extremely difficult for AI — while vision and hearing have advanced hugely, chemical senses remain a big challenge!')"><div class="olet">B</div>Hearing speech</button>
+      <button class="qopt" onclick="answer(this,true,'bq5','Smell and taste are still extremely difficult for AI — while vision and hearing have advanced hugely, chemical senses remain a big challenge!')"><div class="olet">C</div>Smelling and tasting</button>
+    </div>
+    <div class="quiz-ans" id="bq5" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div id="score-reveal" style="display:none;margin-top:16px;padding:14px 16px;border-radius:var(--r);background:var(--blue-l);color:var(--blue-d);font-weight:800;font-size:15px;text-align:center"></div>
+  </div>
+  <div class="cert">
+    <div class="cert-e">🎓</div>
+    <div class="cert-title">Week 3 Complete!</div>
+    <div class="cert-sub">This certifies that</div>
+    <div class="cert-line"></div>
+    <div class="cert-nl">Marty</div>
+    <div class="cert-txt">has successfully completed<br>Week 3 of the AI Summer Adventure<br>and is now an official<br><strong>AI Senses Explorer! 👁️⭐</strong></div>
+  </div>
+  <div style="margin:0 0 8px;padding:14px 16px;background:var(--amber-l);border-radius:var(--r);text-align:center">
+    <div style="font-family:'Fredoka One',cursive;font-size:16px;color:var(--amber-d);margin-bottom:4px">Ready for Week 4? 🏗️</div>
+    <div style="font-size:13px;font-weight:700;color:var(--amber)">Next up: How AI is Built — code, neural networks, and the giant computers that power AI!</div>
+  </div>
+</div>
+</div>
+<script>
+const dots=document.getElementById('dots');
+for(let i=1;i<=10;i++){const d=document.createElement('button');d.className='ch-dot';d.setAttribute('aria-label','Chapter '+i);d.onclick=()=>goTo(i);dots.appendChild(d);}
+function goTo(n){document.getElementById('ch'+n).scrollIntoView({behavior:'smooth'})}
+const chapters=document.querySelectorAll('.chapter');
+const allDots=document.querySelectorAll('.ch-dot');
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const n=parseInt(e.target.id.replace('ch',''));if(!isNaN(n)&&n>=1&&n<=10)allDots.forEach((d,i)=>d.classList.toggle('active',i===n-1));}});},{threshold:0.3});
+chapters.forEach(c=>obs.observe(c));
+const answered={};const bigIds=['bq1','bq2','bq3','bq4','bq5'];let bigScore=0,bigAnswered=0;
+function answer(btn,correct,ansId,explanation){
+  if(answered[ansId])return;answered[ansId]=true;
+  const opts=btn.closest('.quiz-opts').querySelectorAll('.qopt');opts.forEach(o=>o.disabled=true);
+  btn.classList.add(correct?'selected-correct':'selected-wrong');
+  if(!correct){opts.forEach(o=>{const oc=o.getAttribute('onclick');if(oc&&oc.includes("true,'"+ansId+"'"))o.classList.add('reveal-correct');});}
+  const el=document.getElementById(ansId);el.textContent=(correct?'🌟 Correct! ':'🤔 Not quite — ')+explanation;el.classList.add('show');
+  if(bigIds.includes(ansId)){bigAnswered++;if(correct)bigScore++;if(bigAnswered===5){setTimeout(()=>{const rev=document.getElementById('score-reveal');const msgs=['Keep practising! 💪','Nice work! 🎉','You\'re getting it! 🚀','Almost perfect! 🌟','PERFECT SCORE! AI SENSES MASTER! 🏆👁️⭐'];rev.innerHTML='You got <strong>'+bigScore+'/5</strong>! '+msgs[bigScore<=1?0:bigScore===2?1:bigScore===3?2:bigScore===4?3:4];rev.style.display='block';rev.scrollIntoView({behavior:'smooth',block:'nearest'});},400);}}
+  const ch=btn.closest('.chapter');if(ch){const n=parseInt(ch.id.replace('ch',''));if(!isNaN(n)&&n>=1&&n<=10)allDots[n-1].classList.add('done');}
+}
+function checkPw(){
+  const val=document.getElementById('pw-input').value;const err=document.getElementById('pw-error');
+  if(val==='roro@123'){sessionStorage.setItem('marty_unlocked','yes');document.getElementById('lock-screen').style.display='none';document.getElementById('book-content').style.display='block';}
+  else{err.classList.add('show');document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();setTimeout(()=>err.classList.remove('show'),2500);}
+}
+if(sessionStorage.getItem('marty_unlocked')==='yes'){document.getElementById('lock-screen').style.display='none';document.getElementById('book-content').style.display='block';}
+</script>
+</body>
+</html>
