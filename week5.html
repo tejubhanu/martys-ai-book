@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Marty's AI Adventure — Week 5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+:root{--main:#3B6D11;--main-l:#EAF3DE;--main-d:#173404;--main-m:#C0DD97;--teal:#1D9E75;--teal-l:#E1F5EE;--teal-d:#085041;--purple:#7F77DD;--purple-l:#EEEDFE;--purple-d:#26215C;--coral:#D85A30;--coral-l:#FAECE7;--coral-d:#4A1B0C;--amber:#BA7517;--amber-l:#FAEEDA;--amber-d:#633806;--blue:#185FA5;--blue-l:#E6F1FB;--blue-d:#042C53;--green:#3B6D11;--green-l:#EAF3DE;--green-d:#173404;--bg:#F5F3EE;--text:#1a1a1a;--muted:#555;--r:14px;--rs:8px;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}html{scroll-behavior:smooth}body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.7}
+#lock-screen{position:fixed;inset:0;z-index:9999;background:linear-gradient(155deg,#b8dda0, #eaf3de, #f5fbf0);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center}
+#lock-screen .lock-robot{font-size:72px;animation:bob 2.5s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+#lock-screen h1{font-family:'Fredoka One',cursive;font-size:32px;color:var(--main-d);margin:10px 0 4px}
+#lock-screen p{font-size:14px;font-weight:700;color:var(--main);margin-bottom:28px}
+.lock-box{background:white;border-radius:var(--r);padding:24px 28px;width:100%;max-width:320px;border:2px dashed var(--main)}
+.lock-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--main);margin-bottom:10px}
+.lock-box input{width:100%;padding:12px 16px;border-radius:var(--rs);border:2px solid var(--main-m);font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;text-align:center;letter-spacing:4px;outline:none;color:var(--main-d);background:var(--main-l);margin-bottom:12px;transition:border-color .2s}
+.lock-box input:focus{border-color:var(--main)}.lock-box button{width:100%;padding:13px;background:var(--main);color:white;border:none;border-radius:var(--rs);font-family:'Fredoka One',cursive;font-size:18px;cursor:pointer;letter-spacing:.5px;transition:opacity .15s,transform .1s}.lock-box button:active{transform:scale(.97)}
+.lock-err{font-size:13px;font-weight:800;color:var(--coral);margin-top:10px;min-height:18px;opacity:0;transition:opacity .2s}.lock-err.show{opacity:1}
+#book-content{display:none}
+.nav{position:sticky;top:0;z-index:100;background:rgba(245,243,238,.93);backdrop-filter:blur(10px);border-bottom:1px solid #e0ddd5;padding:10px 16px;display:flex;align-items:center;gap:10px}
+.nav-back{font-size:13px;font-weight:800;color:var(--main);text-decoration:none;display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;background:var(--main-l)}
+.nav-title{font-family:'Fredoka One',cursive;font-size:16px;color:var(--main-d);flex:1;text-align:center}
+.ch-dots{display:flex;gap:5px;flex-wrap:wrap}.ch-dot{width:9px;height:9px;border-radius:50%;background:#ddd;border:none;padding:0;cursor:pointer;transition:background .2s,transform .15s}.ch-dot.active{background:var(--main);transform:scale(1.25)}.ch-dot.done{background:var(--main-m)}
+.cover{min-height:100svh;background:linear-gradient(155deg,#b8dda0, #eaf3de, #f5fbf0);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center;position:relative;overflow:hidden}
+.cover::before{content:'🌍';font-size:180px;position:absolute;top:-20px;right:-20px;opacity:.07;transform:rotate(15deg);pointer-events:none}
+.cover-badge{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--main);background:rgba(255,255,255,.7);padding:5px 16px;border-radius:20px;margin-bottom:16px;border:1px solid var(--main-m)}
+.cover-icon{font-size:80px;margin-bottom:12px;animation:bob 2.5s ease-in-out infinite}
+.cover-title{font-family:'Fredoka One',cursive;font-size:42px;color:var(--main-d);line-height:1.1;margin-bottom:8px}
+.cover-sub{font-size:17px;font-weight:700;color:var(--main);margin-bottom:28px}
+.cover-name{background:white;border-radius:var(--r);padding:16px 32px;margin-bottom:32px;border:2px dashed var(--main)}
+.cover-name p{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--main);margin-bottom:2px}
+.cover-name .name{font-family:'Fredoka One',cursive;font-size:30px;color:var(--main-d)}
+.toc{background:white;border-radius:var(--r);padding:18px 22px;width:100%;max-width:420px;text-align:left}
+.toc h3{font-family:'Fredoka One',cursive;font-size:17px;color:var(--main-d);margin-bottom:10px}
+.toc-item{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px dashed var(--main-m);font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;transition:color .15s}.toc-item:last-child{border:none}.toc-item:hover{color:var(--main-d)}
+.toc-num{width:22px;height:22px;background:var(--main-l);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--main-d);flex-shrink:0}
+.chapter{background:white;margin:16px 12px;border-radius:20px;padding:28px 22px;box-shadow:0 2px 16px rgba(0,0,0,.05);scroll-margin-top:64px}
+.ch-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:22px;padding-bottom:18px;border-bottom:2px solid var(--bg)}
+.ch-icon{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.ch-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:3px}.ch-title{font-family:'Fredoka One',cursive;font-size:26px;line-height:1.15}.ch-sub{font-size:13px;font-weight:700;margin-top:2px;color:var(--muted)}
+.intro{border-radius:var(--r);padding:14px 18px;margin-bottom:20px;font-size:14px;font-weight:700;line-height:1.65}
+.sec-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:18px 0 8px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:18px}
+.card{border-radius:var(--r);border:1.5px solid #ebebeb;padding:14px 15px;background:white}
+.card-hd{display:flex;align-items:center;gap:7px;margin-bottom:9px}.card-ico{font-size:20px}.card-lbl{font-family:'Fredoka One',cursive;font-size:15px}
+.fl{list-style:none;display:flex;flex-direction:column;gap:6px}.fl li{display:flex;gap:7px;font-size:12.5px;color:var(--muted);line-height:1.45;font-weight:700;align-items:flex-start}
+.dot{width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.wow{border-radius:var(--r);padding:13px 16px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start}.wow-e{font-size:22px;flex-shrink:0;margin-top:2px}.wow-t{font-size:13px;font-weight:700;line-height:1.55}
+.body-t{font-size:13.5px;font-weight:700;color:var(--muted);line-height:1.7;margin-bottom:13px}
+.vocab{border-radius:var(--r);padding:13px 16px;margin-bottom:18px}.vocab-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
+.vitem{display:flex;gap:8px;margin-bottom:5px;font-size:13px;line-height:1.4}.vw{font-weight:800;min-width:110px;flex-shrink:0}.vd{color:var(--muted);font-weight:700}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.mini{border-radius:var(--rs);padding:11px 12px;font-size:12px;font-weight:700;text-align:center;line-height:1.45}.mini .mi{font-size:22px;margin-bottom:5px}
+.divider{height:1px;background:#eee;margin:14px 0}
+.recap-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px}.rc{border-radius:var(--rs);padding:11px 13px;font-size:12px;font-weight:700;color:var(--muted);line-height:1.45}.rc-n{font-family:'Fredoka One',cursive;font-size:13px;margin-bottom:2px}.rc-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px}
+.quiz-wrap{background:var(--bg);border-radius:var(--r);padding:16px 18px;margin-bottom:18px}.quiz-h{font-family:'Fredoka One',cursive;font-size:17px;margin-bottom:14px}.quiz-q{font-size:13.5px;font-weight:800;margin-bottom:8px}
+.quiz-opts{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
+.qopt{display:flex;align-items:center;gap:9px;background:white;border:1.5px solid #e0ddd5;border-radius:var(--rs);padding:10px 13px;font-size:13px;font-weight:700;color:var(--text);cursor:pointer;transition:all .18s;text-align:left;width:100%;font-family:'Nunito',sans-serif;-webkit-appearance:none}
+.qopt:active{transform:scale(.98)}.qopt .olet{width:22px;height:22px;border-radius:50%;border:2px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;transition:all .2s;color:transparent}
+.qopt.selected-correct{background:var(--teal-l);border-color:var(--teal)}.qopt.selected-correct .olet{background:var(--teal);border-color:var(--teal);color:white}
+.qopt.selected-wrong{background:#FCEBEB;border-color:#E24B4A}.qopt.selected-wrong .olet{background:#E24B4A;border-color:#E24B4A;color:white}
+.qopt.reveal-correct{background:var(--teal-l);border-color:var(--teal)}.qopt.reveal-correct .olet{background:var(--teal);border-color:var(--teal);color:white}
+.qopt:disabled{cursor:default}.quiz-ans{font-size:12.5px;font-weight:700;padding:9px 12px;border-radius:var(--rs);margin-top:4px;display:none;line-height:1.5}.quiz-ans.show{display:block}
+.stars-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}.star-b{display:inline-flex;align-items:center;gap:5px;background:var(--amber-l);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:800;color:var(--amber-d)}
+.activity{border-radius:var(--r);border:2px dashed var(--main);padding:16px 18px;margin-bottom:18px;background:var(--main-l)}
+.act-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--main);margin-bottom:3px}
+.act-title{font-family:'Fredoka One',cursive;font-size:19px;color:var(--main-d);margin-bottom:12px}
+.step{display:flex;gap:9px;margin-bottom:8px;align-items:flex-start}.sn{width:22px;height:22px;border-radius:50%;background:var(--main);color:white;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}.st{font-size:13px;font-weight:700;color:var(--main-d);line-height:1.5}
+.dad-tip{background:white;border-radius:var(--rs);padding:9px 13px;margin-top:10px;font-size:12px;font-weight:700;color:var(--main-d);border-left:3px solid var(--main);line-height:1.5}
+.cert{border:3px dashed var(--main);border-radius:var(--r);padding:28px 20px;text-align:center;background:var(--main-l);margin-bottom:18px}.cert-e{font-size:44px;margin-bottom:8px}.cert-title{font-family:'Fredoka One',cursive;font-size:24px;color:var(--main-d);margin-bottom:4px}.cert-sub{font-size:13px;font-weight:700;color:var(--main);margin-bottom:14px}.cert-line{border-bottom:2px solid var(--main);width:160px;margin:0 auto 4px}.cert-nl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--main);margin-bottom:12px}.cert-txt{font-size:13px;font-weight:700;color:var(--main-d);line-height:1.6}
+@media(max-width:420px){.two-col,.recap-grid{grid-template-columns:1fr}.three-col{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div id="lock-screen">
+  <div class="lock-robot">🌍</div>
+  <h1>Week 5 — AI Helps the World</h1>
+  <p>Enter your secret password to unlock!</p>
+  <div class="lock-box">
+    <div class="lock-label">🔑 Secret Password</div>
+    <input type="password" id="pw-input" placeholder="••••••••" maxlength="20" onkeydown="if(event.key==='Enter')checkPw()"/>
+    <button onclick="checkPw()">Unlock Week 5 🚀</button>
+    <div class="lock-err" id="pw-error">Oops! Wrong password. Try again! 🤔</div>
+  </div>
+</div>
+<div id="book-content">
+<nav class="nav">
+  <a class="nav-back" href="index.html">← Library</a>
+  <div class="nav-title">🌍 Week 5</div>
+  <div class="ch-dots" id="dots"></div>
+</nav>
+<div class="cover" id="ch0">
+  <div class="cover-badge">Week 5 · Summer AI Adventure</div>
+  <div class="cover-icon">🌍</div>
+  <div class="cover-title">AI Helps the World</div>
+  <div class="cover-sub">Doctors, farmers, climate & space</div>
+  <div class="cover-name"><p>This book belongs to</p><div class="name">Marty ⭐</div></div>
+  <div class="toc">
+    <h3>📚 10 Chapters Inside!</h3>
+    <div class="toc-item" onclick="goTo(1)"><div class="toc-num">1</div>AI Doctors</div>
+    <div class="toc-item" onclick="goTo(2)"><div class="toc-num">2</div>AI Scientists</div>
+    <div class="toc-item" onclick="goTo(3)"><div class="toc-num">3</div>AI & Climate</div>
+    <div class="toc-item" onclick="goTo(4)"><div class="toc-num">4</div>AI Farmers</div>
+    <div class="toc-item" onclick="goTo(5)"><div class="toc-num">5</div>AI in Space</div>
+    <div class="toc-item" onclick="goTo(6)"><div class="toc-num">6</div>AI in the Ocean</div>
+    <div class="toc-item" onclick="goTo(7)"><div class="toc-num">7</div>AI & Education</div>
+    <div class="toc-item" onclick="goTo(8)"><div class="toc-num">8</div>AI & Accessibility</div>
+    <div class="toc-item" onclick="goTo(9)"><div class="toc-num">9</div>AI Can Be Wrong!</div>
+    <div class="toc-item" onclick="goTo(10)"><div class="toc-num">10</div>Week 5 Recap + Quiz!</div>
+  </div>
+</div>
+
+
+<div class="chapter" id="ch1">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#E1F5EE">🩺</div>
+    <div>
+      <div class="ch-tag" style="color:#1D9E75">Chapter 1</div>
+      <div class="ch-title">AI Doctors</div>
+      <div class="ch-sub">Finding diseases in X-rays and scans</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#E1F5EE;color:#085041">When a doctor needs to look at thousands of X-rays to find a tiny tumour, it can take hours and even the best doctors can miss something. AI can analyse those same X-rays in seconds — and is sometimes MORE accurate than human doctors! Let's explore how AI is saving lives in medicine.</div>
+  <div class="sec-label">How AI reads X-rays</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;background:var(--blue-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:var(--blue-d);flex:1">🖼️ Gets the X-ray</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--purple-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:var(--purple-d);flex:1">🔢 Converts to numbers</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--amber-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:var(--amber-d);flex:1">🧠 Compares to millions</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--coral-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:var(--coral-d);flex:1">🔍 Spots unusual patterns</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--teal-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:var(--teal-d);flex:1">⚠️ Flags to doctor</div></div>
+  </div>
+  <div class="wow" style="background:#E1F5EE"><div class="wow-e">💡</div><div class="wow-t" style="color:#085041">AI can spot tiny tumours just 1mm in size — smaller than the tip of a pencil! In some studies, AI detected certain cancers more accurately than experienced radiologists. It doesn't replace doctors — it gives them a brilliant second opinion.</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q1a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q1a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q1a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q1a" style="background:#EAF3DE;color:#173404"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎯 Activity Time!</div>
+    <div class="act-title">role-play activity</div>
+    <div class="step"><div class="sn">1</div><div class="st">Use a toy stethoscope and pretend to examine stuffed animals.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">For each animal, make a 'diagnosis' and write it down.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Now imagine: what information would you give an AI to help it diagnose patients?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Think about what data a medical AI would need: symptoms, test results, patient history.</div></div>
+    <div class="dad-tip">💡 This connects diagnosis to data collection — the key insight is that AI doctors need the same information human doctors collect, just structured as data!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch2">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#EEEDFE">🔬</div>
+    <div>
+      <div class="ch-tag" style="color:#7F77DD">Chapter 2</div>
+      <div class="ch-title">AI Scientists</div>
+      <div class="ch-sub">Discovering medicines and new materials</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#EEEDFE;color:#26215C">Developing a new medicine the traditional way takes 10-15 years and costs billions of dollars. AI is changing this dramatically! It can analyse millions of possible chemical combinations and predict which ones might work as medicines — narrowing down the search from millions of options to just a handful to test.</div>
+  <div class="sec-label">Drug discovery with AI</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;background:var(--blue-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:var(--blue-d);flex:1">🧪 Start: millions of molecules</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--purple-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:var(--purple-d);flex:1">🤖 AI screens them</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--teal-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:var(--teal-d);flex:1">✅ Finds promising candidates</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--amber-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:var(--amber-d);flex:1">🔬 Scientists test top ones</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--green-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:var(--green-d);flex:1">💊 New medicine!</div></div>
+  </div>
+  <div class="wow" style="background:#EEEDFE"><div class="wow-e">💡</div><div class="wow-t" style="color:#26215C">During COVID-19, AI helped scientists understand the virus structure and identify potential vaccine targets in DAYS — work that would normally take months or years. AI-assisted drug discovery could be one of the biggest life-saving technologies of your lifetime!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q2a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q2a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q2a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q2a" style="background:#EAF3DE;color:#173404"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎯 Activity Time!</div>
+    <div class="act-title">hands-on science</div>
+    <div class="step"><div class="sn">1</div><div class="st">Mix bicarbonate of soda and vinegar — observe the reaction!</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Now think: a scientist might mix MILLIONS of different chemicals to find a new medicine.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">AI can 'virtually mix' millions of combinations in seconds to predict what will work.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">How many experiments would a human need to do that manually?</div></div>
+    <div class="dad-tip">💡 The AI drug discovery process is literally millions of virtual experiments per second. Compared to one fizzing reaction at a time, the scale difference is mind-boggling for kids!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch3">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#EAF3DE">🌦️</div>
+    <div>
+      <div class="ch-tag" style="color:#3B6D11">Chapter 3</div>
+      <div class="ch-title">AI & Climate</div>
+      <div class="ch-sub">Predicting weather and fighting climate change</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#EAF3DE;color:#173404">Climate change is one of the biggest challenges your generation will face — and AI is one of the most powerful tools available to help! From predicting extreme weather to designing better solar panels, AI is working hard to protect our planet.</div>
+  <div class="sec-label">Ways AI fights climate change</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;background:var(--coral-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:var(--coral-d);flex:1">🌪️ Predicts storms days early</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--amber-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:var(--amber-d);flex:1">☀️ Optimises solar & wind power</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--teal-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:var(--teal-d);flex:1">🚗 Makes cars more fuel-efficient</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--green-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:var(--green-d);flex:1">🌳 Tracks deforestation via satellite</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--blue-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:var(--blue-d);flex:1">🌡️ Models future climate scenarios</div></div>
+  </div>
+  <div class="wow" style="background:#EAF3DE"><div class="wow-e">💡</div><div class="wow-t" style="color:#173404">Google's DeepMind AI improved the accuracy of 10-day weather forecasts dramatically. Better forecasts mean farmers can plan better, power companies can prepare, and people can get out of the way of dangerous storms. AI could save thousands of lives through better weather prediction alone!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q3a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q3a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q3a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q3a" style="background:#EAF3DE;color:#173404"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎯 Activity Time!</div>
+    <div class="act-title">prediction activity</div>
+    <div class="step"><div class="sn">1</div><div class="st">Look outside and make a weather prediction for tomorrow.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Write down your prediction with your reasoning.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Check the real forecast — how did you do?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Now look up how meteorologists collect data: weather balloons, satellites, ocean buoys. AI processes all of this!</div></div>
+    <div class="dad-tip">💡 Weather forecasting requires processing data from thousands of sensors worldwide simultaneously — exactly the type of large-scale pattern recognition that AI excels at!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch4">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#EAF3DE">🌱</div>
+    <div>
+      <div class="ch-tag" style="color:#3B6D11">Chapter 4</div>
+      <div class="ch-title">AI Farmers</div>
+      <div class="ch-sub">Smart farming for more food with less waste</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#EAF3DE;color:#173404">Did you know that about a third of all food grown in the world is wasted? And farming uses more water than any other human activity? AI is helping farmers grow MORE food using LESS water, fewer chemicals, and less land. This is incredibly important as our planet's population keeps growing!</div>
+  <div class="sec-label">Smart farming AI in action</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;background:blue-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🛸</div><div style="font-size:13px;font-weight:700;color:#173404">Drone cameras scan crops</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:teal-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🤖</div><div style="font-size:13px;font-weight:700;color:#173404">AI spots diseases early</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:blue-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">💧</div><div style="font-size:13px;font-weight:700;color:#173404">Smart irrigation delivers exact water needed</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:green-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🌱</div><div style="font-size:13px;font-weight:700;color:#173404">Predicts best planting times</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:amber-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">📊</div><div style="font-size:13px;font-weight:700;color:#173404">Monitors soil health continuously</div></div>
+  </div>
+  <div class="wow" style="background:#EAF3DE"><div class="wow-e">💡</div><div class="wow-t" style="color:#173404">Some AI-powered farms can grow crops using 95% less water than traditional farms! Computer vision cameras scan fields looking for signs of disease or pests on individual plants — catching problems before they spread. One drone can monitor what would take a farmer days to walk.</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q4a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q4a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q4a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q4a" style="background:#EAF3DE;color:#173404"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎯 Activity Time!</div>
+    <div class="act-title">gardening activity</div>
+    <div class="step"><div class="sn">1</div><div class="st">Plant a seed in a small pot (beans germinate fast!).</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Each day, measure its growth and record it in a notebook — you're collecting data!</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Think: what data would a smart farming AI collect? (soil moisture, temperature, sunlight hours, height)</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Design your own 'smart garden sensor' on paper — what would it measure?</div></div>
+    <div class="dad-tip">💡 Growing something and measuring it daily is a beautiful way to understand agricultural data collection. The key insight: a smart farm AI just collects and analyses the same information a great farmer already pays attention to!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch5">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#E6F1FB">🚀</div>
+    <div>
+      <div class="ch-tag" style="color:#185FA5">Chapter 5</div>
+      <div class="ch-title">AI in Space</div>
+      <div class="ch-sub">Mars rovers and telescope image analysis</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#E6F1FB;color:#042C53">Space is HUGE — the nearest star to our Sun is so far away that light takes 4 years to travel there. There's simply too much of space for humans to explore manually. AI is helping us explore more of the universe than ever before — from analysing telescope images to navigating Mars rovers!</div>
+  <div class="sec-label">AI exploring space</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;background:blue-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🔭</div><div style="font-size:13px;font-weight:700;color:#173404">James Webb Telescope: AI analyses billions of star images</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:amber-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🤖</div><div style="font-size:13px;font-weight:700;color:#173404">Mars rovers: AI navigates terrain autonomously</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:purple-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">⭐</div><div style="font-size:13px;font-weight:700;color:#173404">Planet detection: AI finds planets around distant stars</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:teal-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🌌</div><div style="font-size:13px;font-weight:700;color:#173404">Dark matter: AI maps invisible matter in the universe</div></div>
+  </div>
+  <div class="wow" style="background:#E6F1FB"><div class="wow-e">💡</div><div class="wow-t" style="color:#042C53">The James Webb Space Telescope sends back so much data that it would be impossible for humans to analyse it all manually. AI scans the images automatically, flagging interesting objects for scientists to examine. It's already discovered thousands of new galaxies that were previously unknown!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q5a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q5a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q5a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q5a" style="background:#EAF3DE;color:#173404"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎯 Activity Time!</div>
+    <div class="act-title">engineering activity</div>
+    <div class="step"><div class="sn">1</div><div class="st">Draw your own Mars rover on paper.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Think about: what sensors would it have? What AI decisions would it need to make?</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Remember: signals from Mars take 20 minutes to reach Earth! The rover must think for itself.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">What challenges would your AI rover face on Mars?</div></div>
+    <div class="dad-tip">💡 The communication delay is a crucial design constraint — any Mars rover AI must be truly autonomous because remote control is impossible in real-time. This naturally introduces the concept of autonomous AI decision-making!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch6">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#E6F1FB">🐋</div>
+    <div>
+      <div class="ch-tag" style="color:#185FA5">Chapter 6</div>
+      <div class="ch-title">AI in the Ocean</div>
+      <div class="ch-sub">Finding sea creatures and mapping the deep</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#E6F1FB;color:#042C53">Over 80% of Earth's oceans are still unexplored! The deep ocean is as mysterious to us as outer space. AI is helping oceanographers explore and understand this vast unknown world — from identifying whale songs to mapping underwater volcanoes and tracking plastic pollution.</div>
+  <div class="sec-label">Ocean AI missions</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;background:blue-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🎵</div><div style="font-size:13px;font-weight:700;color:#173404">Listens to whale songs and translates their patterns</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:teal-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🐠</div><div style="font-size:13px;font-weight:700;color:#173404">Identifies fish species from underwater camera footage</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:purple-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🗺️</div><div style="font-size:13px;font-weight:700;color:#173404">Maps the ocean floor using sonar data</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:coral-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🌊</div><div style="font-size:13px;font-weight:700;color:#173404">Tracks ocean plastic and pollution spread</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:green-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🦑</div><div style="font-size:13px;font-weight:700;color:#173404">Discovers new species in deep sea footage</div></div>
+  </div>
+  <div class="wow" style="background:#E6F1FB"><div class="wow-e">💡</div><div class="wow-t" style="color:#042C53">Researchers used AI to analyse thousands of hours of underwater recordings and discovered that whale communication has complex structure — almost like a language! AI found patterns in whale clicks that human researchers had studied for decades without noticing. The ocean is full of secrets AI is helping to unlock.</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q6a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q6a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q6a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q6a" style="background:#EAF3DE;color:#173404"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎯 Activity Time!</div>
+    <div class="act-title">creative science activity</div>
+    <div class="step"><div class="sn">1</div><div class="st">Research one deep sea creature — anglerfish, giant squid, or barreleye fish.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Draw the creature in its environment.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Imagine you're designing an AI to identify it in deep sea footage. What features would the AI look for?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">What challenges would there be — darkness, strange shapes, never-seen-before creatures?</div></div>
+    <div class="dad-tip">💡 Deep sea AI faces unique challenges: no light for vision, huge pressure, and creatures that look nothing like surface animals. This highlights that AI has to be specially trained for its environment!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch7">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#EEEDFE">📚</div>
+    <div>
+      <div class="ch-tag" style="color:#7F77DD">Chapter 7</div>
+      <div class="ch-title">AI & Education</div>
+      <div class="ch-sub">Personalised learning and tutoring bots</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#EEEDFE;color:#26215C">Every student learns differently — some learn quickly through reading, others need to hear things explained, others learn best by doing. Traditional classrooms struggle to teach 30 students all at once in the perfect way for each person. AI tutors could change this completely!</div>
+  <div class="sec-label">What AI tutors can do</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;background:blue-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">📊</div><div style="font-size:13px;font-weight:700;color:#173404">Identifies exactly where each student is struggling</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:purple-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🎯</div><div style="font-size:13px;font-weight:700;color:#173404">Adjusts difficulty to always be perfectly challenging</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:teal-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">⏱️</div><div style="font-size:13px;font-weight:700;color:#173404">Gives instant feedback — no waiting for the teacher</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:amber-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">💪</div><div style="font-size:13px;font-weight:700;color:#173404">Provides extra practice on weak areas</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:green-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">📈</div><div style="font-size:13px;font-weight:700;color:#173404">Shows parents and teachers detailed progress data</div></div>
+  </div>
+  <div class="wow" style="background:#EEEDFE"><div class="wow-e">💡</div><div class="wow-t" style="color:#26215C">Duolingo — the language learning app — uses AI to personalise every lesson. It knows exactly which words you keep forgetting and serves them up right before you're about to forget them (a technique called spaced repetition). Users learn languages 2-3× faster than traditional classes!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q7a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q7a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q7a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q7a" style="background:#EAF3DE;color:#173404"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎯 Activity Time!</div>
+    <div class="act-title">creative design activity</div>
+    <div class="step"><div class="sn">1</div><div class="st">On paper, design an AI tutor for YOUR perfect learning experience.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">What subject does it teach? How does it explain things? What's it called?</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">What would make a perfect lesson? What would make a terrible one?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">What data would your AI tutor need to track to get better at teaching you?</div></div>
+    <div class="dad-tip">💡 This activity develops metacognition — thinking about HOW you learn — which is one of the most valuable skills for lifelong learning. Kids who understand their own learning style learn faster!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch8">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#E1F5EE">♿</div>
+    <div>
+      <div class="ch-tag" style="color:#1D9E75">Chapter 8</div>
+      <div class="ch-title">AI & Accessibility</div>
+      <div class="ch-sub">Helping people who are blind, deaf, or have disabilities</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#E1F5EE;color:#085041">One of the most beautiful uses of AI is helping people who experience the world differently. AI is giving blind people the ability to 'see,' helping deaf people access spoken conversations, and giving people with limited mobility new ways to communicate and control technology.</div>
+  <div class="sec-label">AI making the world more accessible</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;background:teal-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">👁️</div><div style="font-size:13px;font-weight:700;color:#173404">Seeing AI: describes photos and scenes aloud for blind users</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:blue-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">👂</div><div style="font-size:13px;font-weight:700;color:#173404">Live captions: transcribes speech to text in real time for deaf users</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:purple-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🗣️</div><div style="font-size:13px;font-weight:700;color:#173404">Eye-tracking: lets people control computers using just their eyes</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:amber-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">✋</div><div style="font-size:13px;font-weight:700;color:#173404">Sign language AI: translates sign language to text and back</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:coral-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🧠</div><div style="font-size:13px;font-weight:700;color:#173404">Brain-computer interfaces: let paralysed people type with thoughts</div></div>
+  </div>
+  <div class="wow" style="background:#E1F5EE"><div class="wow-e">💡</div><div class="wow-t" style="color:#085041">Microsoft's Seeing AI app narrates the world for blind users — it reads text aloud, describes photos, identifies faces and emotions, and even reads product barcodes. One blind user said it was like having a friend always at their side who could describe everything they couldn't see. AI as kindness!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q8a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q8a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q8a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q8a" style="background:#EAF3DE;color:#173404"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎯 Activity Time!</div>
+    <div class="act-title">empathy activity</div>
+    <div class="step"><div class="sn">1</div><div class="st">Ask Dad to find the Accessibility settings on your iPad.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Turn on VoiceOver (the screen reader) and try navigating without looking at the screen.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Try for just 2 minutes — how frustrating is it?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Now imagine how important this technology is for someone who is completely blind. Turn it back off and appreciate your sight!</div></div>
+    <div class="dad-tip">💡 This is a powerful empathy exercise. Experiencing assistive technology firsthand — even briefly — creates lasting appreciation for how AI serves people with disabilities. Very few kids get this perspective!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch9">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#FAECE7">⚠️</div>
+    <div>
+      <div class="ch-tag" style="color:#D85A30">Chapter 9</div>
+      <div class="ch-title">AI Can Be Wrong!</div>
+      <div class="ch-sub">Bias, errors, and why AI isn't always right</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#FAECE7;color:#4A1B0C">We've spent the whole week learning about all the amazing things AI can do. But it's really important to understand that AI is NOT perfect — it makes mistakes, it can be biased, and sometimes it gets things spectacularly wrong. Being a smart AI user means knowing when to trust AI and when to question it!</div>
+  <div class="sec-label">Types of AI errors</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;background:coral-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🎭 Hallucination</div><div style="font-size:13px;font-weight:700;color:#173404">AI confidently states things that are completely wrong</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:amber-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">⚖️ Bias</div><div style="font-size:13px;font-weight:700;color:#173404">Unfair outcomes because training data wasn't balanced</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:blue-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🌊 Distribution shift</div><div style="font-size:13px;font-weight:700;color:#173404">AI works in training but fails on real-world data</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:purple-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🎯 Adversarial attacks</div><div style="font-size:13px;font-weight:700;color:#173404">Tiny changes to input can fool AI completely</div></div>
+  </div>
+  <div class="wow" style="background:#FAECE7"><div class="wow-e">💡</div><div class="wow-t" style="color:#4A1B0C">AI language models sometimes 'hallucinate' — they make up facts with complete confidence! This happens because AI generates text based on patterns, not actual knowledge. Always verify important information from AI with reliable sources. Being a critical thinker is MORE important in the age of AI, not less!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q9a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q9a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q9a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q9a" style="background:#EAF3DE;color:#173404"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎯 Activity Time!</div>
+    <div class="act-title">critical thinking activity</div>
+    <div class="step"><div class="sn">1</div><div class="st">Read this rule: 'People from City A are better at sport than people from City B.'</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Is this fair? Why not? (Not everyone from one place is the same!)</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">If AI was trained on sports data that only covered certain cities, it might learn this wrong pattern.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Design a fairer way to collect sports data. What would you include?</div></div>
+    <div class="dad-tip">💡 This activity introduces bias detection in a completely non-threatening, relatable context. The city sports example is arbitrary enough to feel obviously unfair while being structurally identical to real-world AI bias cases.</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch10">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#FAEEDA">🏆</div>
+    <div>
+      <div class="ch-tag" style="color:#BA7517">Chapter 10</div>
+      <div class="ch-title">Week 5 Recap + Quiz!</div>
+      <div class="ch-sub">Review how AI helps the world — and when it goes wrong</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#FAEEDA;color:#633806">What an incredible week, Marty! 🌍 You've seen AI saving lives in hospitals, growing food, fighting climate change, exploring space and oceans, helping students learn, and making the world accessible for everyone. But you've also seen that AI isn't perfect. Let's review and take the big quiz!</div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q10a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q10a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q10a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q10a" style="background:#EAF3DE;color:#173404"></div>
+  </div>
+</div>
+
+
+<div class="chapter" id="ch10">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--amber-l)">🏆</div><div><div class="ch-tag" style="color:var(--amber)">Chapter 10</div><div class="ch-title">Week 5 Recap + Quiz!</div><div class="ch-sub">Review everything and celebrate! 🎉</div></div></div>
+  <div class="intro" style="background:var(--amber-l);color:var(--amber-d)">What an incredible week, Marty! 🌍 You've seen AI saving lives in hospitals, growing food, fighting climate change, exploring space and oceans, helping students learn, and making the world accessible for everyone. But you've also seen that AI isn't perfect. Let's review and take the big quiz!</div>
+  <div class="sec-label">Everything you learned this week 📚</div>
+  <div class="recap-grid">
+    <div class="rc" style="background:{'hex': '#1D9E75', 'light': '#E1F5EE', 'dark': '#085041'}">&nbsp;<div class="rc-n">&nbsp;Ch 1</div><div class="rc-title">AI Doctors</div>Finding diseases in X-rays and scans</div><div class="rc" style="background:{'hex': '#7F77DD', 'light': '#EEEDFE', 'dark': '#26215C'}">&nbsp;<div class="rc-n">&nbsp;Ch 2</div><div class="rc-title">AI Scientists</div>Discovering medicines and new materials</div><div class="rc" style="background:{'hex': '#185FA5', 'light': '#E6F1FB', 'dark': '#042C53'}">&nbsp;<div class="rc-n">&nbsp;Ch 3</div><div class="rc-title">AI & Climate</div>Predicting weather and fighting climate change</div><div class="rc" style="background:{'hex': '#BA7517', 'light': '#FAEEDA', 'dark': '#633806'}">&nbsp;<div class="rc-n">&nbsp;Ch 4</div><div class="rc-title">AI Farmers</div>Smart farming for more food with less waste</div><div class="rc" style="background:{'hex': '#D85A30', 'light': '#FAECE7', 'dark': '#4A1B0C'}">&nbsp;<div class="rc-n">&nbsp;Ch 5</div><div class="rc-title">AI in Space</div>Mars rovers and telescope image analysis</div><div class="rc" style="background:{'hex': '#3B6D11', 'light': '#EAF3DE', 'dark': '#173404'}">&nbsp;<div class="rc-n">&nbsp;Ch 6</div><div class="rc-title">AI in the Ocean</div>Finding sea creatures and mapping the deep</div><div class="rc" style="background:{'hex': '#D4537E', 'light': '#FBEAF0', 'dark': '#4B1528'}">&nbsp;<div class="rc-n">&nbsp;Ch 7</div><div class="rc-title">AI & Education</div>Personalised learning and tutoring bots</div><div class="rc" style="background:{'hex': '#1D9E75', 'light': '#E1F5EE', 'dark': '#085041'}">&nbsp;<div class="rc-n">&nbsp;Ch 8</div><div class="rc-title">AI & Accessibility</div>Helping people who are blind, deaf, or have disabilities</div><div class="rc" style="background:{'hex': '#7F77DD', 'light': '#EEEDFE', 'dark': '#26215C'}">&nbsp;<div class="rc-n">&nbsp;Ch 9</div><div class="rc-title">AI Can Be Wrong!</div>Bias, errors, and why AI isn't always right</div>
+  </div>
+    <div class="quiz-wrap">
+    <div class="quiz-h">🏆 The BIG Week 5 Quiz!</div>
+    <div class="stars-row"><div class="star-b">⭐ 5 questions</div><div class="star-b">🎯 Tap to answer</div><div class="star-b">🏅 Aim for 5/5!</div></div>
+    <div class="quiz-q">Q1: What is ONE way AI helps doctors?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq1','AI helps doctors by analysing X-rays and scans to spot diseases they might miss!')"><div class="olet">A</div>It replaces doctors completely</button>
+      <button class="qopt" onclick="answer(this,true,'bq1','AI helps doctors by analysing X-rays and scans to spot diseases they might miss!')"><div class="olet">B</div>It analyses X-rays to spot diseases, giving doctors a brilliant second opinion</button>
+      <button class="qopt" onclick="answer(this,false,'bq1','AI helps doctors by analysing X-rays and scans to spot diseases they might miss!')"><div class="olet">C</div>It writes prescriptions automatically</button>
+    </div>
+    <div class="quiz-ans" id="bq1" style="background:#EAF3DE;color:#173404"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q2: What does "bias" in AI mean?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq2','Bias means unfair outcomes because the training data wasn't balanced — AI learns human prejudices from biased data!')"><div class="olet">A</div>When AI works too slowly</button>
+      <button class="qopt" onclick="answer(this,true,'bq2','Bias means unfair outcomes because the training data wasn't balanced — AI learns human prejudices from biased data!')"><div class="olet">B</div>Unfair outcomes because training data wasn't balanced or representative</button>
+      <button class="qopt" onclick="answer(this,false,'bq2','Bias means unfair outcomes because the training data wasn't balanced — AI learns human prejudices from biased data!')"><div class="olet">C</div>When AI gives a wrong answer about maths</button>
+    </div>
+    <div class="quiz-ans" id="bq2" style="background:#EAF3DE;color:#173404"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q3: What is a deepfake?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq3','A deepfake is an AI-generated fake photo or video showing someone doing or saying something that never happened!')"><div class="olet">A</div>A very detailed 3D AI model</button>
+      <button class="qopt" onclick="answer(this,false,'bq3','A deepfake is an AI-generated fake photo or video showing someone doing or saying something that never happened!')"><div class="olet">B</div>A type of underwater AI camera</button>
+      <button class="qopt" onclick="answer(this,true,'bq3','A deepfake is an AI-generated fake photo or video showing someone doing or saying something that never happened!')"><div class="olet">C</div>An AI-generated fake photo or video of a real person</button>
+    </div>
+    <div class="quiz-ans" id="bq3" style="background:#EAF3DE;color:#173404"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q4: Which type of job is HARDEST for AI to replace?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq4','Data entry is routine and repetitive — AI handles that easily! Creative, emotional, and unpredictable work is much harder for AI.')"><div class="olet">A</div>Data entry (typing information into spreadsheets)</button>
+      <button class="qopt" onclick="answer(this,true,'bq4','Data entry is routine and repetitive — AI handles that easily! Creative, emotional, and unpredictable work is much harder for AI.')"><div class="olet">B</div>School counsellor (supporting students emotionally)</button>
+      <button class="qopt" onclick="answer(this,false,'bq4','Data entry is routine and repetitive — AI handles that easily! Creative, emotional, and unpredictable work is much harder for AI.')"><div class="olet">C</div>Traffic light controller</button>
+    </div>
+    <div class="quiz-ans" id="bq4" style="background:#EAF3DE;color:#173404"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q5: Who gets to help decide the rules for AI?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq5','Everyone has a role! Governments, companies, researchers, AND the public — including you — all shape what AI is allowed to do!')"><div class="olet">A</div>Only AI companies and their engineers</button>
+      <button class="qopt" onclick="answer(this,false,'bq5','Everyone has a role! Governments, companies, researchers, AND the public — including you — all shape what AI is allowed to do!')"><div class="olet">B</div>Only governments and politicians</button>
+      <button class="qopt" onclick="answer(this,true,'bq5','Everyone has a role! Governments, companies, researchers, AND the public — including you — all shape what AI is allowed to do!')"><div class="olet">C</div>Everyone — governments, companies, researchers, and citizens like YOU</button>
+    </div>
+    <div class="quiz-ans" id="bq5" style="background:#EAF3DE;color:#173404"></div>
+    <div id="score-reveal" style="display:none;margin-top:16px;padding:14px 16px;border-radius:var(--r);background:#EAF3DE;color:#173404;font-weight:800;font-size:15px;text-align:center"></div>
+  </div>
+  <div class="cert">
+    <div class="cert-e">🎓</div>
+    <div class="cert-title">Week 5 Complete!</div>
+    <div class="cert-sub">This certifies that</div>
+    <div class="cert-line"></div>
+    <div class="cert-nl">Marty</div>
+    <div class="cert-txt">has successfully completed<br>Week 5 of the AI Summer Adventure<br>and is now an official<br><strong>AI World Champion! 🌍⭐</strong></div>
+  </div>
+  <div style="margin:0 0 8px;padding:14px 16px;background:var(--teal-l);border-radius:var(--r);text-align:center">
+    <div style="font-family:'Fredoka One',cursive;font-size:16px;color:var(--teal-d);margin-bottom:4px">Ready for Week 6? 🤔</div>
+    <div style="font-size:13px;font-weight:700;color:var(--teal)">Next up: Is AI Fair & Kind? — fairness, privacy, deepfakes, and who makes the AI rules!</div>
+  </div>
+</div>
+</div>
+<script>
+const dots=document.getElementById('dots');
+for(let i=1;i<=10;i++){const d=document.createElement('button');d.className='ch-dot';d.setAttribute('aria-label','Chapter '+i);d.onclick=()=>goTo(i);dots.appendChild(d);}
+function goTo(n){document.getElementById('ch'+n).scrollIntoView({behavior:'smooth'})}
+const chapters=document.querySelectorAll('.chapter');const allDots=document.querySelectorAll('.ch-dot');
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const n=parseInt(e.target.id.replace('ch',''));if(!isNaN(n)&&n>=1&&n<=10)allDots.forEach((d,i)=>d.classList.toggle('active',i===n-1));}}); },{threshold:0.3});
+chapters.forEach(c=>obs.observe(c));
+const answered={};const bigIds=['bq1','bq2','bq3','bq4','bq5'];let bigScore=0,bigAnswered=0;
+function answer(btn,correct,ansId,explanation){
+  if(answered[ansId])return;answered[ansId]=true;
+  const opts=btn.closest('.quiz-opts').querySelectorAll('.qopt');opts.forEach(o=>o.disabled=true);
+  btn.classList.add(correct?'selected-correct':'selected-wrong');
+  if(!correct){opts.forEach(o=>{const oc=o.getAttribute('onclick');if(oc&&oc.includes("true,'"+ansId+"'"))o.classList.add('reveal-correct');});}
+  const el=document.getElementById(ansId);el.textContent=(correct?'🌟 Correct! ':'🤔 Not quite — ')+explanation;el.classList.add('show');
+  if(bigIds.includes(ansId)){bigAnswered++;if(correct)bigScore++;if(bigAnswered===5){setTimeout(()=>{const rev=document.getElementById('score-reveal');const msgs=['Keep going! 💪','Nice work! 🎉','Getting there! 🚀','Almost perfect! 🌟','PERFECT SCORE! AI WORLD CHAMPION! 🏆🌍⭐'];rev.innerHTML='You got <strong>'+bigScore+'/5</strong>! '+msgs[bigScore<=1?0:bigScore===2?1:bigScore===3?2:bigScore===4?3:4];rev.style.display='block';rev.scrollIntoView({behavior:'smooth',block:'nearest'});},400);}}
+  const ch=btn.closest('.chapter');if(ch){const n=parseInt(ch.id.replace('ch',''));if(!isNaN(n)&&n>=1&&n<=10)allDots[n-1].classList.add('done');}
+}
+function checkPw(){
+  const val=document.getElementById('pw-input').value;const err=document.getElementById('pw-error');
+  if(val==='roro@123'){sessionStorage.setItem('marty_unlocked','yes');document.getElementById('lock-screen').style.display='none';document.getElementById('book-content').style.display='block';}
+  else{err.classList.add('show');document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();setTimeout(()=>err.classList.remove('show'),2500);}
+}
+if(sessionStorage.getItem('marty_unlocked')==='yes'){document.getElementById('lock-screen').style.display='none';document.getElementById('book-content').style.display='block';}
+</script>
+</body>
+</html>

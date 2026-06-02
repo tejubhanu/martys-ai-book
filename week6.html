@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Marty's AI Adventure — Week 6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+:root{--main:#D85A30;--main-l:#FAECE7;--main-d:#4A1B0C;--main-m:#F5C4B3;--teal:#1D9E75;--teal-l:#E1F5EE;--teal-d:#085041;--purple:#7F77DD;--purple-l:#EEEDFE;--purple-d:#26215C;--coral:#D85A30;--coral-l:#FAECE7;--coral-d:#4A1B0C;--amber:#BA7517;--amber-l:#FAEEDA;--amber-d:#633806;--blue:#185FA5;--blue-l:#E6F1FB;--blue-d:#042C53;--green:#3B6D11;--green-l:#EAF3DE;--green-d:#173404;--bg:#F5F3EE;--text:#1a1a1a;--muted:#555;--r:14px;--rs:8px;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}html{scroll-behavior:smooth}body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.7}
+#lock-screen{position:fixed;inset:0;z-index:9999;background:linear-gradient(155deg,#f7c5aa, #faece7, #fff8f5);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center}
+#lock-screen .lock-robot{font-size:72px;animation:bob 2.5s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+#lock-screen h1{font-family:'Fredoka One',cursive;font-size:32px;color:var(--main-d);margin:10px 0 4px}
+#lock-screen p{font-size:14px;font-weight:700;color:var(--main);margin-bottom:28px}
+.lock-box{background:white;border-radius:var(--r);padding:24px 28px;width:100%;max-width:320px;border:2px dashed var(--main)}
+.lock-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--main);margin-bottom:10px}
+.lock-box input{width:100%;padding:12px 16px;border-radius:var(--rs);border:2px solid var(--main-m);font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;text-align:center;letter-spacing:4px;outline:none;color:var(--main-d);background:var(--main-l);margin-bottom:12px;transition:border-color .2s}
+.lock-box input:focus{border-color:var(--main)}.lock-box button{width:100%;padding:13px;background:var(--main);color:white;border:none;border-radius:var(--rs);font-family:'Fredoka One',cursive;font-size:18px;cursor:pointer;letter-spacing:.5px;transition:opacity .15s,transform .1s}.lock-box button:active{transform:scale(.97)}
+.lock-err{font-size:13px;font-weight:800;color:var(--coral);margin-top:10px;min-height:18px;opacity:0;transition:opacity .2s}.lock-err.show{opacity:1}
+#book-content{display:none}
+.nav{position:sticky;top:0;z-index:100;background:rgba(245,243,238,.93);backdrop-filter:blur(10px);border-bottom:1px solid #e0ddd5;padding:10px 16px;display:flex;align-items:center;gap:10px}
+.nav-back{font-size:13px;font-weight:800;color:var(--main);text-decoration:none;display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;background:var(--main-l)}
+.nav-title{font-family:'Fredoka One',cursive;font-size:16px;color:var(--main-d);flex:1;text-align:center}
+.ch-dots{display:flex;gap:5px;flex-wrap:wrap}.ch-dot{width:9px;height:9px;border-radius:50%;background:#ddd;border:none;padding:0;cursor:pointer;transition:background .2s,transform .15s}.ch-dot.active{background:var(--main);transform:scale(1.25)}.ch-dot.done{background:var(--main-m)}
+.cover{min-height:100svh;background:linear-gradient(155deg,#f7c5aa, #faece7, #fff8f5);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center;position:relative;overflow:hidden}
+.cover::before{content:'🤔';font-size:180px;position:absolute;top:-20px;right:-20px;opacity:.07;transform:rotate(15deg);pointer-events:none}
+.cover-badge{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--main);background:rgba(255,255,255,.7);padding:5px 16px;border-radius:20px;margin-bottom:16px;border:1px solid var(--main-m)}
+.cover-icon{font-size:80px;margin-bottom:12px;animation:bob 2.5s ease-in-out infinite}
+.cover-title{font-family:'Fredoka One',cursive;font-size:42px;color:var(--main-d);line-height:1.1;margin-bottom:8px}
+.cover-sub{font-size:17px;font-weight:700;color:var(--main);margin-bottom:28px}
+.cover-name{background:white;border-radius:var(--r);padding:16px 32px;margin-bottom:32px;border:2px dashed var(--main)}
+.cover-name p{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--main);margin-bottom:2px}
+.cover-name .name{font-family:'Fredoka One',cursive;font-size:30px;color:var(--main-d)}
+.toc{background:white;border-radius:var(--r);padding:18px 22px;width:100%;max-width:420px;text-align:left}
+.toc h3{font-family:'Fredoka One',cursive;font-size:17px;color:var(--main-d);margin-bottom:10px}
+.toc-item{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px dashed var(--main-m);font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;transition:color .15s}.toc-item:last-child{border:none}.toc-item:hover{color:var(--main-d)}
+.toc-num{width:22px;height:22px;background:var(--main-l);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--main-d);flex-shrink:0}
+.chapter{background:white;margin:16px 12px;border-radius:20px;padding:28px 22px;box-shadow:0 2px 16px rgba(0,0,0,.05);scroll-margin-top:64px}
+.ch-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:22px;padding-bottom:18px;border-bottom:2px solid var(--bg)}
+.ch-icon{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.ch-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:3px}.ch-title{font-family:'Fredoka One',cursive;font-size:26px;line-height:1.15}.ch-sub{font-size:13px;font-weight:700;margin-top:2px;color:var(--muted)}
+.intro{border-radius:var(--r);padding:14px 18px;margin-bottom:20px;font-size:14px;font-weight:700;line-height:1.65}
+.sec-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:18px 0 8px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:18px}
+.card{border-radius:var(--r);border:1.5px solid #ebebeb;padding:14px 15px;background:white}
+.card-hd{display:flex;align-items:center;gap:7px;margin-bottom:9px}.card-ico{font-size:20px}.card-lbl{font-family:'Fredoka One',cursive;font-size:15px}
+.fl{list-style:none;display:flex;flex-direction:column;gap:6px}.fl li{display:flex;gap:7px;font-size:12.5px;color:var(--muted);line-height:1.45;font-weight:700;align-items:flex-start}
+.dot{width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.wow{border-radius:var(--r);padding:13px 16px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start}.wow-e{font-size:22px;flex-shrink:0;margin-top:2px}.wow-t{font-size:13px;font-weight:700;line-height:1.55}
+.body-t{font-size:13.5px;font-weight:700;color:var(--muted);line-height:1.7;margin-bottom:13px}
+.vocab{border-radius:var(--r);padding:13px 16px;margin-bottom:18px}.vocab-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
+.vitem{display:flex;gap:8px;margin-bottom:5px;font-size:13px;line-height:1.4}.vw{font-weight:800;min-width:110px;flex-shrink:0}.vd{color:var(--muted);font-weight:700}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.mini{border-radius:var(--rs);padding:11px 12px;font-size:12px;font-weight:700;text-align:center;line-height:1.45}.mini .mi{font-size:22px;margin-bottom:5px}
+.divider{height:1px;background:#eee;margin:14px 0}
+.recap-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px}.rc{border-radius:var(--rs);padding:11px 13px;font-size:12px;font-weight:700;color:var(--muted);line-height:1.45}.rc-n{font-family:'Fredoka One',cursive;font-size:13px;margin-bottom:2px}.rc-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px}
+.quiz-wrap{background:var(--bg);border-radius:var(--r);padding:16px 18px;margin-bottom:18px}.quiz-h{font-family:'Fredoka One',cursive;font-size:17px;margin-bottom:14px}.quiz-q{font-size:13.5px;font-weight:800;margin-bottom:8px}
+.quiz-opts{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
+.qopt{display:flex;align-items:center;gap:9px;background:white;border:1.5px solid #e0ddd5;border-radius:var(--rs);padding:10px 13px;font-size:13px;font-weight:700;color:var(--text);cursor:pointer;transition:all .18s;text-align:left;width:100%;font-family:'Nunito',sans-serif;-webkit-appearance:none}
+.qopt:active{transform:scale(.98)}.qopt .olet{width:22px;height:22px;border-radius:50%;border:2px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;transition:all .2s;color:transparent}
+.qopt.selected-correct{background:var(--teal-l);border-color:var(--teal)}.qopt.selected-correct .olet{background:var(--teal);border-color:var(--teal);color:white}
+.qopt.selected-wrong{background:#FCEBEB;border-color:#E24B4A}.qopt.selected-wrong .olet{background:#E24B4A;border-color:#E24B4A;color:white}
+.qopt.reveal-correct{background:var(--teal-l);border-color:var(--teal)}.qopt.reveal-correct .olet{background:var(--teal);border-color:var(--teal);color:white}
+.qopt:disabled{cursor:default}.quiz-ans{font-size:12.5px;font-weight:700;padding:9px 12px;border-radius:var(--rs);margin-top:4px;display:none;line-height:1.5}.quiz-ans.show{display:block}
+.stars-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}.star-b{display:inline-flex;align-items:center;gap:5px;background:var(--amber-l);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:800;color:var(--amber-d)}
+.activity{border-radius:var(--r);border:2px dashed var(--main);padding:16px 18px;margin-bottom:18px;background:var(--main-l)}
+.act-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--main);margin-bottom:3px}
+.act-title{font-family:'Fredoka One',cursive;font-size:19px;color:var(--main-d);margin-bottom:12px}
+.step{display:flex;gap:9px;margin-bottom:8px;align-items:flex-start}.sn{width:22px;height:22px;border-radius:50%;background:var(--main);color:white;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}.st{font-size:13px;font-weight:700;color:var(--main-d);line-height:1.5}
+.dad-tip{background:white;border-radius:var(--rs);padding:9px 13px;margin-top:10px;font-size:12px;font-weight:700;color:var(--main-d);border-left:3px solid var(--main);line-height:1.5}
+.cert{border:3px dashed var(--main);border-radius:var(--r);padding:28px 20px;text-align:center;background:var(--main-l);margin-bottom:18px}.cert-e{font-size:44px;margin-bottom:8px}.cert-title{font-family:'Fredoka One',cursive;font-size:24px;color:var(--main-d);margin-bottom:4px}.cert-sub{font-size:13px;font-weight:700;color:var(--main);margin-bottom:14px}.cert-line{border-bottom:2px solid var(--main);width:160px;margin:0 auto 4px}.cert-nl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--main);margin-bottom:12px}.cert-txt{font-size:13px;font-weight:700;color:var(--main-d);line-height:1.6}
+@media(max-width:420px){.two-col,.recap-grid{grid-template-columns:1fr}.three-col{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div id="lock-screen">
+  <div class="lock-robot">🤔</div>
+  <h1>Week 6 — Is AI Fair & Kind?</h1>
+  <p>Enter your secret password to unlock!</p>
+  <div class="lock-box">
+    <div class="lock-label">🔑 Secret Password</div>
+    <input type="password" id="pw-input" placeholder="••••••••" maxlength="20" onkeydown="if(event.key==='Enter')checkPw()"/>
+    <button onclick="checkPw()">Unlock Week 6 🚀</button>
+    <div class="lock-err" id="pw-error">Oops! Wrong password. Try again! 🤔</div>
+  </div>
+</div>
+<div id="book-content">
+<nav class="nav">
+  <a class="nav-back" href="index.html">← Library</a>
+  <div class="nav-title">🤔 Week 6</div>
+  <div class="ch-dots" id="dots"></div>
+</nav>
+<div class="cover" id="ch0">
+  <div class="cover-badge">Week 6 · Summer AI Adventure</div>
+  <div class="cover-icon">🤔</div>
+  <div class="cover-title">Is AI Fair & Kind?</div>
+  <div class="cover-sub">Ethics, privacy, deepfakes & AI rules</div>
+  <div class="cover-name"><p>This book belongs to</p><div class="name">Marty ⭐</div></div>
+  <div class="toc">
+    <h3>📚 10 Chapters Inside!</h3>
+    <div class="toc-item" onclick="goTo(1)"><div class="toc-num">1</div>What is Fairness?</div>
+    <div class="toc-item" onclick="goTo(2)"><div class="toc-num">2</div>When AI is Unfair</div>
+    <div class="toc-item" onclick="goTo(3)"><div class="toc-num">3</div>Privacy & AI</div>
+    <div class="toc-item" onclick="goTo(4)"><div class="toc-num">4</div>Who Owns Your Data?</div>
+    <div class="toc-item" onclick="goTo(5)"><div class="toc-num">5</div>AI & Jobs</div>
+    <div class="toc-item" onclick="goTo(6)"><div class="toc-num">6</div>New Jobs AI Creates</div>
+    <div class="toc-item" onclick="goTo(7)"><div class="toc-num">7</div>Fake Pictures & Deepfakes</div>
+    <div class="toc-item" onclick="goTo(8)"><div class="toc-num">8</div>Telling Real from Fake</div>
+    <div class="toc-item" onclick="goTo(9)"><div class="toc-num">9</div>AI Rules — Who Makes Them?</div>
+    <div class="toc-item" onclick="goTo(10)"><div class="toc-num">10</div>Week 6 Recap + Quiz!</div>
+  </div>
+</div>
+
+
+<div class="chapter" id="ch1">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#EEEDFE">⚖️</div>
+    <div>
+      <div class="ch-tag" style="color:#7F77DD">Chapter 1</div>
+      <div class="ch-title">What is Fairness?</div>
+      <div class="ch-sub">How we decide what's right and wrong</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#EEEDFE;color:#26215C">Before we can talk about whether AI is fair, we need to think about what 'fairness' actually means! Is it treating everyone exactly the same? Or treating everyone according to their needs? These are questions philosophers have debated for thousands of years — and now AI has to answer them too.</div>
+  <div class="wow" style="background:#EEEDFE"><div class="wow-e">💡</div><div class="wow-t" style="color:#26215C">Here's a classic fairness puzzle: Three kids are watching a baseball game over a fence. One is tall and can see fine. One is medium height and can just about see. One is short and can't see at all. If you give them all the same size box to stand on, is that FAIR? Or should the short kid get a bigger box?</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q1a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q1a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q1a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q1a" style="background:#FAECE7;color:#4A1B0C"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎯 Activity Time!</div>
+    <div class="act-title">critical thinking activity</div>
+    <div class="step"><div class="sn">1</div><div class="st">Read each scenario and decide: fair or unfair? Write your answers.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">1. Every student gets 1 hour to finish a test.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">2. A student with difficulty reading gets 2 hours for the same test.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">3. The fastest runner always wins the race.</div></div>
+    <div class="step"><div class="sn">5</div><div class="st">Discuss: what's the difference between equality (same treatment) and equity (fair treatment)?</div></div>
+    <div class="dad-tip">💡 The equality vs equity distinction is fundamental to AI ethics — it's why AI can't just be 'neutral' or 'treat everyone the same.' This is a deeply important concept worth spending extra time on!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch2">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#FAECE7">😠</div>
+    <div>
+      <div class="ch-tag" style="color:#D85A30">Chapter 2</div>
+      <div class="ch-title">When AI is Unfair</div>
+      <div class="ch-sub">Real examples of AI making unfair choices</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#FAECE7;color:#4A1B0C">Because AI learns from human data, it can learn and repeat human biases — sometimes making things even worse. Let's look at some real examples of when AI got fairness badly wrong, and what we can learn from these mistakes.</div>
+  <div class="sec-label">Real AI bias examples</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;background:coral-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">📸 Face recognition</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Worked worse on darker skin tones because training data had fewer examples</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:amber-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">💼 Job hiring AI</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Recommended fewer women for technical jobs because past hiring data was biased</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:purple-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🏛️ Criminal justice AI</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Predicted higher risk scores for certain groups unfairly</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:teal-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🏥 Medical AI</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Recommended less pain treatment for certain patient groups</div></div>
+  </div>
+  <div class="wow" style="background:#FAECE7"><div class="wow-e">💡</div><div class="wow-t" style="color:#4A1B0C">None of these AI systems were designed to be unfair — the bias crept in through biased training data and biased human decisions baked into history. This is why AI ethics is so important. When we automate unfairness, it can happen at massive scale — affecting millions of people!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q2a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q2a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q2a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q2a" style="background:#FAECE7;color:#4A1B0C"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎯 Activity Time!</div>
+    <div class="act-title">bias detection activity</div>
+    <div class="step"><div class="sn">1</div><div class="st">Story: A robot security guard was trained on footage from one neighbourhood.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">It flags 'suspicious behaviour' based on what it saw in training.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Why might this be unfair? (People in different neighbourhoods behave differently!)</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">How would you fix it? What training data would make it fairer?</div></div>
+    <div class="dad-tip">💡 The security robot example is age-appropriate and abstract enough to discuss without touching sensitive topics while being structurally identical to real AI bias cases. Let Marty lead the 'fix it' discussion!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch3">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#E6F1FB">🔒</div>
+    <div>
+      <div class="ch-tag" style="color:#185FA5">Chapter 3</div>
+      <div class="ch-title">Privacy & AI</div>
+      <div class="ch-sub">What AI knows about us — and should it?</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#E6F1FB;color:#042C53">Every time you use an app, search online, watch a video, or talk to a voice assistant, you're creating DATA about yourself. Companies use AI to collect and analyse this data to understand you better than you might understand yourself! Is this OK? Let's think carefully about privacy.</div>
+  <div class="sec-label">Data you create every day</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;background:blue-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">📱</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Every app you open and how long you use it</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:purple-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🔍</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Everything you search for online</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:teal-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">📍</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Your location every minute of the day</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:amber-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🎵</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Every song you play and when you skip</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:coral-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">💬</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Messages and conversations</div></div>
+  </div>
+  <div class="wow" style="background:#E6F1FB"><div class="wow-e">💡</div><div class="wow-t" style="color:#042C53">By analysing your data, AI can often predict things about you that you've never even said out loud — your mood, your health, even your political views. One study showed an app could predict depression weeks before the person showed any symptoms, just from phone usage patterns. Powerful — and a little scary!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q3a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q3a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q3a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q3a" style="background:#FAECE7;color:#4A1B0C"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎯 Activity Time!</div>
+    <div class="act-title">privacy reflection activity</div>
+    <div class="step"><div class="sn">1</div><div class="st">Write a list of 10 things about yourself.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Now mark each one: would you share this with: your best friend? Your teacher? A stranger? An app?</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Are there things you'd share with friends but NOT an app?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Discuss: why might the same information feel different depending on who's collecting it?</div></div>
+    <div class="dad-tip">💡 This activity develops data literacy and privacy instincts. The key insight: context matters enormously — sharing location with a friend to meet up is very different from an app silently tracking your location all day.</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch4">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#FAEEDA">📦</div>
+    <div>
+      <div class="ch-tag" style="color:#BA7517">Chapter 4</div>
+      <div class="ch-title">Who Owns Your Data?</div>
+      <div class="ch-sub">When you use apps, your info travels far</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#FAEEDA;color:#633806">Here's a question most adults never think about: when you sign up for a free app, who owns all the data the app collects about you? When something is free, YOU are usually the product — your data is what the company is getting paid with. Let's understand what happens to your data!</div>
+  <div class="sec-label">The journey of your data</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;background:#purple-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:#4A1B0C;flex:1">📱 You use the app</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:#amber-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:#4A1B0C;flex:1">📊 App collects your data</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:#blue-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:#4A1B0C;flex:1">🏢 Sent to company servers</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:#purple-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:#4A1B0C;flex:1">🤖 AI analyses it</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:#coral-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:#4A1B0C;flex:1">💰 Sold to advertisers</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:#amber-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:13px;font-weight:800;color:#4A1B0C;flex:1">📣 Ads target you</div></div>
+  </div>
+  <div class="wow" style="background:#FAEEDA"><div class="wow-e">💡</div><div class="wow-t" style="color:#633806">When you use a 'free' social media app, the company makes money by showing you targeted ads. The AI learns what you like, predicts what you'll want to buy, and shows you ads for exactly those things. Your attention and your personal data are the price you pay for using the app 'for free.'</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q4a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q4a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q4a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q4a" style="background:#FAECE7;color:#4A1B0C"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎯 Activity Time!</div>
+    <div class="act-title">data journey activity</div>
+    <div class="step"><div class="sn">1</div><div class="st">Pick one free app you use. Draw it on the left of a paper.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Now draw all the companies that might receive your data from that app.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Draw lines showing the data journey: app → analytics company → advertiser → you (with ads).</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Most free apps share data with 10-100+ other companies! Does knowing this change how you feel about using them?</div></div>
+    <div class="dad-tip">💡 Many parents don't understand the data economy either — this activity teaches both parent and child something genuinely important. The '10-100 companies' statistic is real and consistently shocks people when they first encounter it.</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch5">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#EAF3DE">🏭</div>
+    <div>
+      <div class="ch-tag" style="color:#3B6D11">Chapter 5</div>
+      <div class="ch-title">AI & Jobs</div>
+      <div class="ch-sub">What happens when robots do some jobs?</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#EAF3DE;color:#173404">One of the biggest questions about AI is: will it take people's jobs? Some jobs that humans do today will probably be automated by AI. But historically, new technology has always created new types of jobs too. Let's think honestly about what might change and what that means for your future!</div>
+  <div class="wow" style="background:#EAF3DE"><div class="wow-e">💡</div><div class="wow-t" style="color:#173404">A famous study estimated that about 47% of current jobs could be automated in the next 20 years. But the same study showed that throughout history, technology has always created more jobs than it destroyed — just different types. The key is: which jobs are HARDEST for AI to do?</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q5a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q5a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q5a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q5a" style="background:#FAECE7;color:#4A1B0C"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎯 Activity Time!</div>
+    <div class="act-title">future thinking activity</div>
+    <div class="step"><div class="sn">1</div><div class="st">List 10 jobs you know (teacher, doctor, driver, chef, artist...)</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">For each, rate how hard it would be for AI: 🟢 easy, 🟡 medium, 🔴 hard</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Generally: routine, predictable tasks = easier for AI. Creative, emotional, unpredictable = harder.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Surprise: doctors and lawyers have parts that AI can do! Plumbers and social workers are much harder for AI.</div></div>
+    <div class="dad-tip">💡 The counter-intuitive finding that high-education jobs are often MORE automatable than skilled trades is genuinely surprising to most adults and creates great discussion. A robot can analyse an X-ray but struggles to fix a leaking pipe!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch6">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#E1F5EE">💼</div>
+    <div>
+      <div class="ch-tag" style="color:#1D9E75">Chapter 6</div>
+      <div class="ch-title">New Jobs AI Creates</div>
+      <div class="ch-sub">Future careers in the AI age</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#E1F5EE;color:#085041">For every job AI makes easier or replaces, it tends to create new jobs that didn't exist before. Just like the internet created jobs like 'web designer' and 'social media manager' that nobody could have predicted in 1990, AI is creating entirely new careers right now!</div>
+  <div class="sec-label">New jobs that barely existed 5 years ago</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;background:purple-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🤖 Prompt Engineer</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Crafts the perfect instructions to get the best results from AI</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:teal-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">⚖️ AI Ethicist</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Ensures AI systems are fair, safe, and legal</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:blue-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🔍 AI Auditor</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Tests AI systems to find hidden biases and errors</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:amber-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🎓 AI Trainer</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Teaches AI by labelling data and rating its outputs</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:coral-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🛡️ AI Safety Researcher</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Works to make sure powerful AI remains safe and beneficial</div></div>
+  </div>
+  <div class="wow" style="background:#E1F5EE"><div class="wow-e">💡</div><div class="wow-t" style="color:#085041">The most exciting thing: many of the most important AI jobs of 2035 probably haven't been invented yet — just like how 'app developer' didn't exist in 2005. The best preparation isn't learning specific AI tools (they'll change) but developing curiosity, critical thinking, and creativity — skills AI can't replace!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q6a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q6a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q6a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q6a" style="background:#FAECE7;color:#4A1B0C"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎯 Activity Time!</div>
+    <div class="act-title">creative career activity</div>
+    <div class="step"><div class="sn">1</div><div class="st">Invent a job that might exist in 2040 because of AI.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Give it a name, describe what you'd do, and explain why it's needed.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">What skills would you need? What would a typical work day look like?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Share your idea with the family — whose sounds most exciting? Most useful?</div></div>
+    <div class="dad-tip">💡 Future job design is a wonderful creativity and futurism exercise. Kids often invent genuinely plausible jobs — and it opens their minds to the fact that their career might be something that doesn't exist yet!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch7">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#FAECE7">🎭</div>
+    <div>
+      <div class="ch-tag" style="color:#D85A30">Chapter 7</div>
+      <div class="ch-title">Fake Pictures & Deepfakes</div>
+      <div class="ch-sub">AI that makes fake photos and videos</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#FAECE7;color:#4A1B0C">AI can now create photos and videos of people doing and saying things that NEVER HAPPENED — and they look completely real. These are called deepfakes. A deepfake video could show a famous person saying something terrible, even if they never said it. This is one of the most challenging problems in the AI age!</div>
+  <div class="wow" style="background:#FAECE7"><div class="wow-e">💡</div><div class="wow-t" style="color:#4A1B0C">In 2023, AI-generated fake images spread rapidly on social media appearing to show a famous politician being arrested — before any such event occurred. Millions of people saw them before anyone realised they were fake. Being able to identify and question potentially fake images is an essential skill for your generation!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q7a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q7a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q7a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q7a" style="background:#FAECE7;color:#4A1B0C"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎯 Activity Time!</div>
+    <div class="act-title">media literacy activity</div>
+    <div class="step"><div class="sn">1</div><div class="st">Dad: search online for 'AI generated face' or use thispersondoesnotexist.com</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Look at the faces together. They look incredibly real — because they are AI-generated!</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Now look closely for clues: weird backgrounds, strange ears, blurry teeth, odd hair.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Make a list: what signs might tell you an image is AI-generated vs. real?</div></div>
+    <div class="dad-tip">💡 thispersondoesnotexist.com generates a new photorealistic AI face on every refresh. Every single face is completely fake — there is no such person. The realism is genuinely startling even for adults and creates an excellent jumping-off point for media literacy discussions.</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch8">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#E6F1FB">🔍</div>
+    <div>
+      <div class="ch-tag" style="color:#185FA5">Chapter 8</div>
+      <div class="ch-title">Telling Real from Fake</div>
+      <div class="ch-sub">How to be a smart digital detective</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#E6F1FB;color:#042C53">In a world where AI can create fake photos, videos, and news articles, the most important skill you can develop is critical thinking. How do you tell what's real from what's fake? Let's learn some strategies that will serve you your whole life!</div>
+  <div class="sec-label">The SIFT method for checking information</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;background:coral-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🛑 Stop</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Don't share immediately — take a breath and think</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:blue-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🔍 Investigate the source</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Who made this? Are they trustworthy?</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:teal-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🔎 Find better coverage</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Can you find the same story on trusted news sites?</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:amber-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🌳 Trace claims</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Where did this originally come from? Follow it back</div></div>
+  </div>
+  <div class="wow" style="background:#E6F1FB"><div class="wow-e">💡</div><div class="wow-t" style="color:#042C53">One simple rule: If something seems designed to make you feel VERY angry or VERY scared, slow down! Fake news is often crafted to trigger strong emotions so you share it without thinking. Strong emotions make us less critical. Real news can be upsetting — but fake news is specifically designed to manipulate feelings.</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q8a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q8a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q8a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q8a" style="background:#FAECE7;color:#4A1B0C"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎯 Activity Time!</div>
+    <div class="act-title">media literacy activity</div>
+    <div class="step"><div class="sn">1</div><div class="st">Dad: write 5 news headlines — some real, some made up but plausible.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Marty: decide which are real and which are fake — and explain WHY you think so.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">What clues helped you decide? Extreme language? Unbelievable claims?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Now look them up! Were you right? What fooled you?</div></div>
+    <div class="dad-tip">💡 This game is endlessly playable and directly builds the most critical media literacy skill: instinctive questioning of claims. Doing this repeatedly with increasing subtlety is genuinely one of the most important things a parent can teach a child today.</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch9">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#EEEDFE">🏛️</div>
+    <div>
+      <div class="ch-tag" style="color:#7F77DD">Chapter 9</div>
+      <div class="ch-title">AI Rules — Who Makes Them?</div>
+      <div class="ch-sub">Governments, companies, scientists, and YOU</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#EEEDFE;color:#26215C">Who decides what AI is allowed to do and what it's not? Right now, different countries, companies, and organisations all have different rules — and there's a big global conversation happening about how to make sure powerful AI is safe and beneficial for everyone. Including you!</div>
+  <div class="sec-label">Who shapes AI rules</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;background:blue-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🏛️ Governments</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Make laws about what AI can and can't do in their countries</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:amber-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🏢 Companies</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Set their own internal rules and safety policies</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:teal-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🔬 Researchers</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Publish safety guidelines and identify risks before they happen</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:purple-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">🌍 International orgs</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Try to create global agreements about AI safety</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:green-l;border-radius:var(--rs);padding:10px 13px"><div style="font-size:20px;flex-shrink:0">👤 You!</div><div style="font-size:13px;font-weight:700;color:#4A1B0C">Public opinion shapes what politicians and companies do</div></div>
+  </div>
+  <div class="wow" style="background:#EEEDFE"><div class="wow-e">💡</div><div class="wow-t" style="color:#26215C">The amazing thing: this is still being decided RIGHT NOW. The rules for AI are being written by people alive today — including some who started just as curious as you are! By the time you're an adult, you could literally be one of the people who helps write the rules for AI. Your voice matters!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q9a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q9a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q9a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q9a" style="background:#FAECE7;color:#4A1B0C"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎯 Activity Time!</div>
+    <div class="act-title">civic activity</div>
+    <div class="step"><div class="sn">1</div><div class="st">If you were in charge of AI, what rules would you create?</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Think about: what should AI never be allowed to do? What should it always have to do?</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Write 3 rules that you think every AI must follow.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Share your rules with the family. Hold a vote — which rules would everyone agree to?</div></div>
+    <div class="dad-tip">💡 The key message: this conversation is genuinely unfinished. Children who engage with these questions today are better equipped to participate in the democratic process around AI as they grow up. Empowerment over helplessness!</div>
+  </div>
+</div>
+
+<div class="chapter" id="ch10">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:#FAEEDA">🏆</div>
+    <div>
+      <div class="ch-tag" style="color:#BA7517">Chapter 10</div>
+      <div class="ch-title">Week 6 Recap + Quiz!</div>
+      <div class="ch-sub">Review fairness, privacy, deepfakes, and AI rules</div>
+    </div>
+  </div>
+  <div class="intro" style="background:#FAEEDA;color:#633806">Ethics explorer Marty! 🤔 You've tackled some of the hardest questions in all of technology this week — fairness, bias, privacy, deepfakes, jobs, and who makes the rules. This is the stuff that even the smartest adults in the world are still figuring out. You're asking the right questions! Let's review and quiz!</div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one important thing you learned in this chapter?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q10a','Keep reading to discover more amazing things!')"><div class="olet">A</div>I'm not sure yet</button>
+      <button class="qopt" onclick="answer(this,true,'q10a','You're paying great attention! Every chapter builds your AI knowledge!')"><div class="olet">B</div>Something new and surprising about AI!</button>
+      <button class="qopt" onclick="answer(this,false,'q10a','Talk it over with Dad — discussing what you read helps you remember it better!')"><div class="olet">C</div>I want to discuss it with Dad</button>
+    </div>
+    <div class="quiz-ans" id="q10a" style="background:#FAECE7;color:#4A1B0C"></div>
+  </div>
+</div>
+
+
+<div class="chapter" id="ch10">
+  <div class="ch-header"><div class="ch-icon" style="background:var(--amber-l)">🏆</div><div><div class="ch-tag" style="color:var(--amber)">Chapter 10</div><div class="ch-title">Week 6 Recap + Quiz!</div><div class="ch-sub">Review everything and celebrate! 🎉</div></div></div>
+  <div class="intro" style="background:var(--amber-l);color:var(--amber-d)">Ethics explorer Marty! 🤔 You've tackled some of the hardest questions in all of technology this week — fairness, bias, privacy, deepfakes, jobs, and who makes the rules. This is the stuff that even the smartest adults in the world are still figuring out. You're asking the right questions! Let's review and quiz!</div>
+  <div class="sec-label">Everything you learned this week 📚</div>
+  <div class="recap-grid">
+    <div class="rc" style="background:{'hex': '#1D9E75', 'light': '#E1F5EE', 'dark': '#085041'}">&nbsp;<div class="rc-n">&nbsp;Ch 1</div><div class="rc-title">What is Fairness?</div>How we decide what's right and wrong</div><div class="rc" style="background:{'hex': '#7F77DD', 'light': '#EEEDFE', 'dark': '#26215C'}">&nbsp;<div class="rc-n">&nbsp;Ch 2</div><div class="rc-title">When AI is Unfair</div>Real examples of AI making unfair choices</div><div class="rc" style="background:{'hex': '#185FA5', 'light': '#E6F1FB', 'dark': '#042C53'}">&nbsp;<div class="rc-n">&nbsp;Ch 3</div><div class="rc-title">Privacy & AI</div>What AI knows about us — and should it?</div><div class="rc" style="background:{'hex': '#BA7517', 'light': '#FAEEDA', 'dark': '#633806'}">&nbsp;<div class="rc-n">&nbsp;Ch 4</div><div class="rc-title">Who Owns Your Data?</div>When you use apps, your info travels far</div><div class="rc" style="background:{'hex': '#D85A30', 'light': '#FAECE7', 'dark': '#4A1B0C'}">&nbsp;<div class="rc-n">&nbsp;Ch 5</div><div class="rc-title">AI & Jobs</div>What happens when robots do some jobs?</div><div class="rc" style="background:{'hex': '#3B6D11', 'light': '#EAF3DE', 'dark': '#173404'}">&nbsp;<div class="rc-n">&nbsp;Ch 6</div><div class="rc-title">New Jobs AI Creates</div>Future careers in the AI age</div><div class="rc" style="background:{'hex': '#D4537E', 'light': '#FBEAF0', 'dark': '#4B1528'}">&nbsp;<div class="rc-n">&nbsp;Ch 7</div><div class="rc-title">Fake Pictures & Deepfakes</div>AI that makes fake photos and videos</div><div class="rc" style="background:{'hex': '#1D9E75', 'light': '#E1F5EE', 'dark': '#085041'}">&nbsp;<div class="rc-n">&nbsp;Ch 8</div><div class="rc-title">Telling Real from Fake</div>How to be a smart digital detective</div><div class="rc" style="background:{'hex': '#7F77DD', 'light': '#EEEDFE', 'dark': '#26215C'}">&nbsp;<div class="rc-n">&nbsp;Ch 9</div><div class="rc-title">AI Rules — Who Makes Them?</div>Governments, companies, scientists, and YOU</div>
+  </div>
+    <div class="quiz-wrap">
+    <div class="quiz-h">🏆 The BIG Week 6 Quiz!</div>
+    <div class="stars-row"><div class="star-b">⭐ 5 questions</div><div class="star-b">🎯 Tap to answer</div><div class="star-b">🏅 Aim for 5/5!</div></div>
+    <div class="quiz-q">Q1: What is ONE way AI helps doctors?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq1','AI helps doctors by analysing X-rays and scans to spot diseases they might miss!')"><div class="olet">A</div>It replaces doctors completely</button>
+      <button class="qopt" onclick="answer(this,true,'bq1','AI helps doctors by analysing X-rays and scans to spot diseases they might miss!')"><div class="olet">B</div>It analyses X-rays to spot diseases, giving doctors a brilliant second opinion</button>
+      <button class="qopt" onclick="answer(this,false,'bq1','AI helps doctors by analysing X-rays and scans to spot diseases they might miss!')"><div class="olet">C</div>It writes prescriptions automatically</button>
+    </div>
+    <div class="quiz-ans" id="bq1" style="background:#FAECE7;color:#4A1B0C"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q2: What does "bias" in AI mean?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq2','Bias means unfair outcomes because the training data wasn't balanced — AI learns human prejudices from biased data!')"><div class="olet">A</div>When AI works too slowly</button>
+      <button class="qopt" onclick="answer(this,true,'bq2','Bias means unfair outcomes because the training data wasn't balanced — AI learns human prejudices from biased data!')"><div class="olet">B</div>Unfair outcomes because training data wasn't balanced or representative</button>
+      <button class="qopt" onclick="answer(this,false,'bq2','Bias means unfair outcomes because the training data wasn't balanced — AI learns human prejudices from biased data!')"><div class="olet">C</div>When AI gives a wrong answer about maths</button>
+    </div>
+    <div class="quiz-ans" id="bq2" style="background:#FAECE7;color:#4A1B0C"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q3: What is a deepfake?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq3','A deepfake is an AI-generated fake photo or video showing someone doing or saying something that never happened!')"><div class="olet">A</div>A very detailed 3D AI model</button>
+      <button class="qopt" onclick="answer(this,false,'bq3','A deepfake is an AI-generated fake photo or video showing someone doing or saying something that never happened!')"><div class="olet">B</div>A type of underwater AI camera</button>
+      <button class="qopt" onclick="answer(this,true,'bq3','A deepfake is an AI-generated fake photo or video showing someone doing or saying something that never happened!')"><div class="olet">C</div>An AI-generated fake photo or video of a real person</button>
+    </div>
+    <div class="quiz-ans" id="bq3" style="background:#FAECE7;color:#4A1B0C"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q4: Which type of job is HARDEST for AI to replace?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq4','Data entry is routine and repetitive — AI handles that easily! Creative, emotional, and unpredictable work is much harder for AI.')"><div class="olet">A</div>Data entry (typing information into spreadsheets)</button>
+      <button class="qopt" onclick="answer(this,true,'bq4','Data entry is routine and repetitive — AI handles that easily! Creative, emotional, and unpredictable work is much harder for AI.')"><div class="olet">B</div>School counsellor (supporting students emotionally)</button>
+      <button class="qopt" onclick="answer(this,false,'bq4','Data entry is routine and repetitive — AI handles that easily! Creative, emotional, and unpredictable work is much harder for AI.')"><div class="olet">C</div>Traffic light controller</button>
+    </div>
+    <div class="quiz-ans" id="bq4" style="background:#FAECE7;color:#4A1B0C"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q5: Who gets to help decide the rules for AI?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq5','Everyone has a role! Governments, companies, researchers, AND the public — including you — all shape what AI is allowed to do!')"><div class="olet">A</div>Only AI companies and their engineers</button>
+      <button class="qopt" onclick="answer(this,false,'bq5','Everyone has a role! Governments, companies, researchers, AND the public — including you — all shape what AI is allowed to do!')"><div class="olet">B</div>Only governments and politicians</button>
+      <button class="qopt" onclick="answer(this,true,'bq5','Everyone has a role! Governments, companies, researchers, AND the public — including you — all shape what AI is allowed to do!')"><div class="olet">C</div>Everyone — governments, companies, researchers, and citizens like YOU</button>
+    </div>
+    <div class="quiz-ans" id="bq5" style="background:#FAECE7;color:#4A1B0C"></div>
+    <div id="score-reveal" style="display:none;margin-top:16px;padding:14px 16px;border-radius:var(--r);background:#FAECE7;color:#4A1B0C;font-weight:800;font-size:15px;text-align:center"></div>
+  </div>
+  <div class="cert">
+    <div class="cert-e">🎓</div>
+    <div class="cert-title">Week 6 Complete!</div>
+    <div class="cert-sub">This certifies that</div>
+    <div class="cert-line"></div>
+    <div class="cert-nl">Marty</div>
+    <div class="cert-txt">has successfully completed<br>Week 6 of the AI Summer Adventure<br>and is now an official<br><strong>AI Ethics Champion! 🤔⭐</strong></div>
+  </div>
+  <div style="margin:0 0 8px;padding:14px 16px;background:var(--teal-l);border-radius:var(--r);text-align:center">
+    <div style="font-family:'Fredoka One',cursive;font-size:16px;color:var(--teal-d);margin-bottom:4px">Ready for Week 7? 🛠️</div>
+    <div style="font-size:13px;font-weight:700;color:var(--teal)">Next up: Build Your Own AI! — Scratch, Teachable Machine, and hands-on AI building!</div>
+  </div>
+</div>
+</div>
+<script>
+const dots=document.getElementById('dots');
+for(let i=1;i<=10;i++){const d=document.createElement('button');d.className='ch-dot';d.setAttribute('aria-label','Chapter '+i);d.onclick=()=>goTo(i);dots.appendChild(d);}
+function goTo(n){document.getElementById('ch'+n).scrollIntoView({behavior:'smooth'})}
+const chapters=document.querySelectorAll('.chapter');const allDots=document.querySelectorAll('.ch-dot');
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const n=parseInt(e.target.id.replace('ch',''));if(!isNaN(n)&&n>=1&&n<=10)allDots.forEach((d,i)=>d.classList.toggle('active',i===n-1));}}); },{threshold:0.3});
+chapters.forEach(c=>obs.observe(c));
+const answered={};const bigIds=['bq1','bq2','bq3','bq4','bq5'];let bigScore=0,bigAnswered=0;
+function answer(btn,correct,ansId,explanation){
+  if(answered[ansId])return;answered[ansId]=true;
+  const opts=btn.closest('.quiz-opts').querySelectorAll('.qopt');opts.forEach(o=>o.disabled=true);
+  btn.classList.add(correct?'selected-correct':'selected-wrong');
+  if(!correct){opts.forEach(o=>{const oc=o.getAttribute('onclick');if(oc&&oc.includes("true,'"+ansId+"'"))o.classList.add('reveal-correct');});}
+  const el=document.getElementById(ansId);el.textContent=(correct?'🌟 Correct! ':'🤔 Not quite — ')+explanation;el.classList.add('show');
+  if(bigIds.includes(ansId)){bigAnswered++;if(correct)bigScore++;if(bigAnswered===5){setTimeout(()=>{const rev=document.getElementById('score-reveal');const msgs=['Keep going! 💪','Nice work! 🎉','Getting there! 🚀','Almost perfect! 🌟','PERFECT SCORE! AI ETHICS CHAMPION! 🏆🤔⭐'];rev.innerHTML='You got <strong>'+bigScore+'/5</strong>! '+msgs[bigScore<=1?0:bigScore===2?1:bigScore===3?2:bigScore===4?3:4];rev.style.display='block';rev.scrollIntoView({behavior:'smooth',block:'nearest'});},400);}}
+  const ch=btn.closest('.chapter');if(ch){const n=parseInt(ch.id.replace('ch',''));if(!isNaN(n)&&n>=1&&n<=10)allDots[n-1].classList.add('done');}
+}
+function checkPw(){
+  const val=document.getElementById('pw-input').value;const err=document.getElementById('pw-error');
+  if(val==='roro@123'){sessionStorage.setItem('marty_unlocked','yes');document.getElementById('lock-screen').style.display='none';document.getElementById('book-content').style.display='block';}
+  else{err.classList.add('show');document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();setTimeout(()=>err.classList.remove('show'),2500);}
+}
+if(sessionStorage.getItem('marty_unlocked')==='yes'){document.getElementById('lock-screen').style.display='none';document.getElementById('book-content').style.display='block';}
+</script>
+</body>
+</html>

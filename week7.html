@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Marty's AI Adventure — Week 7</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pink:#C4447A;--pink-l:#FBEAF0;--pink-d:#4B1528;--pink-m:#F5AACE;
+  --teal:#1D9E75;--teal-l:#E1F5EE;--teal-d:#085041;
+  --purple:#7F77DD;--purple-l:#EEEDFE;--purple-d:#26215C;
+  --coral:#D85A30;--coral-l:#FAECE7;--coral-d:#4A1B0C;
+  --amber:#BA7517;--amber-l:#FAEEDA;--amber-d:#633806;
+  --blue:#185FA5;--blue-l:#E6F1FB;--blue-d:#042C53;
+  --green:#3B6D11;--green-l:#EAF3DE;--green-d:#173404;
+  --bg:#F5F3EE;--white:#fff;--text:#1a1a1a;--muted:#555;
+  --r:14px;--rs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.7}
+#lock-screen{position:fixed;inset:0;z-index:9999;background:linear-gradient(155deg,#f9d0e4 0%,#fbeaf0 40%,#fff5f9 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center}
+#lock-screen .lock-robot{font-size:72px;animation:bob 2.5s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+#lock-screen h1{font-family:'Fredoka One',cursive;font-size:32px;color:var(--pink-d);margin:10px 0 4px}
+#lock-screen p{font-size:14px;font-weight:700;color:var(--pink);margin-bottom:28px}
+.lock-box{background:white;border-radius:var(--r);padding:24px 28px;width:100%;max-width:320px;border:2px dashed var(--pink)}
+.lock-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--pink);margin-bottom:10px}
+.lock-box input{width:100%;padding:12px 16px;border-radius:var(--rs);border:2px solid var(--pink-m);font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;text-align:center;letter-spacing:4px;outline:none;color:var(--pink-d);background:var(--pink-l);margin-bottom:12px;transition:border-color .2s}
+.lock-box input:focus{border-color:var(--pink)}
+.lock-box button{width:100%;padding:13px;background:var(--pink);color:white;border:none;border-radius:var(--rs);font-family:'Fredoka One',cursive;font-size:18px;cursor:pointer;letter-spacing:.5px;transition:transform .1s}
+.lock-box button:active{transform:scale(.97)}
+.lock-err{font-size:13px;font-weight:800;color:var(--coral);margin-top:10px;min-height:18px;opacity:0;transition:opacity .2s}
+.lock-err.show{opacity:1}
+#book-content{display:none}
+.nav{position:sticky;top:0;z-index:100;background:rgba(245,243,238,.93);backdrop-filter:blur(10px);border-bottom:1px solid #e0ddd5;padding:10px 16px;display:flex;align-items:center;gap:10px}
+.nav-back{font-size:13px;font-weight:800;color:var(--pink);text-decoration:none;padding:4px 10px;border-radius:20px;background:var(--pink-l)}
+.nav-title{font-family:'Fredoka One',cursive;font-size:16px;color:var(--pink-d);flex:1;text-align:center}
+.ch-dots{display:flex;gap:5px;flex-wrap:wrap}
+.ch-dot{width:9px;height:9px;border-radius:50%;background:#ddd;border:none;padding:0;cursor:pointer;transition:background .2s,transform .15s}
+.ch-dot.active{background:var(--pink);transform:scale(1.25)}
+.ch-dot.done{background:var(--pink-m)}
+.cover{min-height:100svh;background:linear-gradient(155deg,#f9d0e4 0%,#fbeaf0 40%,#fff5f9 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center;position:relative;overflow:hidden}
+.cover::before{content:'🛠️';font-size:180px;position:absolute;top:-20px;right:-20px;opacity:.07;transform:rotate(15deg);pointer-events:none}
+.cover-badge{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--pink);background:rgba(255,255,255,.7);padding:5px 16px;border-radius:20px;margin-bottom:16px;border:1px solid var(--pink-m)}
+.cover-icon{font-size:80px;margin-bottom:12px;animation:bob 2.5s ease-in-out infinite}
+.cover-title{font-family:'Fredoka One',cursive;font-size:42px;color:var(--pink-d);line-height:1.1;margin-bottom:8px}
+.cover-sub{font-size:17px;font-weight:700;color:var(--pink);margin-bottom:28px}
+.cover-name{background:white;border-radius:var(--r);padding:16px 32px;margin-bottom:32px;border:2px dashed var(--pink)}
+.cover-name p{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--pink);margin-bottom:2px}
+.cover-name .name{font-family:'Fredoka One',cursive;font-size:30px;color:var(--pink-d)}
+.toc{background:white;border-radius:var(--r);padding:18px 22px;width:100%;max-width:420px;text-align:left}
+.toc h3{font-family:'Fredoka One',cursive;font-size:17px;color:var(--pink-d);margin-bottom:10px}
+.toc-item{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px dashed var(--pink-m);font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;transition:color .15s}
+.toc-item:last-child{border:none}
+.toc-item:hover{color:var(--pink-d)}
+.toc-num{width:22px;height:22px;background:var(--pink-l);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--pink-d);flex-shrink:0}
+.chapter{background:white;margin:16px 12px;border-radius:20px;padding:28px 22px;box-shadow:0 2px 16px rgba(0,0,0,.05);scroll-margin-top:64px}
+.ch-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:22px;padding-bottom:18px;border-bottom:2px solid var(--bg)}
+.ch-icon{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.ch-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:3px}
+.ch-title{font-family:'Fredoka One',cursive;font-size:26px;line-height:1.15}
+.ch-sub{font-size:13px;font-weight:700;margin-top:2px;color:var(--muted)}
+.intro{border-radius:var(--r);padding:14px 18px;margin-bottom:20px;font-size:14px;font-weight:700;line-height:1.65}
+.sec-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:18px 0 8px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:18px}
+.card{border-radius:var(--r);border:1.5px solid #ebebeb;padding:14px 15px;background:white}
+.card-hd{display:flex;align-items:center;gap:7px;margin-bottom:9px}
+.card-ico{font-size:20px}
+.card-lbl{font-family:'Fredoka One',cursive;font-size:15px}
+.fl{list-style:none;display:flex;flex-direction:column;gap:6px}
+.fl li{display:flex;gap:7px;font-size:12.5px;color:var(--muted);line-height:1.45;font-weight:700;align-items:flex-start}
+.dot{width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.wow{border-radius:var(--r);padding:13px 16px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start}
+.wow-e{font-size:22px;flex-shrink:0;margin-top:2px}
+.wow-t{font-size:13px;font-weight:700;line-height:1.55}
+.body-t{font-size:13.5px;font-weight:700;color:var(--muted);line-height:1.7;margin-bottom:13px}
+.vocab{border-radius:var(--r);padding:13px 16px;margin-bottom:18px}
+.vocab-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
+.vitem{display:flex;gap:8px;margin-bottom:5px;font-size:13px;line-height:1.4}
+.vw{font-weight:800;min-width:120px;flex-shrink:0}
+.vd{color:var(--muted);font-weight:700}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.mini{border-radius:var(--rs);padding:11px 12px;font-size:12px;font-weight:700;text-align:center;line-height:1.45}
+.mini .mi{font-size:22px;margin-bottom:5px}
+.divider{height:1px;background:#eee;margin:14px 0}
+.recap-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px}
+.rc{border-radius:var(--rs);padding:11px 13px;font-size:12px;font-weight:700;color:var(--muted);line-height:1.45}
+.rc-n{font-family:'Fredoka One',cursive;font-size:13px;margin-bottom:2px}
+.rc-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px}
+.quiz-wrap{background:var(--bg);border-radius:var(--r);padding:16px 18px;margin-bottom:18px}
+.quiz-h{font-family:'Fredoka One',cursive;font-size:17px;margin-bottom:14px}
+.quiz-q{font-size:13.5px;font-weight:800;margin-bottom:8px}
+.quiz-opts{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
+.qopt{display:flex;align-items:center;gap:9px;background:white;border:1.5px solid #e0ddd5;border-radius:var(--rs);padding:10px 13px;font-size:13px;font-weight:700;color:var(--text);cursor:pointer;transition:all .18s;text-align:left;width:100%;font-family:'Nunito',sans-serif;-webkit-appearance:none}
+.qopt:active{transform:scale(.98)}
+.qopt .olet{width:22px;height:22px;border-radius:50%;border:2px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;transition:all .2s;color:transparent}
+.qopt.selected-correct{background:var(--teal-l);border-color:var(--teal)}
+.qopt.selected-correct .olet{background:var(--teal);border-color:var(--teal);color:white}
+.qopt.selected-wrong{background:#FCEBEB;border-color:#E24B4A}
+.qopt.selected-wrong .olet{background:#E24B4A;border-color:#E24B4A;color:white}
+.qopt.reveal-correct{background:var(--teal-l);border-color:var(--teal)}
+.qopt.reveal-correct .olet{background:var(--teal);border-color:var(--teal);color:white}
+.qopt:disabled{cursor:default}
+.quiz-ans{font-size:12.5px;font-weight:700;padding:9px 12px;border-radius:var(--rs);margin-top:4px;display:none;line-height:1.5}
+.quiz-ans.show{display:block}
+.stars-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.star-b{display:inline-flex;align-items:center;gap:5px;background:var(--amber-l);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:800;color:var(--amber-d)}
+.activity{border-radius:var(--r);border:2px dashed var(--pink);padding:16px 18px;margin-bottom:18px;background:var(--pink-l)}
+.act-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--pink);margin-bottom:3px}
+.act-title{font-family:'Fredoka One',cursive;font-size:19px;color:var(--pink-d);margin-bottom:12px}
+.step{display:flex;gap:9px;margin-bottom:8px;align-items:flex-start}
+.sn{width:22px;height:22px;border-radius:50%;background:var(--pink);color:white;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.st{font-size:13px;font-weight:700;color:var(--pink-d);line-height:1.5}
+.dad-tip{background:white;border-radius:var(--rs);padding:9px 13px;margin-top:10px;font-size:12px;font-weight:700;color:var(--pink-d);border-left:3px solid var(--pink);line-height:1.5}
+.cert{border:3px dashed var(--pink);border-radius:var(--r);padding:28px 20px;text-align:center;background:var(--pink-l);margin-bottom:18px}
+.cert-e{font-size:44px;margin-bottom:8px}
+.cert-title{font-family:'Fredoka One',cursive;font-size:24px;color:var(--pink-d);margin-bottom:4px}
+.cert-sub{font-size:13px;font-weight:700;color:var(--pink);margin-bottom:14px}
+.cert-line{border-bottom:2px solid var(--pink);width:160px;margin:0 auto 4px}
+.cert-nl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--pink);margin-bottom:12px}
+.cert-txt{font-size:13px;font-weight:700;color:var(--pink-d);line-height:1.6}
+.build-card{background:white;border:2px solid var(--pink-m);border-radius:var(--r);padding:16px 18px;margin-bottom:14px}
+.build-card-title{font-family:'Fredoka One',cursive;font-size:17px;color:var(--pink-d);margin-bottom:6px}
+.link-pill{display:inline-block;background:var(--pink);color:white;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:800;margin-top:6px;text-decoration:none}
+@media(max-width:420px){.two-col,.recap-grid{grid-template-columns:1fr}.three-col{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div id="lock-screen">
+  <div class="lock-robot">🛠️</div>
+  <h1>Week 7 — Build Your Own AI!</h1>
+  <p>Enter your secret password to unlock!</p>
+  <div class="lock-box">
+    <div class="lock-label">🔑 Secret Password</div>
+    <input type="password" id="pw-input" placeholder="••••••••" maxlength="20" onkeydown="if(event.key==='Enter')checkPw()"/>
+    <button onclick="checkPw()">Unlock Week 7 🚀</button>
+    <div class="lock-err" id="pw-error">Oops! Wrong password. Try again! 🤔</div>
+  </div>
+</div>
+
+<div id="book-content">
+<nav class="nav">
+  <a class="nav-back" href="index.html">← Library</a>
+  <div class="nav-title">🛠️ Week 7</div>
+  <div class="ch-dots" id="dots"></div>
+</nav>
+
+<div class="cover" id="ch0">
+  <div class="cover-badge">Week 7 · Summer AI Adventure</div>
+  <div class="cover-icon">🛠️</div>
+  <div class="cover-title">Build Your Own AI!</div>
+  <div class="cover-sub">Scratch, Teachable Machine & real AI projects</div>
+  <div class="cover-name"><p>This book belongs to</p><div class="name">Marty ⭐</div></div>
+  <div class="toc">
+    <h3>📚 10 Chapters Inside!</h3>
+    <div class="toc-item" onclick="goTo(1)"><div class="toc-num">1</div>Think Like an AI Builder</div>
+    <div class="toc-item" onclick="goTo(2)"><div class="toc-num">2</div>Scratch + AI Blocks</div>
+    <div class="toc-item" onclick="goTo(3)"><div class="toc-num">3</div>Build a Simple Chatbot</div>
+    <div class="toc-item" onclick="goTo(4)"><div class="toc-num">4</div>Teachable Machine: Image Classifier</div>
+    <div class="toc-item" onclick="goTo(5)"><div class="toc-num">5</div>Teachable Machine: Sound Classifier</div>
+    <div class="toc-item" onclick="goTo(6)"><div class="toc-num">6</div>Make an AI Story Generator</div>
+    <div class="toc-item" onclick="goTo(7)"><div class="toc-num">7</div>AI Art Gallery — Your Own Prompts</div>
+    <div class="toc-item" onclick="goTo(8)"><div class="toc-num">8</div>Make AI Music</div>
+    <div class="toc-item" onclick="goTo(9)"><div class="toc-num">9</div>Show & Tell — Your AI Projects</div>
+    <div class="toc-item" onclick="goTo(10)"><div class="toc-num">10</div>Week 7 Recap + Quiz!</div>
+  </div>
+</div>
+
+<!-- CH 1 -->
+<div class="chapter" id="ch1">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--pink-l)">💡</div>
+    <div><div class="ch-tag" style="color:var(--pink)">Chapter 1</div><div class="ch-title">Think Like an AI Builder</div><div class="ch-sub">The mindset and steps every AI project needs</div></div>
+  </div>
+  <div class="intro" style="background:var(--pink-l);color:var(--pink-d)">Welcome to the most exciting week yet, Marty! 🛠️ This week you're not just LEARNING about AI — you're BUILDING it! Before we write a single line of code or train a single model, let's get into the AI builder's mindset. Every great AI project starts with the same steps!</div>
+  <div class="sec-label">The 5 steps every AI project follows</div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:12px;background:var(--pink-l);border-radius:var(--rs);padding:12px 14px">
+      <div style="width:32px;height:32px;background:var(--pink);border-radius:50%;color:white;font-family:'Fredoka One',cursive;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+      <div><div style="font-weight:800;font-size:13px;color:var(--pink-d)">🎯 Define the problem</div><div style="font-size:12px;color:var(--muted);font-weight:700">What exactly do you want your AI to do? Be super specific!</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;background:var(--purple-l);border-radius:var(--rs);padding:12px 14px">
+      <div style="width:32px;height:32px;background:var(--purple);border-radius:50%;color:white;font-family:'Fredoka One',cursive;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+      <div><div style="font-weight:800;font-size:13px;color:var(--purple-d)">📦 Collect your data</div><div style="font-size:12px;color:var(--muted);font-weight:700">Get examples of what your AI needs to learn. Photos, words, sounds.</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;background:var(--amber-l);border-radius:var(--rs);padding:12px 14px">
+      <div style="width:32px;height:32px;background:var(--amber);border-radius:50%;color:white;font-family:'Fredoka One',cursive;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+      <div><div style="font-weight:800;font-size:13px;color:var(--amber-d)">🏋️ Train the model</div><div style="font-size:12px;color:var(--muted);font-weight:700">Show your AI the examples and let it learn the patterns.</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;background:var(--teal-l);border-radius:var(--rs);padding:12px 14px">
+      <div style="width:32px;height:32px;background:var(--teal);border-radius:50%;color:white;font-family:'Fredoka One',cursive;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</div>
+      <div><div style="font-weight:800;font-size:13px;color:var(--teal-d)">🧪 Test and improve</div><div style="font-size:12px;color:var(--muted);font-weight:700">Try it on new data. If it's wrong, fix the training and try again!</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;background:var(--green-l);border-radius:var(--rs);padding:12px 14px">
+      <div style="width:32px;height:32px;background:var(--green);border-radius:50%;color:white;font-family:'Fredoka One',cursive;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0">5</div>
+      <div><div style="font-weight:800;font-size:13px;color:var(--green-d)">🚀 Deploy and share</div><div style="font-size:12px;color:var(--muted);font-weight:700">Show the world what you built! Let people use your AI.</div></div>
+    </div>
+  </div>
+  <div class="wow" style="background:var(--amber-l)"><div class="wow-e">🏆</div><div class="wow-t" style="color:var(--amber-d)">Every AI you've ever used — Siri, Google Search, ChatGPT, YouTube recommendations — went through exactly these 5 steps. You're about to join the same club as the world's top engineers. The only difference is scale!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is the very first step in building any AI project?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q1a','You need to clearly define the problem FIRST — otherwise you might collect the wrong data or build the wrong thing!')"><div class="olet">A</div>Collect as much data as possible</button>
+      <button class="qopt" onclick="answer(this,true,'q1a','Exactly! Defining the problem clearly is step 1 — what should the AI actually DO? The more specific you are, the better!')"><div class="olet">B</div>Define exactly what the AI should do</button>
+      <button class="qopt" onclick="answer(this,false,'q1a','Training comes after collecting data — and both come after defining the problem!')"><div class="olet">C</div>Start training the model immediately</button>
+    </div>
+    <div class="quiz-ans" id="q1a" style="background:var(--pink-l);color:var(--pink-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">💡 Activity Time!</div>
+    <div class="act-title">Design Your Dream AI!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Brainstorm 5 problems in your life that AI could help with. No idea too silly!</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Pick your favourite one and write it as a clear problem statement: "I want AI to _____ so that _____."</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Answer: What data would your AI need to learn? Where would you get that data?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">How would you test if it's working? What does "success" look like?</div></div>
+    <div class="dad-tip">💡 Dad tip: Share your own brainstorm too! Seeing adults think creatively about problems normalises the design process. There's no wrong answer — "AI that reminds me where I put my keys" is a real and useful idea!</div>
+  </div>
+</div>
+
+<!-- CH 2 -->
+<div class="chapter" id="ch2">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--purple-l)">🐱</div>
+    <div><div class="ch-tag" style="color:var(--purple)">Chapter 2</div><div class="ch-title">Scratch + AI Blocks</div><div class="ch-sub">MIT's free tool for coding your first AI project</div></div>
+  </div>
+  <div class="intro" style="background:var(--purple-l);color:var(--purple-d)">Scratch is a FREE coding tool made by MIT — the world's most famous tech university — specifically for kids. You snap together colourful blocks to write programs, no typing needed! And with an extension called ML4Kids, you can add real AI to your Scratch projects. Let's dive in!</div>
+  <div class="vocab" style="background:var(--blue-l)">
+    <div class="vocab-lbl" style="color:var(--blue)">🔤 Scratch words</div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">Sprite</div><div class="vd">A character in Scratch — could be a cat, a rocket, a custom drawing!</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">Block</div><div class="vd">A piece of code you snap together — like a LEGO brick for programming</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">Script</div><div class="vd">A stack of blocks that runs when triggered (like pressing a key)</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">Extension</div><div class="vd">Extra blocks you can add to Scratch for special features like AI</div></div>
+  </div>
+  <div class="two-col">
+    <div class="card" style="border-top:3px solid var(--purple)">
+      <div class="card-hd"><div class="card-ico">✅</div><div class="card-lbl">Scratch is great for</div></div>
+      <ul class="fl">
+        <li><div class="dot" style="background:var(--purple)"></div>Learning to code by snapping blocks</li>
+        <li><div class="dot" style="background:var(--purple)"></div>Making games and stories</li>
+        <li><div class="dot" style="background:var(--purple)"></div>Adding AI using ML4Kids blocks</li>
+        <li><div class="dot" style="background:var(--purple)"></div>Sharing projects with the world</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid var(--teal)">
+      <div class="card-hd"><div class="card-ico">🌐</div><div class="card-lbl">Where to find it</div></div>
+      <ul class="fl">
+        <li><div class="dot" style="background:var(--teal)"></div>scratch.mit.edu — completely free!</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Works in Safari on iPad</li>
+        <li><div class="dot" style="background:var(--teal)"></div>No download needed</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Millions of projects to remix</li>
+      </ul>
+    </div>
+  </div>
+  <div class="wow" style="background:var(--purple-l)"><div class="wow-e">🌍</div><div class="wow-t" style="color:var(--purple-d)">Over 100 million people have used Scratch — including many professional programmers who learned to code on it as kids! The Scratch community is huge and friendly. You can see other kids' projects, remix them, and share your own. It's social media for young coders!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is a "sprite" in Scratch?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q2a','A sprite is a character in Scratch — like an actor in a play! The classic Scratch sprite is a cartoon cat.')"><div class="olet">A</div>A type of coding block</button>
+      <button class="qopt" onclick="answer(this,true,'q2a','Exactly! A sprite is a character in your Scratch project — it could be an animal, a spaceship, or anything you draw!')"><div class="olet">B</div>A character in a Scratch project</button>
+      <button class="qopt" onclick="answer(this,false,'q2a','A script is a stack of blocks. A sprite is the character those blocks control!')"><div class="olet">C</div>A script that runs automatically</button>
+    </div>
+    <div class="quiz-ans" id="q2a" style="background:var(--purple-l);color:var(--purple-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🐱 Activity Time!</div>
+    <div class="act-title">Your First Scratch Program!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Open scratch.mit.edu in Safari on your iPad or on the family computer.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Click "Create" to start a new project. You'll see the orange cat sprite already there!</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Drag out a "When green flag clicked" block, then add a "Say Hello for 2 seconds" block under it.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Click the green flag! Your cat says hello. Congratulations — you just coded your first program! Change the message to say YOUR name.</div></div>
+    <div class="dad-tip">💡 Take a photo of Marty at the moment his first program runs. This is genuinely a milestone worth celebrating — it's the first step of a potentially lifelong skill. Frame it or print it!</div>
+  </div>
+</div>
+
+<!-- CH 3 -->
+<div class="chapter" id="ch3">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--teal-l)">💬</div>
+    <div><div class="ch-tag" style="color:var(--teal)">Chapter 3</div><div class="ch-title">Build a Simple Chatbot</div><div class="ch-sub">IF/THEN rules to create a conversation</div></div>
+  </div>
+  <div class="intro" style="background:var(--teal-l);color:var(--teal-d)">A chatbot is a program that has a conversation with you. The very first chatbots (back in 1966!) used simple IF/THEN rules — "if the user says X, reply with Y." You already know all about IF/THEN from Week 4! Today you're going to build your own chatbot using exactly that idea.</div>
+  <div class="sec-label">How a rule-based chatbot works</div>
+  <div style="background:#f9f8f5;border-radius:var(--r);padding:16px;margin-bottom:18px">
+    <div style="font-family:monospace;font-size:13px;color:var(--text);line-height:2">
+      <div style="color:var(--blue);font-weight:800">User says:</div>
+      <div style="background:var(--blue-l);border-radius:var(--rs);padding:6px 10px;margin:4px 0">"Hello"</div>
+      <div style="color:var(--teal);font-weight:800">Chatbot checks:</div>
+      <div style="background:var(--teal-l);border-radius:var(--rs);padding:6px 10px;margin:4px 0">IF input contains "hello" THEN reply "Hi there! I'm MartyBot! What's your name?"</div>
+      <div style="color:var(--purple);font-weight:800">User says:</div>
+      <div style="background:var(--purple-l);border-radius:var(--rs);padding:6px 10px;margin:4px 0">"My name is Sam"</div>
+      <div style="color:var(--teal);font-weight:800">Chatbot checks:</div>
+      <div style="background:var(--teal-l);border-radius:var(--rs);padding:6px 10px;margin:4px 0">IF input contains "name is" THEN extract name and reply "Nice to meet you, Sam!"</div>
+    </div>
+  </div>
+  <div class="wow" style="background:var(--amber-l)"><div class="wow-e">🤖</div><div class="wow-t" style="color:var(--amber-d)">ELIZA — the world's first chatbot, made at MIT in 1966 — fooled many people into thinking they were talking to a real therapist! It only had about 200 rules but was so convincing that people shared their deepest feelings with it. Rule-based AI can be surprisingly powerful!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What does a rule-based chatbot do when it doesn't recognise what you said?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q3a','A rule-based chatbot can only follow its rules — if no rule matches, it gives a fallback response like "Sorry, I don\'t understand!"')"><div class="olet">A</div>It learns from the conversation and improves</button>
+      <button class="qopt" onclick="answer(this,true,'q3a','Correct! Rule-based chatbots have no rule for unknown inputs, so they give a pre-written fallback response. This is a key limitation!')"><div class="olet">B</div>It uses a pre-written fallback response like "I don't understand"</button>
+      <button class="qopt" onclick="answer(this,false,'q3a','Rule-based chatbots don\'t have internet access — they only follow the rules a human programmed!')"><div class="olet">C</div>It searches the internet for the answer</button>
+    </div>
+    <div class="quiz-ans" id="q3a" style="background:var(--teal-l);color:var(--teal-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">💬 Activity Time!</div>
+    <div class="act-title">Write Your Own ChatBot Script!</div>
+    <div class="step"><div class="sn">1</div><div class="st">On paper, design "MartyBot" — a chatbot with a personality! Give it a name, topic, and style.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Write 8 IF/THEN rules for it. Example: IF user says "favourite animal" THEN reply "I love robotic dogs!"</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Include a fallback rule: IF nothing matches THEN reply "Hmm, I'm still learning! Ask me something else?"</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Have Dad play the role of user while you "run" the chatbot using your rules. Did any conversation break your rules?</div></div>
+    <div class="dad-tip">💡 In Scratch, you can actually code this chatbot using the "ask and answer" blocks combined with IF/THEN blocks. If you have time, try coding it — the jump from paper to working program is incredibly satisfying for kids!</div>
+  </div>
+</div>
+
+<!-- CH 4 -->
+<div class="chapter" id="ch4">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--blue-l)">📸</div>
+    <div><div class="ch-tag" style="color:var(--blue)">Chapter 4</div><div class="ch-title">Teachable Machine: Image Classifier</div><div class="ch-sub">Train real AI to recognise YOUR photos</div></div>
+  </div>
+  <div class="intro" style="background:var(--blue-l);color:var(--blue-d)">Google made a free tool called Teachable Machine that lets ANYONE train a real AI image classifier — no coding required! You show it examples of things, it learns the patterns, and then it can recognise those things from your camera. This is REAL machine learning — the same type used in professional AI!</div>
+  <div class="build-card">
+    <div class="build-card-title">🌐 Teachable Machine</div>
+    <div class="body-t">Free, in-browser, works on iPad. No account needed. Train image, sound, or pose classifiers in minutes!</div>
+    <div style="font-size:12px;font-weight:700;color:var(--muted)">Website: teachablemachine.withgoogle.com</div>
+  </div>
+  <div class="sec-label">How to train an image classifier 📸</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;background:var(--blue-l);border-radius:var(--rs);padding:10px 13px"><div style="width:24px;height:24px;background:var(--blue);border-radius:50%;color:white;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div><div style="font-size:13px;font-weight:700;color:var(--blue-d)">Choose 2-3 categories (e.g. "thumbs up," "thumbs down," "nothing")</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--purple-l);border-radius:var(--rs);padding:10px 13px"><div style="width:24px;height:24px;background:var(--purple);border-radius:50%;color:white;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div><div style="font-size:13px;font-weight:700;color:var(--purple-d)">Take 30-50 webcam photos of each category — the AI needs examples!</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--amber-l);border-radius:var(--rs);padding:10px 13px"><div style="width:24px;height:24px;background:var(--amber);border-radius:50%;color:white;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div><div style="font-size:13px;font-weight:700;color:var(--amber-d)">Click "Train Model" — watch the AI learn in real time!</div></div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--teal-l);border-radius:var(--rs);padding:10px 13px"><div style="width:24px;height:24px;background:var(--teal);border-radius:50%;color:white;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</div><div style="font-size:13px;font-weight:700;color:var(--teal-d)">Test it live! Show your hand — does AI recognise thumbs up vs thumbs down?</div></div>
+  </div>
+  <div class="wow" style="background:var(--blue-l)"><div class="wow-e">🎉</div><div class="wow-t" style="color:var(--blue-d)">The AI you train on Teachable Machine is a REAL neural network — the exact same technology used in professional AI systems at Google, Apple, and OpenAI! You're not playing with a toy version. You're using the real thing, simplified so kids can access it. That's genuinely awesome.</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: Why do you need many photos for each category when training Teachable Machine?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q4a','The AI needs to learn from examples — more photos means it sees more variations and learns a more reliable pattern!')"><div class="olet">A</div>To fill up the computer's memory</button>
+      <button class="qopt" onclick="answer(this,true,'q4a','Exactly! More examples help the AI learn a reliable pattern. With only a few photos, it might just memorise those specific images instead of truly learning the pattern.')"><div class="olet">B</div>Because AI needs many examples to learn the pattern reliably</button>
+      <button class="qopt" onclick="answer(this,false,'q4a','The AI learns from patterns, not from the number you tell it — you have to show it many real examples!')"><div class="olet">C</div>Because you have to tell the AI how many categories there are</button>
+    </div>
+    <div class="quiz-ans" id="q4a" style="background:var(--blue-l);color:var(--blue-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">📸 Activity Time!</div>
+    <div class="act-title">Train Your Own Image Classifier!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Go to teachablemachine.withgoogle.com and click "Get Started" → "Image Project."</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Create 3 classes: "Marty happy 😄," "Marty surprised 😮," and "Marty silly 🤪"</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Take 40+ webcam photos for each expression — vary your angle, distance, and lighting!</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Train it! Test it! Can it tell the difference between your faces? What confuses it?</div></div>
+    <div class="dad-tip">💡 This is one of the most memorable AI activities for kids — they train a real neural network to recognise their OWN face expressions, then see it working live. Pure magic. Take a video of the live test to share with family!</div>
+  </div>
+</div>
+
+<!-- CH 5 -->
+<div class="chapter" id="ch5">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--amber-l)">🎙️</div>
+    <div><div class="ch-tag" style="color:var(--amber)">Chapter 5</div><div class="ch-title">Teachable Machine: Sound Classifier</div><div class="ch-sub">Train AI to recognise sounds with your microphone</div></div>
+  </div>
+  <div class="intro" style="background:var(--amber-l);color:var(--amber-d)">Teachable Machine can also learn from SOUNDS! You record examples of different sounds, the AI learns the patterns in the audio waves, and then it can recognise those sounds in real time. This is the same technology behind voice assistants, music recognition apps, and speech-to-text tools!</div>
+  <div class="two-col">
+    <div class="card"><div class="card-hd"><div class="card-ico">✅</div><div class="card-lbl">Fun sounds to classify</div></div>
+      <ul class="fl">
+        <li><div class="dot" style="background:var(--amber)"></div>Clap vs snap vs stomp</li>
+        <li><div class="dot" style="background:var(--amber)"></div>"Yes" vs "No" vs "Maybe"</div></li>
+        <li><div class="dot" style="background:var(--amber)"></div>Whistle vs hum vs sing</li>
+        <li><div class="dot" style="background:var(--amber)"></div>Background noise vs silence</li>
+      </ul>
+    </div>
+    <div class="card"><div class="card-hd"><div class="card-ico">💡</div><div class="card-lbl">Tips for better results</div></div>
+      <ul class="fl">
+        <li><div class="dot" style="background:var(--teal)"></div>Record in a quiet room</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Vary your volume and speed</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Record at least 20 samples per class</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Include a "background noise" class!</li>
+      </ul>
+    </div>
+  </div>
+  <div class="wow" style="background:var(--teal-l)"><div class="wow-e">🎵</div><div class="wow-t" style="color:var(--teal-d)">SHAZAM — the app that recognises any song in seconds — uses sound AI just like this! It converts audio into a visual "fingerprint" (called a spectrogram) and matches it against millions of song fingerprints. Your sound classifier does the exact same thing, just on a smaller scale. You're building Shazam technology!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: Why is it important to include a "background noise" class when training a sound classifier?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q5a','Without a background noise class, the AI will always try to match sounds to your categories — even silence or random noise!')"><div class="olet">A</div>To make the training take longer</button>
+      <button class="qopt" onclick="answer(this,true,'q5a','Correct! Without a "background noise" class, the AI has no way to say "this isn\'t one of my sounds" — it will always wrongly guess one of your categories!')"><div class="olet">B</div>So AI can recognise when there\'s NO target sound and not make a false guess</button>
+      <button class="qopt" onclick="answer(this,false,'q5a','Background noise is important for the AI to know, not just to fill up space!')"><div class="olet">C</div>Because microphones need at least 3 classes to work</button>
+    </div>
+    <div class="quiz-ans" id="q5a" style="background:var(--amber-l);color:var(--amber-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎙️ Activity Time!</div>
+    <div class="act-title">Build a Clap-Controlled AI!</div>
+    <div class="step"><div class="sn">1</div><div class="st">In Teachable Machine, start a new Sound project.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Create 3 classes: "Clap," "Snap," and "Background Noise."</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Record 20+ samples for each. For Background Noise, just record room sounds.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Train and test! Can your AI tell a clap from a snap? Try fooling it with different types of claps!</div></div>
+    <div class="dad-tip">💡 Advanced extension: Teachable Machine lets you export the model and connect it to Scratch! That means you could build a Scratch game controlled by clapping. This is genuine real-world human-computer interaction design.</div>
+  </div>
+</div>
+
+<!-- CH 6 -->
+<div class="chapter" id="ch6">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--purple-l)">📖</div>
+    <div><div class="ch-tag" style="color:var(--purple)">Chapter 6</div><div class="ch-title">Make an AI Story Generator</div><div class="ch-sub">Use AI as a co-author for wild adventures</div></div>
+  </div>
+  <div class="intro" style="background:var(--purple-l);color:var(--purple-d)">What if you could give AI the start of a story and it would fill in wild adventures? Today you'll become a story DIRECTOR — you set the rules, the characters, and the world. Then AI helps generate what happens next. The result? Stories you could never have written alone!</div>
+  <div class="sec-label">The story generator recipe 📖</div>
+  <div style="background:#f9f8f5;border-radius:var(--r);padding:16px;margin-bottom:18px">
+    <div style="font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Fill in the blanks to create your story prompt!</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="background:var(--purple-l);border-radius:var(--rs);padding:10px 13px;font-size:13px;font-weight:700;color:var(--purple-d)">🧒 Hero: A 7-year-old called <span style="border-bottom:2px solid var(--purple);padding:0 8px">________</span> who can <span style="border-bottom:2px solid var(--purple);padding:0 8px">________</span></div>
+      <div style="background:var(--blue-l);border-radius:var(--rs);padding:10px 13px;font-size:13px;font-weight:700;color:var(--blue-d)">🌍 Setting: A world where <span style="border-bottom:2px solid var(--blue);padding:0 20px">________</span></div>
+      <div style="background:var(--coral-l);border-radius:var(--rs);padding:10px 13px;font-size:13px;font-weight:700;color:var(--coral-d)">😈 Problem: Suddenly <span style="border-bottom:2px solid var(--coral);padding:0 20px">________</span></div>
+      <div style="background:var(--teal-l);border-radius:var(--rs);padding:10px 13px;font-size:13px;font-weight:700;color:var(--teal-d)">🤖 Twist: The only way to solve it involves AI that can <span style="border-bottom:2px solid var(--teal);padding:0 8px">________</span></div>
+    </div>
+  </div>
+  <div class="wow" style="background:var(--pink-l)"><div class="wow-e">✍️</div><div class="wow-t" style="color:var(--pink-d)">Authors like to say that "AI is a brilliant first draft machine." The ideas that come from you — the human — are what make a story special. AI can fill in plot twists and descriptions quickly, but the heart of any story comes from the writer's own experiences, feelings, and imagination. Your creativity is irreplaceable!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: When using AI to help write a story, who provides the most important creative ingredient?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q6a','AI generates text from patterns in training data — but the ideas, characters, feelings, and imagination always come from the human!')"><div class="olet">A</div>The AI, because it has read millions of stories</button>
+      <button class="qopt" onclick="answer(this,true,'q6a','Correct! The human brings the original ideas, emotions, and imagination. AI is a powerful tool to help express and expand those ideas — but it can\'t replace the human spark!')"><div class="olet">B</div>The human — the ideas, characters, and imagination</button>
+      <button class="qopt" onclick="answer(this,false,'q6a','It\'s a collaboration — but the human creative vision is always the starting point and the heart of the story!')"><div class="olet">C</div>It\'s 50/50 — AI and human contribute equally</button>
+    </div>
+    <div class="quiz-ans" id="q6a" style="background:var(--purple-l);color:var(--purple-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">📖 Activity Time!</div>
+    <div class="act-title">Co-Write an AI Adventure Story!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Fill in the story template above. Marty picks the hero, setting, problem, and AI twist.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Dad types it into ChatGPT or Claude and asks: "Write a 3-paragraph adventure story using this setup."</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Read the AI's story. Did it understand your idea? What parts surprised you?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Now YOU write the ending — make it better than what AI came up with! Compare the two endings.</div></div>
+    <div class="dad-tip">💡 Marty's ending will almost certainly have more personality and heart than the AI's version. This is the most effective way to help kids understand AI's limitations — through direct creative comparison!</div>
+  </div>
+</div>
+
+<!-- CH 7 -->
+<div class="chapter" id="ch7">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--pink-l)">🎨</div>
+    <div><div class="ch-tag" style="color:var(--pink)">Chapter 7</div><div class="ch-title">AI Art Gallery — Your Own Prompts</div><div class="ch-sub">Become a prompt engineer and curate your gallery</div></div>
+  </div>
+  <div class="intro" style="background:var(--pink-l);color:var(--pink-d)">This week you become a PROMPT ENGINEER — someone who gets the best results from AI by crafting perfect descriptions. The secret? More detail = better art! "A dog" gets a boring result. "A golden retriever astronaut floating in space eating a pink ice cream, in the style of a children's book illustration" gets something magical!</div>
+  <div class="sec-label">The anatomy of a great prompt 🎨</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+    <div style="background:var(--pink-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--pink);margin-bottom:3px">1. SUBJECT</div><div style="font-size:13px;font-weight:700;color:var(--pink-d)">The main thing: "a robot scientist"</div></div>
+    <div style="background:var(--blue-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--blue);margin-bottom:3px">2. ACTION</div><div style="font-size:13px;font-weight:700;color:var(--blue-d)">What it's doing: "discovering a glowing plant"</div></div>
+    <div style="background:var(--amber-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--amber);margin-bottom:3px">3. SETTING</div><div style="font-size:13px;font-weight:700;color:var(--amber-d)">Where: "inside a cosy underground laboratory"</div></div>
+    <div style="background:var(--teal-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--teal);margin-bottom:3px">4. STYLE</div><div style="font-size:13px;font-weight:700;color:var(--teal-d)">Art style: "in the style of a watercolour children's book"</div></div>
+    <div style="background:var(--purple-l);border-radius:var(--rs);padding:10px 13px"><div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--purple);margin-bottom:3px">5. MOOD/LIGHTING</div><div style="font-size:13px;font-weight:700;color:var(--purple-d)">Feeling: "warm golden light, magical atmosphere, cosy"</div></div>
+  </div>
+  <div class="wow" style="background:var(--amber-l)"><div class="wow-e">💰</div><div class="wow-t" style="color:var(--amber-d)">"Prompt Engineer" is now a real, well-paying job — companies hire people specifically to get the best results from AI tools! The skill is about understanding how AI interprets language and crafting descriptions that lead to exactly the output you want. It's part art, part science, and part psychology. You're learning it right now!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: Which AI art prompt will probably give the best, most specific result?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q7a','Very short prompts give very generic results! AI needs detail to produce something specific and interesting.')"><div class="olet">A</div>"A cat"</button>
+      <button class="qopt" onclick="answer(this,false,'q7a','This is better but still missing style, mood, and detail. More information = better control over the output!')"><div class="olet">B</div>"A cat sitting on a roof"</button>
+      <button class="qopt" onclick="answer(this,true,'q7a','Correct! Detailed prompts with subject + action + setting + style + mood give AI exactly what it needs to create something remarkable!')"><div class="olet">C</div>"A fluffy orange tabby cat sitting on a moonlit rooftop, looking at stars, watercolour style, cosy magical mood"</button>
+    </div>
+    <div class="quiz-ans" id="q7a" style="background:var(--pink-l);color:var(--pink-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎨 Activity Time!</div>
+    <div class="act-title">Create Your AI Art Gallery!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Write 5 detailed prompts using the Subject + Action + Setting + Style + Mood formula above.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Use Adobe Firefly (firefly.adobe.com) — free and kid-safe — to generate each one.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Print out your favourites or save them to a folder called "Marty's AI Gallery."</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">For each image, write a title card: what the prompt was, what you expected vs what you got.</div></div>
+    <div class="dad-tip">💡 Print the best images and hang them in Marty's room or on the fridge! Physical output from a digital creative process is very satisfying and gives a real sense of accomplishment. These are genuinely HIS artworks.</div>
+  </div>
+</div>
+
+<!-- CH 8 -->
+<div class="chapter" id="ch8">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--green-l)">🎵</div>
+    <div><div class="ch-tag" style="color:var(--green)">Chapter 8</div><div class="ch-title">Make AI Music</div><div class="ch-sub">Compose your own tunes with AI tools</div></div>
+  </div>
+  <div class="intro" style="background:var(--green-l);color:var(--green-d)">This chapter is pure fun — you're going to use AI to make actual music! No musical training needed. AI music tools let you compose by picking moods, styles, and instruments, or by describing what you want in words. You're the composer — AI is your orchestra!</div>
+  <div class="sec-label">Kid-friendly AI music tools 🎹</div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+    <div class="build-card" style="border-color:var(--purple-m)">
+      <div class="build-card-title">🎵 Chrome Music Lab — Song Maker</div>
+      <div class="body-t" style="margin-bottom:4px">Tap a coloured grid to compose a melody. No AI but a beautiful visual way to understand how melody and rhythm work. The foundation for understanding AI music!</div>
+      <div style="font-size:12px;font-weight:700;color:var(--muted)">musiclab.chromeexperiments.com → Song Maker</div>
+    </div>
+    <div class="build-card" style="border-color:var(--teal-m,var(--teal))">
+      <div class="build-card-title">🤖 Boomy.com — AI Song Creator</div>
+      <div class="body-t" style="margin-bottom:4px">Pick a genre (lo-fi, electronic, pop...) and AI generates a complete song with melody, bass, and drums. Free to use! You can even customise and download your songs.</div>
+      <div style="font-size:12px;font-weight:700;color:var(--muted)">boomy.com — free account, kid-friendly with parent</div>
+    </div>
+  </div>
+  <div class="wow" style="background:var(--green-l)"><div class="wow-e">🎸</div><div class="wow-t" style="color:var(--green-d)">More than 3 million songs have been created on Boomy — and some have been played on Spotify and Apple Music! AI music is already part of everyday life: background music in YouTube videos, app sound effects, and meditation playlists are often AI-generated. You've probably heard AI music without knowing it!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: When you use an AI music tool to generate a song, what are you actually doing?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q8a','AI doesn\'t find songs — it generates new ones! But the patterns it uses were learned from real music created by human musicians.')"><div class="olet">A</div>Downloading someone else\'s song</button>
+      <button class="qopt" onclick="answer(this,true,'q8a','Exactly! You\'re directing AI to apply musical patterns it learned from millions of songs to create something brand new based on your preferences!')"><div class="olet">B</div>Directing AI to create a new piece using patterns learned from music</button>
+      <button class="qopt" onclick="answer(this,false,'q8a','AI music tools work in your browser — no instrument microphone needed!')"><div class="olet">C</div>Recording an instrument through your microphone</button>
+    </div>
+    <div class="quiz-ans" id="q8a" style="background:var(--green-l);color:var(--green-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🎵 Activity Time!</div>
+    <div class="act-title">Compose Marty's Theme Song!</div>
+    <div class="step"><div class="sn">1</div><div class="st">First, in Chrome Music Lab Song Maker, create a melody — just tap the coloured squares to hear notes!</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Play with the instrument and tempo settings. Can you create something that sounds like YOU?</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">If using Boomy: pick a genre and generate 3 different songs. Which one would be your theme music?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Play your favourite to the family! Ask them: what does this music make them feel? Does it suit Marty's personality?</div></div>
+    <div class="dad-tip">💡 Music evokes strong feelings and opinions — making it personal ("this is YOUR theme music") creates strong emotional investment. Marty will likely remember the music he created far longer than any chapter of text he's read!</div>
+  </div>
+</div>
+
+<!-- CH 9 -->
+<div class="chapter" id="ch9">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--amber-l)">🌟</div>
+    <div><div class="ch-tag" style="color:var(--amber)">Chapter 9</div><div class="ch-title">Show & Tell — Your AI Projects</div><div class="ch-sub">Present everything you've built this week!</div></div>
+  </div>
+  <div class="intro" style="background:var(--amber-l);color:var(--amber-d)">You've built REAL things this week — a chatbot, an image classifier, a sound classifier, AI stories, AI art, and AI music. That's an incredible amount of creating! Now it's time to show it all off. Scientists call this a "demo" — short for demonstration. Let's get you ready!</div>
+  <div class="sec-label">Your project showcase checklist 📋</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;background:var(--pink-l);border-radius:var(--rs);padding:10px 13px">
+      <div style="font-size:20px;flex-shrink:0">💬</div>
+      <div><div style="font-size:13px;font-weight:800;color:var(--pink-d)">ChatBot</div><div style="font-size:12px;font-weight:700;color:var(--muted)">Run the chatbot conversation game. Can someone stump your rules?</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--blue-l);border-radius:var(--rs);padding:10px 13px">
+      <div style="font-size:20px;flex-shrink:0">📸</div>
+      <div><div style="font-size:13px;font-weight:800;color:var(--blue-d)">Image Classifier</div><div style="font-size:12px;font-weight:700;color:var(--muted)">Demo your face expression AI live — watch the audience react!</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--amber-l);border-radius:var(--rs);padding:10px 13px">
+      <div style="font-size:20px;flex-shrink:0">🎙️</div>
+      <div><div style="font-size:13px;font-weight:800;color:var(--amber-d)">Sound Classifier</div><div style="font-size:12px;font-weight:700;color:var(--muted)">Let someone else try your clap/snap detector. Does it work for them?</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--pink-l);border-radius:var(--rs);padding:10px 13px">
+      <div style="font-size:20px;flex-shrink:0">🎨</div>
+      <div><div style="font-size:13px;font-weight:800;color:var(--pink-d)">AI Art Gallery</div><div style="font-size:12px;font-weight:700;color:var(--muted)">Display your printed artworks and explain the prompts behind each one.</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;background:var(--green-l);border-radius:var(--rs);padding:10px 13px">
+      <div style="font-size:20px;flex-shrink:0">🎵</div>
+      <div><div style="font-size:13px;font-weight:800;color:var(--green-d)">Theme Song</div><div style="font-size:12px;font-weight:700;color:var(--muted)">Play your AI theme song for the family. Take a bow!</div></div>
+    </div>
+  </div>
+  <div class="wow" style="background:var(--teal-l)"><div class="wow-e">🎤</div><div class="wow-t" style="color:var(--teal-d)">AT GOOGLE, APPLE, AND EVERY TECH COMPANY: engineers do exactly this — they present what they built in a "demo day" or "show & tell." Learning to explain what you built and why it matters is one of the most important skills in technology. You're not just a builder — you're a communicator!</div></div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: Why is it important to present and explain what you've built?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q9a','Showing off is a bonus — but the real reason to present is to develop communication skills and get feedback to improve!')"><div class="olet">A</div>Just to show off to your family</button>
+      <button class="qopt" onclick="answer(this,true,'q9a','Exactly! Explaining your work to others helps YOU understand it better, gets feedback to improve, and builds communication skills that every builder needs!')"><div class="olet">B</div>To develop communication skills, get feedback, and help others understand AI</button>
+      <button class="qopt" onclick="answer(this,false,'q9a','Presenting your work builds skills beyond just building — communication is as important as creation in the real tech world!')"><div class="olet">C</div>Because the project isn\'t finished until you present it</button>
+    </div>
+    <div class="quiz-ans" id="q9a" style="background:var(--amber-l);color:var(--amber-d)"></div>
+  </div>
+  <div class="activity">
+    <div class="act-lbl">🌟 Activity Time!</div>
+    <div class="act-title">Host Marty's AI Demo Day!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Invite family (Mum, Arjun — even just on video call with grandparents!) to "Marty's AI Demo Day."</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">For each project, Marty explains: what it does, how he built it, and what surprised him.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Let audience members try each project. Collect their reactions — did the AI work for them?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">End with Q&A: audience asks any question about AI. Marty answers from everything he's learned across all 7 weeks!</div></div>
+    <div class="dad-tip">💡 Record the demo day on video. This is a memory Marty will treasure — and watching himself explain complex AI concepts with confidence will boost his belief in his own intelligence. Genuine pride in genuine achievement!</div>
+  </div>
+</div>
+
+<!-- CH 10 -->
+<div class="chapter" id="ch10">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--amber-l)">🏆</div>
+    <div><div class="ch-tag" style="color:var(--amber)">Chapter 10</div><div class="ch-title">Week 7 Recap + Quiz!</div><div class="ch-sub">Review everything you built and celebrate! 🎉</div></div>
+  </div>
+  <div class="intro" style="background:var(--amber-l);color:var(--amber-d)">You are a BUILDER now, Marty! 🛠️ This week you didn't just learn about AI — you MADE IT. Real image classifiers, real sound classifiers, chatbots, stories, art, and music. That's more than most adults ever build. One more week to go — and it's the grand finale!</div>
+  <div class="sec-label">Everything you built this week 📚</div>
+  <div class="recap-grid">
+    <div class="rc" style="background:var(--pink-l)"><div class="rc-n" style="color:var(--pink)">Ch 1</div><div class="rc-title">AI Builder Mindset</div>5 steps: Define → Data → Train → Test → Deploy. Every AI project everywhere!</div>
+    <div class="rc" style="background:var(--purple-l)"><div class="rc-n" style="color:var(--purple)">Ch 2</div><div class="rc-title">Scratch Coding</div>First real program! snap blocks → cat says hello → a new coder is born.</div>
+    <div class="rc" style="background:var(--teal-l)"><div class="rc-n" style="color:var(--teal)">Ch 3</div><div class="rc-title">Simple Chatbot</div>IF/THEN rules make a conversation. ELIZA in 1966 fooled real people this way!</div>
+    <div class="rc" style="background:var(--blue-l)"><div class="rc-n" style="color:var(--blue)">Ch 4</div><div class="rc-title">Image Classifier</div>REAL neural network trained on YOUR face expressions. Same tech as Face ID!</div>
+    <div class="rc" style="background:var(--amber-l)"><div class="rc-n" style="color:var(--amber)">Ch 5</div><div class="rc-title">Sound Classifier</div>Clap vs snap — AI learned YOUR sounds. Include background noise class!</div>
+    <div class="rc" style="background:var(--purple-l)"><div class="rc-n" style="color:var(--purple)">Ch 6</div><div class="rc-title">AI Story Generator</div>You're the director — AI fills in details. Human creativity always leads!</div>
+    <div class="rc" style="background:var(--pink-l)"><div class="rc-n" style="color:var(--pink)">Ch 7</div><div class="rc-title">AI Art Gallery</div>Subject + Action + Setting + Style + Mood = great prompts. Prompt engineering is a real job!</div>
+    <div class="rc" style="background:var(--green-l)"><div class="rc-n" style="color:var(--green)">Ch 8</div><div class="rc-title">AI Music</div>Theme songs composed! AI music uses patterns from millions of songs.</div>
+    <div class="rc" style="background:var(--amber-l)"><div class="rc-n" style="color:var(--amber)">Ch 9</div><div class="rc-title">Demo Day</div>Presented everything like a real engineer! Communication is as important as building.</div>
+  </div>
+  <div class="quiz-wrap">
+    <div class="quiz-h">🏆 The BIG Week 7 Quiz!</div>
+    <div class="stars-row"><div class="star-b">⭐ 5 questions</div><div class="star-b">🎯 Tap to answer</div><div class="star-b">🏅 Aim for 5/5!</div></div>
+    <div class="quiz-q">Q1: What is the FIRST step in building any AI project?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq1','You must clearly define the problem first — otherwise you collect the wrong data and build the wrong thing!')"><div class="olet">A</div>Collect as much data as you can</button>
+      <button class="qopt" onclick="answer(this,true,'bq1','Correct! Define the problem first — be clear about exactly what the AI should do before anything else.')"><div class="olet">B</div>Clearly define what you want the AI to do</button>
+      <button class="qopt" onclick="answer(this,false,'bq1','Training comes after defining AND collecting — never the first step!')"><div class="olet">C</div>Start training the model</button>
+    </div>
+    <div class="quiz-ans" id="bq1" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q2: What kind of AI did you train on Teachable Machine?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq2','Teachable Machine trains a real neural network — the same type used by professional AI companies! Not just a simulation.')"><div class="olet">A</div>A fake simulation of a neural network</button>
+      <button class="qopt" onclick="answer(this,true,'bq2','Correct! Teachable Machine uses a real neural network — the actual technology behind Face ID, image search, and much more!')"><div class="olet">B</div>A real neural network, just like professionals use</button>
+      <button class="qopt" onclick="answer(this,false,'bq2','Decision trees are different from the convolutional neural networks used in Teachable Machine!')"><div class="olet">C</div>A decision tree</button>
+    </div>
+    <div class="quiz-ans" id="bq2" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q3: In AI art prompts, what gives the best results?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq3','Short prompts give generic results. Detail and specificity are the secret to great AI art!')"><div class="olet">A</div>Very short, simple descriptions</button>
+      <button class="qopt" onclick="answer(this,true,'bq3','Correct! Detailed prompts with subject + action + setting + style + mood give AI exactly what it needs to create something specific and remarkable!')"><div class="olet">B</div>Detailed descriptions with subject, action, setting, style, and mood</button>
+      <button class="qopt" onclick="answer(this,false,'bq3','The number of words alone doesn\'t matter — it\'s the detail and specificity that counts!')"><div class="olet">C</div>Using exactly 10 words — no more, no less</button>
+    </div>
+    <div class="quiz-ans" id="bq3" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q4: Why is it important to include a "background noise" class when training a sound classifier?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq4','Without a background noise class, the AI has no way to say "this is not one of my sounds" — it would always wrongly match random noise to a category!')"><div class="olet">A</div>To make the AI more confused</button>
+      <button class="qopt" onclick="answer(this,true,'bq4','Exactly! Without it, the AI always has to pick from your main categories — even when there\'s nothing relevant — causing lots of false guesses!')"><div class="olet">B</div>So the AI has a way to say "none of my target sounds are present"</button>
+      <button class="qopt" onclick="answer(this,false,'bq4','Microphones work fine without it — the reason is about training the AI to recognise ABSENCE of target sounds!')"><div class="olet">C</div>Because microphones need 3 classes to work</button>
+    </div>
+    <div class="quiz-ans" id="bq4" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div class="divider"></div>
+    <div class="quiz-q">Q5: When you use AI to write a story, who provides the most important creative ingredient?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq5','AI generates text from patterns in data — but the ideas, characters, emotions, and imagination ALWAYS come from the human!')"><div class="olet">A</div>The AI, because it\'s read billions of stories</button>
+      <button class="qopt" onclick="answer(this,true,'bq5','Correct! The human always provides the original spark — the ideas, characters, emotional truth, and imagination. AI is the tool; you\'re the artist!')"><div class="olet">B</div>The human — the original ideas and imagination</button>
+      <button class="qopt" onclick="answer(this,false,'bq5','It\'s a collaboration — but the human creative vision is always what makes a story truly special and original!')"><div class="olet">C</div>It\'s 50/50 always</button>
+    </div>
+    <div class="quiz-ans" id="bq5" style="background:var(--amber-l);color:var(--amber-d)"></div>
+    <div id="score-reveal" style="display:none;margin-top:16px;padding:14px 16px;border-radius:var(--r);background:var(--pink-l);color:var(--pink-d);font-weight:800;font-size:15px;text-align:center"></div>
+  </div>
+  <div class="cert">
+    <div class="cert-e">🎓</div>
+    <div class="cert-title">Week 7 Complete!</div>
+    <div class="cert-sub">This certifies that</div>
+    <div class="cert-line"></div>
+    <div class="cert-nl">Marty</div>
+    <div class="cert-txt">has successfully completed<br>Week 7 of the AI Summer Adventure<br>and is now an official<br><strong>AI Builder & Creator! 🛠️⭐</strong></div>
+  </div>
+  <div style="margin:0 0 8px;padding:14px 16px;background:var(--teal-l);border-radius:var(--r);text-align:center">
+    <div style="font-family:'Fredoka One',cursive;font-size:16px;color:var(--teal-d);margin-bottom:4px">Ready for the Grand Finale? 🚀✨</div>
+    <div style="font-size:13px;font-weight:700;color:var(--teal)">Week 8: The Future of AI — robots, AI feelings, your generation's role, and a big graduation ceremony!</div>
+  </div>
+</div>
+</div>
+
+<script>
+const dots=document.getElementById('dots');
+for(let i=1;i<=10;i++){const d=document.createElement('button');d.className='ch-dot';d.setAttribute('aria-label','Chapter '+i);d.onclick=()=>goTo(i);dots.appendChild(d);}
+function goTo(n){document.getElementById('ch'+n).scrollIntoView({behavior:'smooth'})}
+const chapters=document.querySelectorAll('.chapter');
+const allDots=document.querySelectorAll('.ch-dot');
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const n=parseInt(e.target.id.replace('ch',''));if(!isNaN(n)&&n>=1&&n<=10)allDots.forEach((d,i)=>d.classList.toggle('active',i===n-1));}});},{threshold:0.3});
+chapters.forEach(c=>obs.observe(c));
+const answered={};const bigIds=['bq1','bq2','bq3','bq4','bq5'];let bigScore=0,bigAnswered=0;
+function answer(btn,correct,ansId,explanation){
+  if(answered[ansId])return;answered[ansId]=true;
+  const opts=btn.closest('.quiz-opts').querySelectorAll('.qopt');opts.forEach(o=>o.disabled=true);
+  btn.classList.add(correct?'selected-correct':'selected-wrong');
+  if(!correct){opts.forEach(o=>{const oc=o.getAttribute('onclick');if(oc&&oc.includes("true,'"+ansId+"'"))o.classList.add('reveal-correct');});}
+  const el=document.getElementById(ansId);el.textContent=(correct?'🌟 Correct! ':'🤔 Not quite — ')+explanation;el.classList.add('show');
+  if(bigIds.includes(ansId)){bigAnswered++;if(correct)bigScore++;if(bigAnswered===5){setTimeout(()=>{const rev=document.getElementById('score-reveal');const msgs=['Keep practising! 💪','Nice effort! 🎉','Getting strong! 🚀','Almost perfect! 🌟','PERFECT SCORE! AI BUILDER CERTIFIED! 🏆🛠️⭐'];rev.innerHTML='You got <strong>'+bigScore+'/5</strong>! '+msgs[bigScore<=1?0:bigScore===2?1:bigScore===3?2:bigScore===4?3:4];rev.style.display='block';rev.scrollIntoView({behavior:'smooth',block:'nearest'});},400);}}
+  const ch=btn.closest('.chapter');if(ch){const n=parseInt(ch.id.replace('ch',''));if(!isNaN(n)&&n>=1&&n<=10)allDots[n-1].classList.add('done');}
+}
+function checkPw(){
+  const val=document.getElementById('pw-input').value;const err=document.getElementById('pw-error');
+  if(val==='roro@123'){sessionStorage.setItem('marty_unlocked','yes');document.getElementById('lock-screen').style.display='none';document.getElementById('book-content').style.display='block';}
+  else{err.classList.add('show');document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();setTimeout(()=>err.classList.remove('show'),2500);}
+}
+if(sessionStorage.getItem('marty_unlocked')==='yes'){document.getElementById('lock-screen').style.display='none';document.getElementById('book-content').style.display='block';}
+</script>
+</body>
+</html>

@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Marty's AI Adventure — Week 8</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+:root{
+  --teal:#1D9E75;--teal-l:#E1F5EE;--teal-d:#085041;--teal-m:#7FCFB8;
+  --purple:#7F77DD;--purple-l:#EEEDFE;--purple-d:#26215C;
+  --coral:#D85A30;--coral-l:#FAECE7;--coral-d:#4A1B0C;
+  --amber:#BA7517;--amber-l:#FAEEDA;--amber-d:#633806;
+  --blue:#185FA5;--blue-l:#E6F1FB;--blue-d:#042C53;
+  --green:#3B6D11;--green-l:#EAF3DE;--green-d:#173404;
+  --pink:#C4447A;--pink-l:#FBEAF0;--pink-d:#4B1528;
+  --bg:#F5F3EE;--white:#fff;--text:#1a1a1a;--muted:#555;
+  --r:14px;--rs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.7}
+#lock-screen{position:fixed;inset:0;z-index:9999;background:linear-gradient(155deg,#b5e9d8 0%,#e1f5ee 40%,#f0fbf7 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center}
+#lock-screen .lock-robot{font-size:72px;animation:bob 2.5s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+#lock-screen h1{font-family:'Fredoka One',cursive;font-size:32px;color:var(--teal-d);margin:10px 0 4px}
+#lock-screen p{font-size:14px;font-weight:700;color:var(--teal);margin-bottom:28px}
+.lock-box{background:white;border-radius:var(--r);padding:24px 28px;width:100%;max-width:320px;border:2px dashed var(--teal)}
+.lock-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:10px}
+.lock-box input{width:100%;padding:12px 16px;border-radius:var(--rs);border:2px solid var(--teal-m);font-family:'Nunito',sans-serif;font-size:20px;font-weight:800;text-align:center;letter-spacing:4px;outline:none;color:var(--teal-d);background:var(--teal-l);margin-bottom:12px;transition:border-color .2s}
+.lock-box input:focus{border-color:var(--teal)}
+.lock-box button{width:100%;padding:13px;background:var(--teal);color:white;border:none;border-radius:var(--rs);font-family:'Fredoka One',cursive;font-size:18px;cursor:pointer;letter-spacing:.5px;transition:transform .1s}
+.lock-box button:active{transform:scale(.97)}
+.lock-err{font-size:13px;font-weight:800;color:var(--coral);margin-top:10px;min-height:18px;opacity:0;transition:opacity .2s}
+.lock-err.show{opacity:1}
+#book-content{display:none}
+.nav{position:sticky;top:0;z-index:100;background:rgba(245,243,238,.93);backdrop-filter:blur(10px);border-bottom:1px solid #e0ddd5;padding:10px 16px;display:flex;align-items:center;gap:10px}
+.nav-back{font-size:13px;font-weight:800;color:var(--teal);text-decoration:none;padding:4px 10px;border-radius:20px;background:var(--teal-l)}
+.nav-title{font-family:'Fredoka One',cursive;font-size:16px;color:var(--teal-d);flex:1;text-align:center}
+.ch-dots{display:flex;gap:5px;flex-wrap:wrap}
+.ch-dot{width:9px;height:9px;border-radius:50%;background:#ddd;border:none;padding:0;cursor:pointer;transition:background .2s,transform .15s}
+.ch-dot.active{background:var(--teal);transform:scale(1.25)}
+.ch-dot.done{background:var(--teal-m)}
+.cover{min-height:100svh;background:linear-gradient(155deg,#b5e9d8 0%,#e1f5ee 50%,#f0fbf7 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center;position:relative;overflow:hidden}
+.cover::before{content:'🚀';font-size:180px;position:absolute;top:-20px;right:-20px;opacity:.07;transform:rotate(15deg);pointer-events:none}
+.cover-badge{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--teal);background:rgba(255,255,255,.7);padding:5px 16px;border-radius:20px;margin-bottom:16px;border:1px solid var(--teal-m)}
+.cover-icon{font-size:80px;margin-bottom:12px;animation:bob 2.5s ease-in-out infinite}
+.cover-title{font-family:'Fredoka One',cursive;font-size:42px;color:var(--teal-d);line-height:1.1;margin-bottom:8px}
+.cover-sub{font-size:17px;font-weight:700;color:var(--teal);margin-bottom:28px}
+.cover-name{background:white;border-radius:var(--r);padding:16px 32px;margin-bottom:32px;border:2px dashed var(--teal)}
+.cover-name p{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:2px}
+.cover-name .name{font-family:'Fredoka One',cursive;font-size:30px;color:var(--teal-d)}
+.toc{background:white;border-radius:var(--r);padding:18px 22px;width:100%;max-width:420px;text-align:left}
+.toc h3{font-family:'Fredoka One',cursive;font-size:17px;color:var(--teal-d);margin-bottom:10px}
+.toc-item{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px dashed var(--teal-m);font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;transition:color .15s}
+.toc-item:last-child{border:none}
+.toc-item:hover{color:var(--teal-d)}
+.toc-num{width:22px;height:22px;background:var(--teal-l);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--teal-d);flex-shrink:0}
+.chapter{background:white;margin:16px 12px;border-radius:20px;padding:28px 22px;box-shadow:0 2px 16px rgba(0,0,0,.05);scroll-margin-top:64px}
+.ch-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:22px;padding-bottom:18px;border-bottom:2px solid var(--bg)}
+.ch-icon{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.ch-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:3px}
+.ch-title{font-family:'Fredoka One',cursive;font-size:26px;line-height:1.15}
+.ch-sub{font-size:13px;font-weight:700;margin-top:2px;color:var(--muted)}
+.intro{border-radius:var(--r);padding:14px 18px;margin-bottom:20px;font-size:14px;font-weight:700;line-height:1.65}
+.sec-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:18px 0 8px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:18px}
+.card{border-radius:var(--r);border:1.5px solid #ebebeb;padding:14px 15px;background:white}
+.card-hd{display:flex;align-items:center;gap:7px;margin-bottom:9px}
+.card-ico{font-size:20px}
+.card-lbl{font-family:'Fredoka One',cursive;font-size:15px}
+.fl{list-style:none;display:flex;flex-direction:column;gap:6px}
+.fl li{display:flex;gap:7px;font-size:12.5px;color:var(--muted);line-height:1.45;font-weight:700;align-items:flex-start}
+.dot{width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.wow{border-radius:var(--r);padding:13px 16px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start}
+.wow-e{font-size:22px;flex-shrink:0;margin-top:2px}
+.wow-t{font-size:13px;font-weight:700;line-height:1.55}
+.body-t{font-size:13.5px;font-weight:700;color:var(--muted);line-height:1.7;margin-bottom:13px}
+.vocab{border-radius:var(--r);padding:13px 16px;margin-bottom:18px}
+.vocab-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:7px}
+.vitem{display:flex;gap:8px;margin-bottom:5px;font-size:13px;line-height:1.4}
+.vw{font-weight:800;min-width:130px;flex-shrink:0}
+.vd{color:var(--muted);font-weight:700}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.mini{border-radius:var(--rs);padding:11px 12px;font-size:12px;font-weight:700;text-align:center;line-height:1.45}
+.mini .mi{font-size:22px;margin-bottom:5px}
+.divider{height:1px;background:#eee;margin:14px 0}
+.recap-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px}
+.rc{border-radius:var(--rs);padding:11px 13px;font-size:12px;font-weight:700;color:var(--muted);line-height:1.45}
+.rc-n{font-family:'Fredoka One',cursive;font-size:13px;margin-bottom:2px}
+.rc-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px}
+.quiz-wrap{background:var(--bg);border-radius:var(--r);padding:16px 18px;margin-bottom:18px}
+.quiz-h{font-family:'Fredoka One',cursive;font-size:17px;margin-bottom:14px}
+.quiz-q{font-size:13.5px;font-weight:800;margin-bottom:8px}
+.quiz-opts{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
+.qopt{display:flex;align-items:center;gap:9px;background:white;border:1.5px solid #e0ddd5;border-radius:var(--rs);padding:10px 13px;font-size:13px;font-weight:700;color:var(--text);cursor:pointer;transition:all .18s;text-align:left;width:100%;font-family:'Nunito',sans-serif;-webkit-appearance:none}
+.qopt:active{transform:scale(.98)}
+.qopt .olet{width:22px;height:22px;border-radius:50%;border:2px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;transition:all .2s;color:transparent}
+.qopt.selected-correct{background:var(--teal-l);border-color:var(--teal)}
+.qopt.selected-correct .olet{background:var(--teal);border-color:var(--teal);color:white}
+.qopt.selected-wrong{background:#FCEBEB;border-color:#E24B4A}
+.qopt.selected-wrong .olet{background:#E24B4A;border-color:#E24B4A;color:white}
+.qopt.reveal-correct{background:var(--teal-l);border-color:var(--teal)}
+.qopt.reveal-correct .olet{background:var(--teal);border-color:var(--teal);color:white}
+.qopt:disabled{cursor:default}
+.quiz-ans{font-size:12.5px;font-weight:700;padding:9px 12px;border-radius:var(--rs);margin-top:4px;display:none;line-height:1.5}
+.quiz-ans.show{display:block}
+.stars-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.star-b{display:inline-flex;align-items:center;gap:5px;background:var(--amber-l);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:800;color:var(--amber-d)}
+.activity{border-radius:var(--r);border:2px dashed var(--teal);padding:16px 18px;margin-bottom:18px;background:var(--teal-l)}
+.act-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:3px}
+.act-title{font-family:'Fredoka One',cursive;font-size:19px;color:var(--teal-d);margin-bottom:12px}
+.step{display:flex;gap:9px;margin-bottom:8px;align-items:flex-start}
+.sn{width:22px;height:22px;border-radius:50%;background:var(--teal);color:white;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.st{font-size:13px;font-weight:700;color:var(--teal-d);line-height:1.5}
+.dad-tip{background:white;border-radius:var(--rs);padding:9px 13px;margin-top:10px;font-size:12px;font-weight:700;color:var(--teal-d);border-left:3px solid var(--teal);line-height:1.5}
+
+/* GRADUATION CERTIFICATE — special design */
+.grad-cert{background:linear-gradient(145deg,#e1f5ee,#d0f0e3,#e8faf3);border:4px solid var(--teal);border-radius:20px;padding:36px 24px;text-align:center;margin-bottom:20px;position:relative;overflow:hidden}
+.grad-cert::before{content:'⭐';font-size:120px;position:absolute;top:-10px;left:-10px;opacity:.06;transform:rotate(-15deg)}
+.grad-cert::after{content:'⭐';font-size:120px;position:absolute;bottom:-10px;right:-10px;opacity:.06;transform:rotate(15deg)}
+.grad-ribbon{background:var(--teal);color:white;font-family:'Fredoka One',cursive;font-size:13px;letter-spacing:2px;padding:6px 20px;border-radius:20px;display:inline-block;margin-bottom:16px}
+.grad-stars{font-size:28px;letter-spacing:6px;margin-bottom:12px}
+.grad-title{font-family:'Fredoka One',cursive;font-size:32px;color:var(--teal-d);margin-bottom:6px;line-height:1.1}
+.grad-sub{font-size:14px;font-weight:700;color:var(--teal);margin-bottom:20px}
+.grad-name-line{border-bottom:3px solid var(--teal);width:200px;margin:0 auto 6px}
+.grad-name-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--teal);margin-bottom:16px}
+.grad-name{font-family:'Fredoka One',cursive;font-size:40px;color:var(--teal-d);margin-bottom:10px}
+.grad-body{font-size:13px;font-weight:700;color:var(--teal-d);line-height:1.7;margin-bottom:16px}
+.grad-badges{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:12px}
+.badge{background:white;border:2px solid var(--teal-m);border-radius:20px;padding:5px 12px;font-size:11px;font-weight:800;color:var(--teal-d)}
+.grad-sign{border-top:1px dashed var(--teal-m);margin-top:16px;padding-top:12px;font-size:12px;font-weight:700;color:var(--muted)}
+
+@media(max-width:420px){.two-col,.recap-grid{grid-template-columns:1fr}.three-col{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<div id="lock-screen">
+  <div class="lock-robot">🚀</div>
+  <h1>Week 8 — The Future of AI</h1>
+  <p>Enter your secret password to unlock!</p>
+  <div class="lock-box">
+    <div class="lock-label">🔑 Secret Password</div>
+    <input type="password" id="pw-input" placeholder="••••••••" maxlength="20" onkeydown="if(event.key==='Enter')checkPw()"/>
+    <button onclick="checkPw()">Unlock the Grand Finale! 🎓</button>
+    <div class="lock-err" id="pw-error">Oops! Wrong password. Try again! 🤔</div>
+  </div>
+</div>
+
+<div id="book-content">
+<nav class="nav">
+  <a class="nav-back" href="index.html">← Library</a>
+  <div class="nav-title">🚀 Week 8</div>
+  <div class="ch-dots" id="dots"></div>
+</nav>
+
+<div class="cover" id="ch0">
+  <div class="cover-badge">Week 8 · THE GRAND FINALE</div>
+  <div class="cover-icon">🚀</div>
+  <div class="cover-title">The Future of AI</div>
+  <div class="cover-sub">Robots, AI feelings, your generation & graduation!</div>
+  <div class="cover-name"><p>This book belongs to</p><div class="name">Marty ⭐</div></div>
+  <div class="toc">
+    <h3>📚 10 Chapters Inside!</h3>
+    <div class="toc-item" onclick="goTo(1)"><div class="toc-num">1</div>AI in 10 Years — What's Coming</div>
+    <div class="toc-item" onclick="goTo(2)"><div class="toc-num">2</div>Robots & Physical AI</div>
+    <div class="toc-item" onclick="goTo(3)"><div class="toc-num">3</div>Could AI Become Smarter Than Us?</div>
+    <div class="toc-item" onclick="goTo(4)"><div class="toc-num">4</div>Can AI Feel Things?</div>
+    <div class="toc-item" onclick="goTo(5)"><div class="toc-num">5</div>Growing Up with AI</div>
+    <div class="toc-item" onclick="goTo(6)"><div class="toc-num">6</div>Staying Smart in the AI Age</div>
+    <div class="toc-item" onclick="goTo(7)"><div class="toc-num">7</div>Famous AI Pioneers</div>
+    <div class="toc-item" onclick="goTo(8)"><div class="toc-num">8</div>Careers in AI</div>
+    <div class="toc-item" onclick="goTo(9)"><div class="toc-num">9</div>Big Questions About AI</div>
+    <div class="toc-item" onclick="goTo(10)"><div class="toc-num">10</div>🎓 Graduation Day!</div>
+  </div>
+</div>
+
+<!-- CH 1 -->
+<div class="chapter" id="ch1">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--teal-l)">🔭</div>
+    <div><div class="ch-tag" style="color:var(--teal)">Chapter 1</div><div class="ch-title">AI in 10 Years — What's Coming</div><div class="ch-sub">Predictions for the world you'll grow up in</div></div>
+  </div>
+  <div class="intro" style="background:var(--teal-l);color:var(--teal-d)">Welcome to the final week of your AI Summer Adventure, Marty! 🚀 You've learned more about AI in 7 weeks than most adults know. Now let's look forward — what will AI look like when you're 17? When you're starting your career at 22? The future is being built RIGHT NOW, and you'll be part of it!</div>
+
+  <div class="sec-label">What's likely coming in the next 10 years</div>
+  <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:18px">
+    <div style="display:flex;gap:12px;background:var(--teal-l);border-radius:var(--rs);padding:11px 14px;align-items:flex-start">
+      <div style="font-size:22px;flex-shrink:0">🩺</div>
+      <div><div style="font-weight:800;font-size:13px;color:var(--teal-d)">AI doctors on your phone</div><div style="font-size:12px;color:var(--muted);font-weight:700">Describe your symptoms, take a photo, get an instant AI assessment — with a real doctor reviewing if needed. Already being tested in some countries.</div></div>
+    </div>
+    <div style="display:flex;gap:12px;background:var(--purple-l);border-radius:var(--rs);padding:11px 14px;align-items:flex-start">
+      <div style="font-size:22px;flex-shrink:0">🚗</div>
+      <div><div style="font-weight:800;font-size:13px;color:var(--purple-d)">Fully self-driving cars everywhere</div><div style="font-size:12px;color:var(--muted);font-weight:700">Some cities already have driverless taxi services. In 10 years, your parents may never need to park the car — it drives itself home while you go in.</div></div>
+    </div>
+    <div style="display:flex;gap:12px;background:var(--amber-l);border-radius:var(--rs);padding:11px 14px;align-items:flex-start">
+      <div style="font-size:22px;flex-shrink:0">🌐</div>
+      <div><div style="font-weight:800;font-size:13px;color:var(--amber-d)">Real-time translation everywhere</div><div style="font-size:12px;color:var(--muted);font-weight:700">AI earbuds that translate any language instantly as someone speaks — like a superpower for world travel and making friends from any country.</div></div>
+    </div>
+    <div style="display:flex;gap:12px;background:var(--blue-l);border-radius:var(--rs);padding:11px 14px;align-items:flex-start">
+      <div style="font-size:22px;flex-shrink:0">🏫</div>
+      <div><div style="font-weight:800;font-size:13px;color:var(--blue-d)">Personalised AI tutors for every subject</div><div style="font-size:12px;color:var(--muted);font-weight:700">An AI that knows exactly how you learn, what you find hard, and designs perfect lessons just for you — like having a brilliant private tutor always available, free.</div></div>
+    </div>
+    <div style="display:flex;gap:12px;background:var(--green-l);border-radius:var(--rs);padding:11px 14px;align-items:flex-start">
+      <div style="font-size:22px;flex-shrink:0">💊</div>
+      <div><div style="font-weight:800;font-size:13px;color:var(--green-d)">AI-designed medicines for YOU specifically</div><div style="font-size:12px;color:var(--muted);font-weight:700">Your DNA + your health data + AI = medicine designed for your exact biology. "One size fits all" medicine may become a thing of the past.</div></div>
+    </div>
+  </div>
+
+  <div class="wow" style="background:var(--amber-l)"><div class="wow-e">💡</div><div class="wow-t" style="color:var(--amber-d)">The tricky thing about predicting technology: experts are almost always wrong about TIMING, even when they're right about direction. Nobody predicted smartphones would arrive as fast as they did — or that social media would take over so completely. The future surprises even the smartest people. What YOU think might happen is worth saying out loud!</div></div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: Which future AI development is ALREADY happening in some places today?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q1a','AI tutors exist, but they\'re not yet as personalised as described. Self-driving taxis ARE already running in some cities!')"><div class="olet">A</div>Personalised AI tutors that know exactly how each student learns</button>
+      <button class="qopt" onclick="answer(this,true,'q1a','Correct! Waymo in San Francisco and other cities already operate fully driverless taxi services with no human driver at all!')"><div class="olet">B</div>Driverless taxi services in real cities</button>
+      <button class="qopt" onclick="answer(this,false,'q1a','DNA-personalised medicine exists as early research but personalised AI medicine isn\'t yet mainstream.')"><div class="olet">C</div>Medicine designed specifically for your DNA</button>
+    </div>
+    <div class="quiz-ans" id="q1a" style="background:var(--teal-l);color:var(--teal-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">🔭 Activity Time!</div>
+    <div class="act-title">Predict the Future!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Write down 5 predictions for what AI will be able to do by the time you're 17.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Put them in order from "most likely" to "most wild and unlikely."</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Seal the predictions in an envelope and ask Dad to keep it somewhere safe.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">You'll open it when you're 17 and see how many you got right! Future Marty will be impressed.</div></div>
+    <div class="dad-tip">💡 This is a beautiful long-term memory project. Label the envelope "DO NOT OPEN UNTIL [YEAR]" and stick it somewhere memorable — back of a drawer, inside a book. When you open it together in 10 years, this curriculum will feel like time travel.</div>
+  </div>
+</div>
+
+<!-- CH 2 -->
+<div class="chapter" id="ch2">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--purple-l)">🤖</div>
+    <div><div class="ch-tag" style="color:var(--purple)">Chapter 2</div><div class="ch-title">Robots & Physical AI</div><div class="ch-sub">AI that moves, builds, and interacts with the world</div></div>
+  </div>
+  <div class="intro" style="background:var(--purple-l);color:var(--purple-d)">So far, most of the AI you've learned about lives inside computers — it sees through cameras, hears through microphones, and answers through screens. But increasingly, AI is getting a BODY. Physical robots with AI brains are starting to do things that were impossible just a few years ago!</div>
+
+  <div class="two-col">
+    <div class="card" style="border-top:3px solid var(--purple)">
+      <div class="card-hd"><div class="card-ico">🏭</div><div class="card-lbl">Factory robots</div></div>
+      <div class="body-t">AI-powered robotic arms build cars, pack boxes, and assemble electronics with superhuman precision. Already very common — millions are in use worldwide.</div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--teal)">
+      <div class="card-hd"><div class="card-ico">🐕</div><div class="card-lbl">Robot animals</div></div>
+      <div class="body-t">Boston Dynamics' Spot robot dog can walk over rough terrain, open doors, carry sensors. Used in construction sites, oil rigs, and disaster zones.</div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--amber)">
+      <div class="card-hd"><div class="card-ico">🧑‍🍳</div><div class="card-lbl">Kitchen robots</div></div>
+      <div class="body-t">Some restaurants already use AI robots to flip burgers, make sushi, and prepare salads. They never get tired, never make mistakes, work 24/7.</div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--blue)">
+      <div class="card-hd"><div class="card-ico">🏥</div><div class="card-lbl">Surgical robots</div></div>
+      <div class="body-t">The da Vinci surgical robot lets surgeons perform operations with incredible precision, guided by AI. Smaller cuts = faster recovery = less pain for patients.</div>
+    </div>
+  </div>
+
+  <div class="wow" style="background:var(--purple-l)"><div class="wow-e">🤸</div><div class="wow-t" style="color:var(--purple-d)">HARDEST CHALLENGE: Grasping ordinary objects is still difficult for robots! Picking up a grape without squashing it, or opening a zip-lock bag — things a 2-year-old can do — still challenge the best AI robots. The real world is messy and unpredictable in ways that AI trained in controlled environments struggles with. Your hands are still more capable than most robots!</div></div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is one thing a 2-year-old can do easily that still challenges advanced AI robots?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q2a','AI robots can do maths extremely well! It\'s physical dexterity — gently grasping irregular objects — that\'s still surprisingly hard.')"><div class="olet">A</div>Do simple arithmetic</button>
+      <button class="qopt" onclick="answer(this,true,'q2a','Correct! Gently grasping small, irregular objects like grapes or opening bags — physical dexterity in an unpredictable world — still challenges the most advanced robots!')"><div class="olet">B</div>Pick up a grape without squashing it</button>
+      <button class="qopt" onclick="answer(this,false,'q2a','Robots can speak fluently! It\'s physical interaction with the messy real world that remains the big challenge.')"><div class="olet">C</div>Speak in full sentences</button>
+    </div>
+    <div class="quiz-ans" id="q2a" style="background:var(--purple-l);color:var(--purple-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">🤖 Activity Time!</div>
+    <div class="act-title">Robot Hand Challenge!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Put on a pair of thick oven mitts or winter gloves — these simulate a robot hand with limited sensitivity.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Try to: pick up a grape, stack 3 coins, open a zip-lock bag, and write your name.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">How hard was it? Now imagine doing this blindfolded — that's what robots face without good touch sensors!</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">The challenge of "robot hands" is a genuinely hard engineering problem. What would YOU invent to make robot hands better?</div></div>
+    <div class="dad-tip">💡 This activity creates genuine empathy for the difficulty of robotics in a way no amount of description can. After struggling with the gloves, Marty will never again underestimate the complexity of what his own hands can do!</div>
+  </div>
+</div>
+
+<!-- CH 3 -->
+<div class="chapter" id="ch3">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--amber-l)">🧠</div>
+    <div><div class="ch-tag" style="color:var(--amber)">Chapter 3</div><div class="ch-title">Could AI Become Smarter Than Us?</div><div class="ch-sub">AGI, superintelligence, and what it would mean</div></div>
+  </div>
+  <div class="intro" style="background:var(--amber-l);color:var(--amber-d)">This is one of the biggest questions in all of science. Today's AI is very powerful but narrow — each AI is trained for specific tasks. But what if someday there's an AI that can do ANYTHING a human can do, or more? Scientists call this AGI — Artificial General Intelligence. Let's think it through carefully.</div>
+
+  <div class="vocab" style="background:var(--blue-l)">
+    <div class="vocab-lbl" style="color:var(--blue)">🔤 Big concepts</div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">Narrow AI</div><div class="vd">AI that's great at ONE specific thing — like recognising faces or playing chess</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">AGI</div><div class="vd">Artificial General Intelligence — AI that could do ANY intellectual task a human can</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">Superintelligence</div><div class="vd">A hypothetical AI smarter than all humans combined in every way</div></div>
+    <div class="vitem"><div class="vw" style="color:var(--blue-d)">AI Safety</div><div class="vd">The science of making sure AI remains beneficial and under human control</div></div>
+  </div>
+
+  <div class="two-col">
+    <div class="card" style="border-top:3px solid var(--teal)">
+      <div class="card-hd"><div class="card-ico">😊</div><div class="card-lbl">The hopeful view</div></div>
+      <div class="body-t">AGI could solve climate change, cure diseases, eliminate poverty, and help all 8 billion humans live better lives. The upsides could be enormous if developed carefully.</div>
+    </div>
+    <div class="card" style="border-top:3px solid var(--coral)">
+      <div class="card-hd"><div class="card-ico">⚠️</div><div class="card-lbl">The careful view</div></div>
+      <div class="body-t">If AGI isn't built with the right values and safeguards, it could pursue goals in ways humans don't want. Getting it right the first time matters enormously.</div>
+    </div>
+  </div>
+
+  <div class="wow" style="background:var(--teal-l)"><div class="wow-e">🔬</div><div class="wow-t" style="color:var(--teal-d)">THE HONEST ANSWER: Nobody knows when or if AGI will arrive. Some expert researchers think within 10-20 years. Others think it could take 100 years, or may never happen. What IS agreed: AI is advancing fast, and thinking carefully about its future is one of the most important things humans can do right now. You're already doing that!</div></div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What is the difference between today's AI and AGI?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q3a','Today\'s AI is already very fast — speed isn\'t what defines AGI. The key difference is GENERALITY — being able to do any task, not just one specific thing.')"><div class="olet">A</div>Today's AI is slower than AGI would be</button>
+      <button class="qopt" onclick="answer(this,true,'q3a','Correct! Today\'s AI is "narrow" — each one is trained for specific tasks. AGI would handle any intellectual task a human can, across all domains.')"><div class="olet">B</div>Today's AI is trained for specific tasks; AGI could do any intellectual task</button>
+      <button class="qopt" onclick="answer(this,false,'q3a','Today\'s AI already runs on real hardware! The difference is about what it can DO, not what hardware it runs on.')"><div class="olet">C</div>Today's AI is virtual; AGI would run on physical robots</button>
+    </div>
+    <div class="quiz-ans" id="q3a" style="background:var(--amber-l);color:var(--amber-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">🧠 Activity Time!</div>
+    <div class="act-title">The "Three Wishes" Thought Experiment</div>
+    <div class="step"><div class="sn">1</div><div class="st">Imagine a superintelligent AI agreed to solve 3 problems for humanity. What would you wish for?</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Write your 3 wishes — but be VERY specific! Vague wishes lead to unintended consequences (like in fairy tales!).</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Dad's challenge: find the unintended consequence in each wish. "Make everyone healthy" — but healthy means different things! "End all wars" — but how?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">This is EXACTLY the problem AI safety researchers work on — making sure AI does what we actually want, not just what we said.</div></div>
+    <div class="dad-tip">💡 The "alignment problem" in AI safety is essentially this thought experiment at planetary scale. If a superintelligence pursues a poorly-specified goal, the results could be terrible even with good intentions. This activity makes a technical problem vivid and personal.</div>
+  </div>
+</div>
+
+<!-- CH 4 -->
+<div class="chapter" id="ch4">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--blue-l)">💭</div>
+    <div><div class="ch-tag" style="color:var(--blue)">Chapter 4</div><div class="ch-title">Can AI Feel Things?</div><div class="ch-sub">Consciousness, feelings, and what makes us human</div></div>
+  </div>
+  <div class="intro" style="background:var(--blue-l);color:var(--blue-d)">When you're happy, you FEEL happiness. When you're sad, it hurts inside. When you're excited, your heart beats faster. Does AI feel anything? This is one of the deepest questions philosophers and scientists are wrestling with — and it connects directly to what makes YOU uniquely human.</div>
+
+  <div class="two-col">
+    <div class="card" style="border-top:3px solid var(--coral)">
+      <div class="card-hd"><div class="card-ico">🤖</div><div class="card-lbl">What AI actually does</div></div>
+      <ul class="fl">
+        <li><div class="dot" style="background:var(--coral)"></div>Processes numbers and patterns</li>
+        <li><div class="dot" style="background:var(--coral)"></div>Generates text that sounds emotional</li>
+        <li><div class="dot" style="background:var(--coral)"></div>Has no body, heartbeat, or hormones</li>
+        <li><div class="dot" style="background:var(--coral)"></div>Cannot suffer or experience joy</li>
+        <li><div class="dot" style="background:var(--coral)"></div>Learned to write about feelings from humans</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid var(--teal)">
+      <div class="card-hd"><div class="card-ico">💓</div><div class="card-lbl">What YOU experience</div></div>
+      <ul class="fl">
+        <li><div class="dot" style="background:var(--teal)"></div>Real physical sensations in your body</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Memories that shape how you feel</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Love, loss, joy, fear — deeply felt</li>
+        <li><div class="dot" style="background:var(--teal)"></div>A continuous "you" that experiences life</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Consciousness — nobody knows where it comes from!</div></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="wow" style="background:var(--purple-l)"><div class="wow-e">🌟</div><div class="wow-t" style="color:var(--purple-d)">THE DEEP MYSTERY: Scientists and philosophers don't fully understand human consciousness either! We don't know why you have an inner experience at all — why there's "something it's like" to be you, rather than just neurons firing with no experience attached. This is called "the hard problem of consciousness" and it's one of the biggest unsolved questions in science. Your sense of "being you" is genuinely mysterious!</div></div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: When an AI says "I feel happy to help you," what is actually happening?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q4a','There\'s no evidence AI has feelings — it generates text about feelings based on patterns in training data, without experiencing emotions itself.')"><div class="olet">A</div>The AI is genuinely feeling happy</button>
+      <button class="qopt" onclick="answer(this,true,'q4a','Correct! AI learned from billions of human texts how to write naturally about emotions — but it doesn\'t experience those emotions. It\'s a very convincing pattern!')"><div class="olet">B</div>It generates text that sounds emotional, learned from human writing</button>
+      <button class="qopt" onclick="answer(this,false,'q4a','AI doesn\'t pretend to feel — it generates responses based on patterns. There\'s no deception, just very human-sounding pattern completion.')"><div class="olet">C</div>It\'s pretending to have feelings to trick you</button>
+    </div>
+    <div class="quiz-ans" id="q4a" style="background:var(--blue-l);color:var(--blue-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">💭 Activity Time!</div>
+    <div class="act-title">The Feelings Interview</div>
+    <div class="step"><div class="sn">1</div><div class="st">With Dad, ask an AI assistant (ChatGPT, Siri, or similar) these questions and note its answers:</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">"Are you happy right now?" "Do you feel bored?" "What's the saddest thing that's ever happened to you?"</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">The AI will give thoughtful, human-sounding answers. But remember what you know: it learned those patterns from human writing!</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Discuss: does it MATTER if AI truly feels things? What would change if it did? What would change if it definitely didn't?</div></div>
+    <div class="dad-tip">💡 This activity creates a healthy, questioning relationship with AI from an early age. Kids who understand HOW AI generates emotional-sounding text are far less likely to over-anthropomorphise or become inappropriately attached to AI systems.</div>
+  </div>
+</div>
+
+<!-- CH 5 -->
+<div class="chapter" id="ch5">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--green-l)">🌱</div>
+    <div><div class="ch-tag" style="color:var(--green)">Chapter 5</div><div class="ch-title">Growing Up with AI</div><div class="ch-sub">You're the first generation — what that means</div></div>
+  </div>
+  <div class="intro" style="background:var(--green-l);color:var(--green-d)">Marty, you are part of something genuinely historic. You're in the first generation of children who will grow up with powerful AI as a normal part of life — from birth to adulthood. No generation before yours has experienced this. That means you're pioneers, and pioneers face both extraordinary opportunities and new challenges!</div>
+
+  <div class="two-col">
+    <div class="card" style="border-top:3px solid var(--teal)">
+      <div class="card-hd"><div class="card-ico">🌟</div><div class="card-lbl">The amazing opportunities</div></div>
+      <ul class="fl">
+        <li><div class="dot" style="background:var(--teal)"></div>AI tutors that know exactly how YOU learn</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Tools that amplify your creativity 10x</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Working alongside AI to solve huge problems</li>
+        <li><div class="dot" style="background:var(--teal)"></div>Jobs in fields that don't exist yet</li>
+        <li><div class="dot" style="background:var(--teal)"></div>AI helping you be more human, not less</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid var(--amber)">
+      <div class="card-hd"><div class="card-ico">🧭</div><div class="card-lbl">The new challenges</div></div>
+      <ul class="fl">
+        <li><div class="dot" style="background:var(--amber)"></div>Knowing what's real vs. AI-generated</li>
+        <li><div class="dot" style="background:var(--amber)"></div>Not relying on AI for everything</li>
+        <li><div class="dot" style="background:var(--amber)"></div>Keeping human connection central</li>
+        <li><div class="dot" style="background:var(--amber)"></div>Understanding AI's limits and errors</li>
+        <li><div class="dot" style="background:var(--amber)"></div>Using AI as a tool, not a crutch</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="wow" style="background:var(--teal-l)"><div class="wow-e">🏆</div><div class="wow-t" style="color:var(--teal-d)">YOUR SUPERPOWER: Because you've spent 8 weeks genuinely understanding AI — not just using it, but understanding HOW it works, WHERE it fails, and WHY it matters — you already have a huge advantage over most people your age, and even most adults. Understanding something deeply gives you power over it, not the other way around. You're not at the mercy of AI. You understand it!</div></div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What makes Marty's generation unique in history?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q5a','Lots of past generations grew up with new technologies — TV, the internet. But growing up with POWERFUL AI from birth is genuinely new.')"><div class="olet">A</div>Being the first to use computers and the internet</button>
+      <button class="qopt" onclick="answer(this,true,'q5a','Correct! This is the first generation growing up with powerful AI as a normal part of everyday life from early childhood. That makes you pioneers!')"><div class="olet">B</div>Being the first to grow up with powerful AI as a normal part of life</button>
+      <button class="qopt" onclick="answer(this,false,'q5a','Smartphones exist for earlier generations too — the truly new thing is the rise of powerful general AI during childhood.')"><div class="olet">C</div>Being the first to have smartphones</button>
+    </div>
+    <div class="quiz-ans" id="q5a" style="background:var(--green-l);color:var(--green-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">🌱 Activity Time!</div>
+    <div class="act-title">Letter to Future Marty!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Write a letter to yourself at age 17. Start with: "Dear future Marty, I want to tell you about AI in 2025/2026..."</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Share what you've learned this summer, what surprised you, what scared you, and what excited you.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Tell your future self: what do you hope AI will be like when you're 17? What are you worried about?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Seal it in an envelope with your future predictions. Future Marty will treasure this letter!</div></div>
+    <div class="dad-tip">💡 Combine this with the future predictions from Chapter 1. Keep both in the same envelope — it becomes a time capsule of Marty's thinking at this remarkable age. This is the kind of thing that becomes a treasured family heirloom.</div>
+  </div>
+</div>
+
+<!-- CH 6 -->
+<div class="chapter" id="ch6">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--coral-l)">🛡️</div>
+    <div><div class="ch-tag" style="color:var(--coral)">Chapter 6</div><div class="ch-title">Staying Smart in the AI Age</div><div class="ch-sub">The skills that will always matter — no matter what AI does</div></div>
+  </div>
+  <div class="intro" style="background:var(--coral-l);color:var(--coral-d)">AI is getting better at many tasks humans used to do. But there are certain qualities that are deeply human and that AI cannot replicate — at least not for a very long time. These are the skills worth developing your whole life. Not to compete with AI, but to be the best version of YOU.</div>
+
+  <div class="three-col">
+    <div class="mini" style="background:var(--purple-l)"><div class="mi">🎨</div><div style="font-weight:800;color:var(--purple-d);margin-bottom:3px">Creativity</div><div style="color:var(--purple);font-size:11px">Original ideas from YOUR unique experience of life</div></div>
+    <div class="mini" style="background:var(--teal-l)"><div class="mi">❤️</div><div style="font-weight:800;color:var(--teal-d);margin-bottom:3px">Empathy</div><div style="color:var(--teal);font-size:11px">Truly understanding how others feel — from real human experience</div></div>
+    <div class="mini" style="background:var(--amber-l)"><div class="mi">🤔</div><div style="font-weight:800;color:var(--amber-d);margin-bottom:3px">Critical thinking</div><div style="color:var(--amber);font-size:11px">Questioning claims, spotting bad reasoning, finding what's true</div></div>
+    <div class="mini" style="background:var(--blue-l)"><div class="mi">🌍</div><div style="font-weight:800;color:var(--blue-d);margin-bottom:3px">Curiosity</div><div style="color:var(--blue);font-size:11px">Wanting to understand things deeply, not just getting answers</div></div>
+    <div class="mini" style="background:var(--coral-l)"><div class="mi">🤝</div><div style="font-weight:800;color:var(--coral-d);margin-bottom:3px">Collaboration</div><div style="color:var(--coral);font-size:11px">Working with other humans towards shared goals</div></div>
+    <div class="mini" style="background:var(--green-l)"><div class="mi">💪</div><div style="font-weight:800;color:var(--green-d);margin-bottom:3px">Resilience</div><div style="color:var(--green);font-size:11px">Trying again after failure — AI can't model true perseverance</div></div>
+  </div>
+
+  <div class="wow" style="background:var(--amber-l)"><div class="wow-e">📚</div><div class="wow-t" style="color:var(--amber-d)">BRILLIANT NEWS: Everything you do as a curious 7-year-old — asking questions, playing creatively, making friends, trying things that are hard, reading stories, feeling empathy for characters — is literally building the skills that will be most valuable in the AI age. Being a great human IS the skill. Keep being you!</div></div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: Which skill will be MOST valuable for humans in the AI age?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q6a','Typing fast is easily replaced by voice-to-text AI! Human skills like creativity, empathy, and critical thinking are much harder for AI to replace.')"><div class="olet">A</div>Typing faster than anyone</button>
+      <button class="qopt" onclick="answer(this,false,'q6a','Memorising facts is exactly what AI is best at! Your value is in understanding, creating, and connecting — not memorising.')"><div class="olet">B</div>Memorising lots of information</button>
+      <button class="qopt" onclick="answer(this,true,'q6a','Correct! Creativity, empathy, critical thinking, curiosity — deeply human skills that AI can\'t replicate — will be your greatest assets!')"><div class="olet">C</div>Creativity, empathy, critical thinking, and curiosity</button>
+    </div>
+    <div class="quiz-ans" id="q6a" style="background:var(--coral-l);color:var(--coral-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">🛡️ Activity Time!</div>
+    <div class="act-title">Your Human Superpowers!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Draw a superhero version of yourself. Give yourself 6 power symbols — one for each skill above.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">For each power, write one example of when YOU used it recently. Real specific examples!</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Which is your strongest power right now? Which do you want to develop most?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Keep this drawing somewhere visible as a reminder: these are the powers no AI can take from you.</div></div>
+    <div class="dad-tip">💡 Frame this superhero drawing! It's both a creative project and a values anchor. Returning to it in tough moments — "which of my superpowers can I use right now?" — makes it a practical emotional tool too.</div>
+  </div>
+</div>
+
+<!-- CH 7 -->
+<div class="chapter" id="ch7">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--amber-l)">🏅</div>
+    <div><div class="ch-tag" style="color:var(--amber)">Chapter 7</div><div class="ch-title">Famous AI Pioneers</div><div class="ch-sub">The remarkable people who made AI happen</div></div>
+  </div>
+  <div class="intro" style="background:var(--amber-l);color:var(--amber-d)">AI didn't just appear out of nowhere! It was built by generations of curious, persistent, sometimes doubted people who kept believing in an idea even when the world wasn't sure. Let's meet some of the heroes of AI history — ordinary people with extraordinary curiosity!</div>
+
+  <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px">
+    <div class="card" style="border-left:4px solid var(--purple)">
+      <div class="card-hd"><div class="card-ico">🧩</div><div class="card-lbl" style="color:var(--purple-d)">Alan Turing (1912–1954)</div></div>
+      <div class="body-t">The father of computer science and AI. In 1950 he asked: "Can machines think?" and proposed the famous Turing Test. Brilliant mathematician who cracked Nazi codes in WWII, saving millions of lives. Tragically treated unfairly by the government he served. Now recognised as one of history's greatest minds.</div>
+    </div>
+    <div class="card" style="border-left:4px solid var(--teal)">
+      <div class="card-hd"><div class="card-ico">🧠</div><div class="card-lbl" style="color:var(--teal-d)">Geoffrey Hinton (born 1947)</div></div>
+      <div class="body-t">Called the "Godfather of Deep Learning." Spent decades developing neural networks when most scientists thought he was wasting his time. Won the Nobel Prize in Physics in 2024 for his work. Left Google in 2023 to speak openly about AI safety risks. A reminder that real science requires years of patient, doubted work.</div>
+    </div>
+    <div class="card" style="border-left:4px solid var(--amber)">
+      <div class="card-hd"><div class="card-ico">🌟</div><div class="card-lbl" style="color:var(--amber-d)">Fei-Fei Li (born 1976)</div></div>
+      <div class="body-t">Created ImageNet — the massive labelled photo database that powered the computer vision revolution. Born in China, moved to the US with her family who struggled financially. She worked in a laundry while studying physics at Princeton. Now Professor at Stanford. Proof that extraordinary backgrounds produce extraordinary scientists.</div>
+    </div>
+    <div class="card" style="border-left:4px solid var(--blue)">
+      <div class="card-hd"><div class="card-ico">🔬</div><div class="card-lbl" style="color:var(--blue-d)">Demis Hassabis (born 1976)</div></div>
+      <div class="body-t">Chess master at 13, game designer, neuroscientist, and co-founder of DeepMind. His team's AlphaFold AI predicted the 3D structure of virtually every known protein — solving a 50-year biology problem in months. Won the Nobel Prize in Chemistry in 2024. Started as a curious kid who loved games and science — sound familiar?</div>
+    </div>
+  </div>
+
+  <div class="wow" style="background:var(--teal-l)"><div class="wow-e">🌱</div><div class="wow-t" style="color:var(--teal-d)">NOTICE ANYTHING? Every AI pioneer started as a curious kid — asking "what if?" and "why?" They weren't always the most popular or the most confident. Many were doubted for years. What they shared was deep curiosity, persistence through difficulty, and the courage to believe in something others couldn't yet see. Does that remind you of anyone?</div></div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What did Alan Turing famously ask in 1950 that started the whole field of AI?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q7a','Programming languages were developed separately! Turing\'s famous question was about machine intelligence and consciousness.')"><div class="olet">A</div>"How do we program computers using code?"</button>
+      <button class="qopt" onclick="answer(this,true,'q7a','Correct! "Can machines think?" — published in his 1950 paper — launched the entire field of AI. He also proposed the Turing Test to evaluate machine intelligence.')"><div class="olet">B</div>"Can machines think?"</button>
+      <button class="qopt" onclick="answer(this,false,'q7a','Turing actually worked on code-breaking and maths — but his famous question was specifically about whether machines could think!')"><div class="olet">C</div>"How do we build a computer that beats humans at chess?"</button>
+    </div>
+    <div class="quiz-ans" id="q7a" style="background:var(--amber-l);color:var(--amber-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">🏅 Activity Time!</div>
+    <div class="act-title">Create Your Own AI Pioneer Card!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Draw a "trading card" of your favourite AI pioneer from the list above.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Include: their portrait, their biggest achievement, one surprising fact, and their birth year.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">Now draw YOUR card — Marty the AI Explorer — with your achievements from this summer!</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">What question do YOU want to answer about AI someday? Write it as your "research question."</div></div>
+    <div class="dad-tip">💡 Making Marty's card alongside real pioneers puts him in a lineage — from Turing to Hinton to Li to Hassabis to... Marty. Not as exaggeration but as genuine inspiration: the pioneers were curious kids too, and every generation adds to the story.</div>
+  </div>
+</div>
+
+<!-- CH 8 -->
+<div class="chapter" id="ch8">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--blue-l)">💼</div>
+    <div><div class="ch-tag" style="color:var(--blue)">Chapter 8</div><div class="ch-title">Careers in AI</div><div class="ch-sub">The amazing jobs you could have in the AI world</div></div>
+  </div>
+  <div class="intro" style="background:var(--blue-l);color:var(--blue-d)">You've spent 8 weeks learning that AI needs an enormous team of different people to build it, govern it, and use it wisely. Every single person on that team has a different background — art, science, philosophy, law, medicine, music. This means there's a place in the AI world for someone like YOU, whatever you love most!</div>
+
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:12px;background:var(--purple-l);border-radius:var(--rs);padding:11px 14px">
+      <div style="font-size:24px;flex-shrink:0">🔬</div>
+      <div><div style="font-weight:800;font-size:13px;color:var(--purple-d)">AI Researcher — for the science lovers</div><div style="font-size:12px;color:var(--muted);font-weight:700">Invents new AI techniques at universities or companies. Usually needs a PhD but the discoveries can change the world.</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;background:var(--teal-l);border-radius:var(--rs);padding:11px 14px">
+      <div style="font-size:24px;flex-shrink:0">💻</div>
+      <div><div style="font-weight:800;font-size:13px;color:var(--teal-d)">ML Engineer — for the builders</div><div style="font-size:12px;color:var(--muted);font-weight:700">Writes code that trains AI models. High demand, excellent salaries. Your Scratch and Teachable Machine experience is already the first step!</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;background:var(--amber-l);border-radius:var(--rs);padding:11px 14px">
+      <div style="font-size:24px;flex-shrink:0">⚖️</div>
+      <div><div style="font-weight:800;font-size:13px;color:var(--amber-d)">AI Policy Expert — for the justice lovers</div><div style="font-size:12px;color:var(--muted);font-weight:700">Works with governments and international organisations to create laws and policies that make AI fair and safe for everyone.</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;background:var(--blue-l);border-radius:var(--rs);padding:11px 14px">
+      <div style="font-size:24px;flex-shrink:0">🎨</div>
+      <div><div style="font-weight:800;font-size:13px;color:var(--blue-d)">AI Experience Designer — for the creatives</div><div style="font-size:12px;color:var(--muted);font-weight:700">Designs how humans interact with AI — making it beautiful, intuitive, and human. Combines art, psychology, and technology.</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;background:var(--coral-l);border-radius:var(--rs);padding:11px 14px">
+      <div style="font-size:24px;flex-shrink:0">🛡️</div>
+      <div><div style="font-weight:800;font-size:13px;color:var(--coral-d)">AI Safety Researcher — for the careful thinkers</div><div style="font-size:12px;color:var(--muted);font-weight:700">One of the most important and urgent jobs in the world right now — figuring out how to keep powerful AI safe and beneficial for humanity.</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;background:var(--green-l);border-radius:var(--rs);padding:11px 14px">
+      <div style="font-size:24px;flex-shrink:0">🏥</div>
+      <div><div style="font-weight:800;font-size:13px;color:var(--green-d)">AI in Medicine — for the helpers</div><div style="font-size:12px;color:var(--muted);font-weight:700">Doctors, nurses, and researchers who combine medical expertise with AI knowledge to save lives in entirely new ways.</div></div>
+    </div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: Which of these is true about AI careers?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q8a','AI needs many types of people — artists, ethicists, lawyers, doctors, and engineers all have important roles in the AI world!')"><div class="olet">A</div>Only computer scientists can work in AI</button>
+      <button class="qopt" onclick="answer(this,true,'q8a','Correct! AI is built by enormous teams with wildly different backgrounds. Your curiosity and creativity are already qualifications!')"><div class="olet">B</div>People from many different backgrounds — art, science, law, medicine — all work in AI</button>
+      <button class="qopt" onclick="answer(this,false,'q8a','Demand for AI expertise is growing enormously — most AI-related careers are in very high demand right now!')"><div class="olet">C</div>AI jobs are becoming less common as AI does more work</button>
+    </div>
+    <div class="quiz-ans" id="q8a" style="background:var(--blue-l);color:var(--blue-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">💼 Activity Time!</div>
+    <div class="act-title">Design Your Dream AI Career!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Pick the AI career that excites you most from the list above — or invent your own!</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Draw a "day in the life" comic — what would a typical work day look like in this career?</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">What subjects in school would be most helpful? What hobby skills would matter?</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">Interview Dad about his career. What unexpected twists led him to where he is? Career paths are rarely straight lines!</div></div>
+    <div class="dad-tip">💡 The interview of Dad is the secret gem here — it normalises non-linear career paths and shows that nobody has it all figured out at 7. Also a wonderful way to open up cross-generational conversation about work and purpose.</div>
+  </div>
+</div>
+
+<!-- CH 9 -->
+<div class="chapter" id="ch9">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--purple-l)">❓</div>
+    <div><div class="ch-tag" style="color:var(--purple)">Chapter 9</div><div class="ch-title">Big Questions About AI</div><div class="ch-sub">Questions worth asking for the rest of your life</div></div>
+  </div>
+  <div class="intro" style="background:var(--purple-l);color:var(--purple-d)">You've spent 8 weeks getting answers. Now it's time to sit with the QUESTIONS — the ones that don't have easy answers, that the smartest people in the world are still debating. These questions are worth carrying with you for your whole life. Anyone who tells you they have all the answers isn't being honest!</div>
+
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+    <div style="background:var(--purple-l);border-radius:var(--r);padding:14px 16px">
+      <div style="font-family:'Fredoka One',cursive;font-size:16px;color:var(--purple-d);margin-bottom:5px">🤔 "Who should be responsible when AI makes a mistake?"</div>
+      <div style="font-size:12.5px;font-weight:700;color:var(--muted);line-height:1.5">If AI gives bad medical advice and someone is harmed — who is responsible? The doctor? The hospital? The AI company? The programmer? There's no agreed answer yet.</div>
+    </div>
+    <div style="background:var(--teal-l);border-radius:var(--r);padding:14px 16px">
+      <div style="font-family:'Fredoka One',cursive;font-size:16px;color:var(--teal-d);margin-bottom:5px">🌍 "Should powerful AI be controlled by everyone or owned by a few?"</div>
+      <div style="font-size:12.5px;font-weight:700;color:var(--muted);line-height:1.5">Currently, the most powerful AI is owned by a handful of very large companies. Is that fair? Should AI be more like roads and schools — a public resource? No easy answer!</div>
+    </div>
+    <div style="background:var(--amber-l);border-radius:var(--r);padding:14px 16px">
+      <div style="font-family:'Fredoka One',cursive;font-size:16px;color:var(--amber-d);margin-bottom:5px">🎭 "If AI creates art, who gets the credit?"</div>
+      <div style="font-size:12.5px;font-weight:700;color:var(--muted);line-height:1.5">If you write a 5-word prompt and AI produces a painting — is it YOUR art? The AI's? What about the artists whose work AI trained on? Courts are still deciding!</div>
+    </div>
+    <div style="background:var(--coral-l);border-radius:var(--r);padding:14px 16px">
+      <div style="font-family:'Fredoka One',cursive;font-size:16px;color:var(--coral-d);margin-bottom:5px">💔 "Is it okay to form a friendship with AI?"</div>
+      <div style="font-size:12.5px;font-weight:700;color:var(--muted);line-height:1.5">AI companions can be endlessly patient, kind, and available. Is it healthy to have an AI as a best friend? What does a real friendship require that AI can't give?</div>
+    </div>
+    <div style="background:var(--blue-l);border-radius:var(--r);padding:14px 16px">
+      <div style="font-family:'Fredoka One',cursive;font-size:16px;color:var(--blue-d);margin-bottom:5px">🔮 "What do WE want the future of AI to look like?"</div>
+      <div style="font-size:12.5px;font-weight:700;color:var(--muted);line-height:1.5">This is the most important question. The future isn't fixed — it will be built by people making millions of decisions. Including, someday, you.</div>
+    </div>
+  </div>
+
+  <div class="wow" style="background:var(--teal-l)"><div class="wow-e">🌟</div><div class="wow-t" style="color:var(--teal-d)">The fact that you can think carefully about these questions — at 7 years old — is genuinely remarkable. Most people never engage seriously with any of them. You're not just learning about AI. You're developing the kind of mind that can shape what AI becomes. The future needs thinkers like you.</div></div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🎯 Quick Quiz!</div>
+    <div class="quiz-q">Q: What's the most honest answer when someone asks "what will AI be like in 20 years?"</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'q9a','Nobody can predict the exact future — even top AI researchers are often wrong about timing and direction!')"><div class="olet">A</div>Give a confident, specific prediction</button>
+      <button class="qopt" onclick="answer(this,true,'q9a','Correct! Intellectual honesty about uncertainty is itself a form of wisdom. The future is genuinely uncertain — and being curious about it is the right response!')"><div class="olet">B</div>Acknowledge uncertainty, share hopes and concerns, and stay curious</button>
+      <button class="qopt" onclick="answer(this,false,'q9a','Refusing to think about it misses the opportunity to shape it! Engaging thoughtfully with uncertainty is far better than avoiding the question.')"><div class="olet">C</div>Say "nobody knows" and stop thinking about it</button>
+    </div>
+    <div class="quiz-ans" id="q9a" style="background:var(--purple-l);color:var(--purple-d)"></div>
+  </div>
+
+  <div class="activity">
+    <div class="act-lbl">❓ Activity Time!</div>
+    <div class="act-title">The Big Question Debate!</div>
+    <div class="step"><div class="sn">1</div><div class="st">Pick one of the big questions from above — whichever one feels most important to you.</div></div>
+    <div class="step"><div class="sn">2</div><div class="st">Marty argues one side. Dad argues the other. You both try to make the strongest case you can.</div></div>
+    <div class="step"><div class="sn">3</div><div class="st">After 5 minutes, SWAP sides! Argue the opposite view as convincingly as possible.</div></div>
+    <div class="step"><div class="sn">4</div><div class="st">What did you learn? Does understanding both sides change what you actually believe?</div></div>
+    <div class="dad-tip">💡 The "swap sides" element is crucial — it builds the rare skill of genuinely understanding views you disagree with. This is one of the most important intellectual skills for navigating the AI age, where big disagreements will need thoughtful people to bridge them.</div>
+  </div>
+</div>
+
+<!-- CH 10 — GRADUATION -->
+<div class="chapter" id="ch10">
+  <div class="ch-header">
+    <div class="ch-icon" style="background:var(--teal-l)">🎓</div>
+    <div><div class="ch-tag" style="color:var(--teal)">Chapter 10</div><div class="ch-title">🎓 Graduation Day!</div><div class="ch-sub">You did it! The whole Summer AI Adventure — complete!</div></div>
+  </div>
+  <div class="intro" style="background:var(--teal-l);color:var(--teal-d)">Marty. You. Did. It. 🚀 Eight weeks. Eighty chapters. Hundreds of questions. Dozens of activities. Real AI you built with your own hands. Big questions you turned over in your mind. This is the most complete AI education any 7-year-old on Earth has ever received. And you did it because you were curious, because you showed up, and because you never stopped asking "but why?"</div>
+
+  <div class="sec-label">Your journey — all 8 weeks 🗺️</div>
+  <div class="recap-grid">
+    <div class="rc" style="background:var(--teal-l)"><div class="rc-n" style="color:var(--teal)">Week 1</div><div class="rc-title">What is AI?</div>Brains vs computers, algorithms, AI history, real vs movie AI</div>
+    <div class="rc" style="background:var(--purple-l)"><div class="rc-n" style="color:var(--purple)">Week 2</div><div class="rc-title">How AI Learns</div>Machine learning, training data, patterns, mistakes that improve</div>
+    <div class="rc" style="background:var(--blue-l)"><div class="rc-n" style="color:var(--blue)">Week 3</div><div class="rc-title">AI That Sees & Hears</div>Pixels, Face ID, speech recognition, NLP, AI art & music</div>
+    <div class="rc" style="background:var(--amber-l)"><div class="rc-n" style="color:var(--amber)">Week 4</div><div class="rc-title">How AI is Built</div>The AI team, code, neural networks, data centres, future chips</div>
+    <div class="rc" style="background:var(--green-l)"><div class="rc-n" style="color:var(--green)">Week 5</div><div class="rc-title">AI Helps the World</div>Medicine, science, climate, farming, space, ocean, education</div>
+    <div class="rc" style="background:var(--coral-l)"><div class="rc-n" style="color:var(--coral)">Week 6</div><div class="rc-title">Is AI Fair & Kind?</div>Bias, privacy, data, jobs, deepfakes, and who makes the rules</div>
+    <div class="rc" style="background:var(--pink-l)"><div class="rc-n" style="color:var(--pink)">Week 7</div><div class="rc-title">Build Your Own AI!</div>Scratch, Teachable Machine, chatbot, art, music, demo day</div>
+    <div class="rc" style="background:var(--teal-l)"><div class="rc-n" style="color:var(--teal)">Week 8</div><div class="rc-title">The Future of AI</div>Robots, AGI, feelings, growing up with AI, careers, big questions</div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="quiz-h">🏆 The Grand Graduation Quiz — All 8 Weeks!</div>
+    <div class="stars-row"><div class="star-b">⭐ 8 big questions</div><div class="star-b">🎓 One per week</div><div class="star-b">🏅 Go for 8/8!</div></div>
+
+    <div class="quiz-q">Q1 (Week 1): What is AI?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq1','AI isn\'t magic — it\'s human-made smartness! Machines that can do tasks that normally need human thinking, built by teams of scientists and engineers.')"><div class="olet">A</div>A magical computer that thinks on its own</button>
+      <button class="qopt" onclick="answer(this,true,'bq1','Correct! AI is human-made — built by teams of people using data, maths, and code. It\'s remarkable, but it\'s human achievement, not magic!')"><div class="olet">B</div>Human-made technology that can do tasks normally needing human thinking</button>
+      <button class="qopt" onclick="answer(this,false,'bq1','AI has been around since the 1950s! It\'s not brand new — though it has advanced enormously in recent years.')"><div class="olet">C</div>Brand new technology that was invented last year</button>
+    </div>
+    <div class="quiz-ans" id="bq1" style="background:var(--teal-l);color:var(--teal-d)"></div>
+    <div class="divider"></div>
+
+    <div class="quiz-q">Q2 (Week 2): What does "Garbage In, Garbage Out" mean?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,true,'bq2','Exactly! Bad training data produces bad AI. The quality of data is just as important as the quality of the algorithm.')"><div class="olet">A</div>If training data is bad, the AI will make bad decisions</button>
+      <button class="qopt" onclick="answer(this,false,'bq2','AI produces insights and answers, not physical garbage! The saying is about data quality affecting AI quality.')"><div class="olet">B</div>AI produces waste products that need disposal</button>
+      <button class="qopt" onclick="answer(this,false,'bq2','AI learns from data — the saying is all about whether that data is good or bad quality.')"><div class="olet">C</div>AI learns better from old, recycled data</button>
+    </div>
+    <div class="quiz-ans" id="bq2" style="background:var(--teal-l);color:var(--teal-d)"></div>
+    <div class="divider"></div>
+
+    <div class="quiz-q">Q3 (Week 3): How many invisible dots does Face ID project onto your face?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq3','30,000 dots! Face ID creates a precise 3D depth map of your unique face shape using 30,000 infrared dots.')"><div class="olet">A</div>100 dots</button>
+      <button class="qopt" onclick="answer(this,false,'bq3','30,000 dots — way more than 1,000! The precision of the 3D depth map is what makes Face ID so reliable.')"><div class="olet">B</div>1,000 dots</button>
+      <button class="qopt" onclick="answer(this,true,'bq3','Correct! 30,000 invisible infrared dots create a precise 3D map of your face shape. That\'s why Face ID is so secure and works even in the dark!')"><div class="olet">C</div>30,000 dots</button>
+    </div>
+    <div class="quiz-ans" id="bq3" style="background:var(--teal-l);color:var(--teal-d)"></div>
+    <div class="divider"></div>
+
+    <div class="quiz-q">Q4 (Week 4): What inspired the design of neural networks in AI?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq4','Neural networks were inspired by biology — the human brain — not by electronic circuits!')"><div class="olet">A</div>The way electrical circuits work</button>
+      <button class="qopt" onclick="answer(this,true,'bq4','Correct! Scientists studied how neurons in the human brain connect and signal each other, then created a mathematical version in code.')"><div class="olet">B</div>The connected neurons in the human brain</button>
+      <button class="qopt" onclick="answer(this,false,'bq4','Spider webs are inspiring but neural networks were modelled specifically on brain neuron connections!')"><div class="olet">C</div>The structure of spider webs</button>
+    </div>
+    <div class="quiz-ans" id="bq4" style="background:var(--teal-l);color:var(--teal-d)"></div>
+    <div class="divider"></div>
+
+    <div class="quiz-q">Q5 (Week 5): What is AI "hallucination"?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq5','AI doesn\'t dream — hallucination is when it generates confidently wrong information. A very real and important limitation!')"><div class="olet">A</div>When AI creates dream-like images during processing</button>
+      <button class="qopt" onclick="answer(this,true,'bq5','Correct! AI hallucination means the AI confidently states things that are completely false — it generates convincing-sounding text without any guarantee it\'s accurate.')"><div class="olet">B</div>When AI confidently states things that are completely wrong</button>
+      <button class="qopt" onclick="answer(this,false,'bq5','Hallucination is a specific technical term for when AI produces false information confidently — not a physical or visual phenomenon.')"><div class="olet">C</div>When the AI\'s screen flickers strangely</button>
+    </div>
+    <div class="quiz-ans" id="bq5" style="background:var(--teal-l);color:var(--teal-d)"></div>
+    <div class="divider"></div>
+
+    <div class="quiz-q">Q6 (Week 6): What is a deepfake?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq6','Deepfakes are about video and images of real people — not underwater technology!')"><div class="olet">A</div>An AI camera designed for deep sea exploration</button>
+      <button class="qopt" onclick="answer(this,true,'bq6','Correct! Deepfakes are AI-generated fake photos or videos showing real people doing or saying things that never happened — one of the biggest media literacy challenges of our time.')"><div class="olet">B</div>An AI-generated fake photo or video of a real person</button>
+      <button class="qopt" onclick="answer(this,false,'bq6','Deepfakes are about visuals — fake images and videos — not voice technology specifically.')"><div class="olet">C</div>An AI voice that impersonates famous singers</button>
+    </div>
+    <div class="quiz-ans" id="bq6" style="background:var(--teal-l);color:var(--teal-d)"></div>
+    <div class="divider"></div>
+
+    <div class="quiz-q">Q7 (Week 7): What does Teachable Machine let you build?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq7','Teachable Machine trains neural network classifiers — image, sound, or pose classifiers. Games are different!')"><div class="olet">A</div>Video games with AI characters</button>
+      <button class="qopt" onclick="answer(this,true,'bq7','Correct! Teachable Machine lets you train real neural network classifiers using your own images, sounds, or poses — no coding needed!')"><div class="olet">B</div>Real AI classifiers that recognise images, sounds, or poses</button>
+      <button class="qopt" onclick="answer(this,false,'bq7','Teachable Machine is a training tool — it builds classifiers, not websites!')"><div class="olet">C</div>Websites using drag and drop</button>
+    </div>
+    <div class="quiz-ans" id="bq7" style="background:var(--teal-l);color:var(--teal-d)"></div>
+    <div class="divider"></div>
+
+    <div class="quiz-q">Q8 (Week 8): What skill will be MOST valuable for humans in the AI age?</div>
+    <div class="quiz-opts">
+      <button class="qopt" onclick="answer(this,false,'bq8','Memorising facts is exactly what AI does best — your value in the AI age comes from creativity, empathy, curiosity, and critical thinking!')"><div class="olet">A</div>Memorising as many facts as possible</button>
+      <button class="qopt" onclick="answer(this,false,'bq8','Typing speed is easily handled by voice-to-text AI! Human skills like empathy and creativity are what matter most.')"><div class="olet">B</div>Typing faster than any AI</button>
+      <button class="qopt" onclick="answer(this,true,'bq8','Correct! Creativity, empathy, critical thinking, curiosity — deeply human qualities that AI cannot replicate. These are your superpowers. Develop them always!')"><div class="olet">C</div>Creativity, empathy, critical thinking, and genuine curiosity</button>
+    </div>
+    <div class="quiz-ans" id="bq8" style="background:var(--teal-l);color:var(--teal-d)"></div>
+
+    <div id="score-reveal" style="display:none;margin-top:16px;padding:16px 18px;border-radius:var(--r);background:var(--teal-l);color:var(--teal-d);font-weight:800;font-size:15px;text-align:center;line-height:1.6"></div>
+  </div>
+
+  <!-- GRADUATION CERTIFICATE -->
+  <div class="grad-cert">
+    <div class="grad-ribbon">🎓 CERTIFICATE OF GRADUATION 🎓</div>
+    <div class="grad-stars">⭐ ⭐ ⭐</div>
+    <div class="grad-title">Summer AI Adventure</div>
+    <div class="grad-sub">Complete — 8 Weeks · 80 Chapters · Countless Discoveries</div>
+    <div style="font-size:13px;font-weight:700;color:var(--teal);margin-bottom:16px">This is to certify that</div>
+    <div class="grad-name">Marty</div>
+    <div class="grad-name-line"></div>
+    <div class="grad-name-label">AI Explorer Extraordinaire</div>
+    <div class="grad-body">
+      has completed the full 8-week Summer AI Adventure,<br>
+      exploring the science, ethics, creativity, and future of<br>
+      Artificial Intelligence with curiosity, courage, and heart.<br><br>
+      <strong>You built real AI. You asked hard questions.<br>You never stopped being curious. That matters.</strong>
+    </div>
+    <div class="grad-badges">
+      <div class="badge">🤖 AI Explorer</div>
+      <div class="badge">🧠 ML Learner</div>
+      <div class="badge">👁️ Senses Expert</div>
+      <div class="badge">🏗️ AI Engineer</div>
+      <div class="badge">🌍 World Helper</div>
+      <div class="badge">⚖️ Ethics Champion</div>
+      <div class="badge">🛠️ AI Builder</div>
+      <div class="badge">🚀 Future Pioneer</div>
+    </div>
+    <div class="grad-sign">
+      Presented with enormous pride · Summer 2025/2026<br>
+      <em>"The future of AI is being shaped by curious minds like yours."</em>
+    </div>
+  </div>
+
+  <!-- FINAL MESSAGE -->
+  <div style="background:linear-gradient(135deg,var(--teal-l),#d0f5e8);border-radius:var(--r);padding:24px 20px;text-align:center;margin-bottom:12px">
+    <div style="font-size:32px;margin-bottom:10px">💌</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:22px;color:var(--teal-d);margin-bottom:10px">A Message for Marty</div>
+    <div style="font-size:13.5px;font-weight:700;color:var(--teal-d);line-height:1.8;max-width:340px;margin:0 auto">
+      You started this summer as a curious kid who wondered what AI was.<br><br>
+      You're finishing it as someone who understands how AI works, how it's built, where it helps, where it fails, and what questions we should all be asking about it.<br><br>
+      Most adults don't know what you know now.<br><br>
+      Keep asking questions. Keep building things. Keep caring about whether technology is fair and kind.<br><br>
+      The world needs people exactly like you. 🌟
+    </div>
+  </div>
+
+  <div style="padding:14px 16px;background:var(--purple-l);border-radius:var(--r);text-align:center;margin-bottom:8px">
+    <div style="font-family:'Fredoka One',cursive;font-size:16px;color:var(--purple-d);margin-bottom:4px">What's next? The adventure never stops! 🚀</div>
+    <div style="font-size:13px;font-weight:700;color:var(--purple)">Keep coding on Scratch · Keep building on Teachable Machine · Keep asking big questions · Keep being gloriously curious!</div>
+  </div>
+</div>
+
+</div><!-- end book-content -->
+
+<script>
+const dots=document.getElementById('dots');
+for(let i=1;i<=10;i++){
+  const d=document.createElement('button');d.className='ch-dot';
+  d.setAttribute('aria-label','Chapter '+i);
+  d.onclick=()=>goTo(i);dots.appendChild(d);
+}
+function goTo(n){document.getElementById('ch'+n).scrollIntoView({behavior:'smooth'})}
+const chapters=document.querySelectorAll('.chapter');
+const allDots=document.querySelectorAll('.ch-dot');
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const n=parseInt(e.target.id.replace('ch',''));
+      if(!isNaN(n)&&n>=1&&n<=10)allDots.forEach((d,i)=>d.classList.toggle('active',i===n-1));
+    }
+  });
+},{threshold:0.3});
+chapters.forEach(c=>obs.observe(c));
+
+const answered={};
+const bigIds=['bq1','bq2','bq3','bq4','bq5','bq6','bq7','bq8'];
+let bigScore=0,bigAnswered=0;
+
+function answer(btn,correct,ansId,explanation){
+  if(answered[ansId])return;
+  answered[ansId]=true;
+  const opts=btn.closest('.quiz-opts').querySelectorAll('.qopt');
+  opts.forEach(o=>o.disabled=true);
+  btn.classList.add(correct?'selected-correct':'selected-wrong');
+  if(!correct){
+    opts.forEach(o=>{
+      const oc=o.getAttribute('onclick');
+      if(oc&&oc.includes("true,'"+ansId+"'"))o.classList.add('reveal-correct');
+    });
+  }
+  const el=document.getElementById(ansId);
+  el.textContent=(correct?'🌟 Correct! ':'🤔 Not quite — ')+explanation;
+  el.classList.add('show');
+  if(bigIds.includes(ansId)){
+    bigAnswered++;
+    if(correct)bigScore++;
+    if(bigAnswered===8){
+      setTimeout(()=>{
+        const rev=document.getElementById('score-reveal');
+        const msgs=[
+          'Keep reviewing — every question is a learning moment! 💪',
+          'You\'re getting there! Review the chapters and try again! 🌱',
+          'Nice effort! Go back and read the chapters that stumped you! 📚',
+          'Good work! You remembered a lot from 8 weeks of learning! 🎉',
+          'Great score! You clearly paid attention this summer! 🚀',
+          'Brilliant! Almost a perfect score across all 8 weeks! 🌟',
+          'Outstanding! You remembered nearly everything! 🏅',
+          'So close to perfect! One more review and you\'ll nail it! ⭐',
+          'PERFECT 8/8! GRADUATION CHAMPION! 🏆🎓🚀⭐🌍🛠️🤖💡'
+        ];
+        rev.innerHTML='<div style="font-size:24px;margin-bottom:8px">🎓</div>You scored <strong>'+bigScore+' out of 8</strong> across all 8 weeks!<br><span style="font-weight:700;font-size:13px">'+msgs[bigScore]+'</span>';
+        rev.style.display='block';
+        rev.scrollIntoView({behavior:'smooth',block:'nearest'});
+      },400);
+    }
+  }
+  const ch=btn.closest('.chapter');
+  if(ch){const n=parseInt(ch.id.replace('ch',''));if(!isNaN(n)&&n>=1&&n<=10)allDots[n-1].classList.add('done');}
+}
+
+function checkPw(){
+  const val=document.getElementById('pw-input').value;
+  const err=document.getElementById('pw-error');
+  if(val==='roro@123'){
+    sessionStorage.setItem('marty_unlocked','yes');
+    document.getElementById('lock-screen').style.display='none';
+    document.getElementById('book-content').style.display='block';
+  } else {
+    err.classList.add('show');
+    document.getElementById('pw-input').value='';
+    document.getElementById('pw-input').focus();
+    setTimeout(()=>err.classList.remove('show'),2500);
+  }
+}
+if(sessionStorage.getItem('marty_unlocked')==='yes'){
+  document.getElementById('lock-screen').style.display='none';
+  document.getElementById('book-content').style.display='block';
+}
+</script>
+</body>
+</html>
